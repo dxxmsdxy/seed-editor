@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+// datasource db {
+//   provider = "sqlite"
+//   url      = "file:./dev.db"
+// }
+
+model Seed {
+  id                Int      @id @default(autoincrement())
+  wallet            String
+  seedNumber        String
+  pngUrl            String?
+  svgUrl            String?
+  status            String   @default("unconfirmed")
+  confirmationTries Int      @default(0)
+  createdAt         DateTime @default(now())
+
+  inscriptionId     String?
+  commitTxId        String?
+  revealTxId        String?
+}
