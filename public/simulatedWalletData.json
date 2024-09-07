@@ -1,0 +1,37 @@
+[
+    {
+      "id": "1",
+      "seed": "302232035870861218095296",
+      "modNumber": "000100200300400",
+      "attunementNumber": 3,
+      "locked": false
+    },
+    {
+      "id": "2",
+      "seed": "0",
+      "modNumber": null,
+      "attunementNumber": null,
+      "locked": false
+    },
+    {
+      "id": "3",
+      "seed": "644612459954026516842496",
+      "modNumber": null,
+      "attunementNumber": null,
+      "locked": false
+    },
+    {
+    "id": "4",
+    "seed": "35189392244992",
+    "modNumber": null,
+    "attunementNumber": 2,
+    "locked": true
+    },
+    {
+    "id": "5",
+    "seed": "0",
+    "modNumber": null,
+    "attunementNumber": null,
+    "locked": false
+    }
+  ]

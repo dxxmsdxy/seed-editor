@@ -15,6 +15,26 @@ import IconGreen from "@/public/icons/seeds-editor-icons_green.svg";
 import IconCMYK from "@/public/icons/seeds-editor-icons_cmyk.svg";
 import IconBolt from "@/public/icons/seeds-editor-icons_bolt.svg";
 
+import { useAppSelector, useAppDispatch } from '@/app/hooks';
+import {
+  setSeed,
+  setModNumber,
+  setAttunementNumber,
+  resetSeed,
+  toggleBit,
+  randomizeBits,
+  saveSeed,
+  deleteSaved,
+  setSavedSeeds,
+  prepareToChangeSeed,
+} from '@/store/slices/seedSlice';
+import { setShowInscribeModal } from '@/store/slices/modalSlice';
+import { RootState } from '@/store/store';
+import { setSelectedIndex, updateQueueItem, resetQueueItem, updateQueueOrder, selectNextUnsetItem, initializeQueue, toggleQueueItemLock, setCurrentPage } from '@/store/slices/queueSlice';
+import { selectSetQueueItems } from '@/store/slices/queueSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { connectWalletAndLoadData } from '@/store/slices/walletSlice';
+
 // Add this custom debounce function at the top of your file or in a separate utils file
 function debounce<T extends (...args: any[]) => any>(
   func: T,
@@ -35,41 +55,22 @@ interface QueueItem {
 }
 
 export default function Home() {
+  const dispatch = useAppDispatch();
+  const { seed, bitsArray, modNumber, attunementNumber, savedSeeds } = useAppSelector((state: RootState) => state.seed);
+  const { items: queueItems, selectedIndex: selectedQueueIndex, currentPage, itemsPerPage } = useAppSelector((state: RootState) => state.queue);
+  const showInscribeModal = useAppSelector((state) => state.modal.showInscribeModal);
+  const setQueueItems = useAppSelector(selectSetQueueItems);
+  const isQueueModified = setQueueItems.length > 0;
+  const walletConnected = useSelector((state: RootState) => state.wallet.connected);
+
   const [advancedToggled, setAdvancedToggled] = useState(false);
   const [modToggled, setModToggled] = useState(false);
-  const {
-    seed,
-
-    selectedSeed,
-
-    savedSeeds,
-    setSavedSeeds,
-
-    bitsArray,
-
-    saveSeed,
-    selectSeed,
-    deleteSeed,
-    resetSeed,
-
-    toggleBit,
-
-    randomizeBits,
-
-    setShowInscribeModal,
-  } = useSeed();
 
   const [selectedButtons, setSelectedButtons] = useState<Set<number>>(new Set());
 
   const [isSelecting, setIsSelecting] = useState(false);
   const [tempSelectedButtons, setTempSelectedButtons] = useState<Set<number>>(new Set());
   const initialSelectionRef = useRef<Set<number>>(new Set());
-
-  const [queueItems, setQueueItems] = useState<QueueItem[]>(Array(10).fill({ seed: BigInt(0), modNumber: null, attunementNumber: null, locked: false }));
-  const [selectedQueueIndex, setSelectedQueueIndex] = useState<number | null>(null);
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
 
   const endSelection = useCallback(() => {
     if (isSelecting) {
@@ -81,12 +82,12 @@ export default function Home() {
   const selectNextUnsetQueueItem = useCallback(() => {
     const nextUnsetIndex = queueItems.findIndex(item => item.seed === BigInt(0));
     if (nextUnsetIndex !== -1) {
-      setSelectedQueueIndex(nextUnsetIndex);
+      dispatch(setSelectedIndex(nextUnsetIndex));
       // Update the current page to show the selected item
       const newPage = Math.floor(nextUnsetIndex / itemsPerPage) + 1;
-      setCurrentPage(newPage);
+      dispatch(setCurrentPage(newPage));
     }
-  }, [queueItems, itemsPerPage]);
+  }, [queueItems, itemsPerPage, dispatch]);
 
   const handleEditorInteraction = useCallback(() => {
     if (selectedQueueIndex === null && seed !== BigInt(0)) {
@@ -150,24 +151,18 @@ export default function Home() {
     []
   );
 
-  const handleModNumberChange = (inputValue: string) => {
-    // Check if the input is a valid 15-digit number
-    if (/^\d{15}$/.test(inputValue)) {
-      setModNumber(inputValue);
-      updateUIFromModNumber(inputValue);
-    } else {
-      // If invalid, set to default value
-      setModNumber("000000000000000");
-      updateUIFromModNumber("000000000000000");
-    }
-  };
-
   const incrementAttunement = () => {
-    setAttunementNumber((prev) => (prev === 9 ? 0 : prev + 1));
+    dispatch(setAttunementNumber((prevAttunement) => {
+      const newAttunement = prevAttunement === 9 ? 0 : prevAttunement + 1;
+      return newAttunement;
+    }));
   };
 
   const decrementAttunement = () => {
-    setAttunementNumber((prev) => (prev === 0 ? 9 : prev - 1));
+    dispatch(setAttunementNumber((prevAttunement) => {
+      const newAttunement = prevAttunement === 0 ? 9 : prevAttunement - 1;
+      return newAttunement;
+    }));
   };
 
   const [sliderValues, setSliderValues] = useState({
@@ -179,8 +174,6 @@ export default function Home() {
     "tint%": 100
   });
 
-  const [modNumber, setModNumber] = useState("000000000000000");
-  const [attunementNumber, setAttunementNumber] = useState(0);
   const initialAttunementRef = useRef(0);
 
   const updateModNumber = useCallback(() => {
@@ -202,8 +195,8 @@ export default function Home() {
         : sliderValues["tint%"].toString().padStart(2, '0');
 
     const newModNumber = `${displaySettingsValue}${colorValue}${depthValue}${spinValue}${tintValue}${tintPercentValue}`;
-    setModNumber(newModNumber);
-  }, [selectedButtons, sliderValues]);
+    dispatch(setModNumber(newModNumber));
+  }, [selectedButtons, sliderValues, dispatch]);
 
   useEffect(() => {
     updateModNumber();
@@ -211,16 +204,16 @@ export default function Home() {
 
   const handleQueueItemSelect = (index: number) => {
     if (index === selectedQueueIndex) {
-      setSelectedQueueIndex(null);
-      resetSeed();
+      dispatch(setSelectedIndex(null));
+      dispatch(resetSeed());
       resetEditorToDefaults();
+      
     } else {
-      setSelectedQueueIndex(index);
-      selectSeed(queueItems[index].seed);
-      if (queueItems[index].seed !== BigInt(0)) {
-        // Load stored mod and attunement values
-        setModNumber(queueItems[index].modNumber || "000000000000000");
-        setAttunementNumber(queueItems[index].attunementNumber || initialAttunementRef.current);
+      dispatch(setSelectedIndex(index));
+      dispatch(setSeed(queueItems[index].seed.toString()));
+      if (queueItems[index].seed !== '0') {
+        dispatch(setModNumber(queueItems[index].modNumber || "000000000000000"));
+        dispatch(setAttunementNumber(queueItems[index].attunementNumber || initialAttunementRef.current));
         updateUIFromModNumber(queueItems[index].modNumber || "000000000000000");
       } else {
         resetEditorToDefaults();
@@ -229,7 +222,7 @@ export default function Home() {
 
     // Update the current page to show the selected item
     const newPage = Math.floor(index / itemsPerPage) + 1;
-    setCurrentPage(newPage);
+    dispatch(setCurrentPage(newPage));
   };
 
   const isSelectButtonEnabled = useCallback(() => {
@@ -244,15 +237,14 @@ export default function Home() {
     }
     
     // If not locked, allow all changes
-    return seed !== currentQueueItem.seed ||
+    return seed !== currentQueueItem.seed.toString() ||
            modNumber !== (currentQueueItem.modNumber || "000000000000000") ||
            attunementNumber !== (currentQueueItem.attunementNumber ?? initialAttunementRef.current);
   }, [selectedQueueIndex, queueItems, seed, modNumber, attunementNumber]);
 
   const handleSelectButtonClick = () => {
     if (selectedQueueIndex !== null) {
-      const newQueueItems = [...queueItems];
-      const currentItem = newQueueItems[selectedQueueIndex];
+      const currentItem = queueItems[selectedQueueIndex];
       
       const selectedItem = {
         seed: currentItem.locked ? currentItem.seed : seed,
@@ -261,40 +253,24 @@ export default function Home() {
         locked: currentItem.locked
       };
 
-      // Update the selected item in its current position
-      newQueueItems[selectedQueueIndex] = selectedItem;
+      dispatch(updateQueueItem({ index: selectedQueueIndex, item: selectedItem }));
+      dispatch(updateQueueOrder());
 
-      // Reorder the items only if the seed is being set (not BigInt(0)) and the item was previously unset
-      if (seed !== BigInt(0) && currentItem.seed === BigInt(0)) {
-        // Remove the selected item from its current position
-        newQueueItems.splice(selectedQueueIndex, 1);
+      // Check if all items are set after updating the current item
+      const allItemsSet = queueItems.every((item, index) => 
+        index === selectedQueueIndex ? selectedItem.seed !== '0' : item.seed !== '0'
+      );
 
-        // Find the index of the last set item
-        const lastSetIndex = newQueueItems.findLastIndex(item => item.seed !== BigInt(0));
-
-        // Insert the new item after the last set item
-        newQueueItems.splice(lastSetIndex + 1, 0, selectedItem);
+      if (allItemsSet) {
+        // If all items are set, clear the selection but don't reset the editor
+        dispatch(setSelectedIndex(null));
+      } else {
+        // If not all items are set, try to select the next unset item
+        resetEditorToDefaults();
+        dispatch(selectNextUnsetItem());
       }
 
-      setQueueItems(newQueueItems);
-
-      // Reset selection and UI
-      setSelectedQueueIndex(null);
-      resetEditorToDefaults();
-      selectSeed(BigInt(0));
-
-      // Find the next unset item in the queue
-      const nextUnsetIndex = newQueueItems.findIndex(item => item.seed === BigInt(0));
-
-      if (nextUnsetIndex !== -1) {
-        setTimeout(() => {
-          setSelectedQueueIndex(nextUnsetIndex);
-        }, 300);
-
-        // Update the current page to show the next unset item
-        const newPage = Math.floor(nextUnsetIndex / itemsPerPage) + 1;
-        setCurrentPage(newPage);
-      }
+      // Reset UI toggles
       setAdvancedToggled(false);
       setModToggled(false);
     }
@@ -302,76 +278,33 @@ export default function Home() {
 
   const handleQueueItemReset = (event: React.MouseEvent, index: number) => {
     event.stopPropagation();
-    const newQueueItems = [...queueItems];
-    
-    // Remove the item at the given index
-    newQueueItems.splice(index, 1);
-    
-    // Separate set and unset items
-    const setItems = newQueueItems.filter(item => item.seed !== BigInt(0));
-    const unsetItems = newQueueItems.filter(item => item.seed === BigInt(0));
-    
-    // Add a new unset item
-    unsetItems.push({ seed: BigInt(0), modNumber: null, attunementNumber: null, locked: false });
-    
-    // Combine set and unset items
-    const reorderedItems = [...setItems, ...unsetItems];
-    
-    setQueueItems(reorderedItems);
-    
-    // Find the index of the next unset item
-    const nextUnsetIndex = reorderedItems.findIndex(item => item.seed === BigInt(0));
-    
-    // If the removed item was selected, update selection
-    if (index === selectedQueueIndex) {
-      if (nextUnsetIndex !== -1) {
-        setSelectedQueueIndex(nextUnsetIndex);
-        selectSeed(BigInt(0));
-        resetEditorToDefaults();
-      } else if (setItems.length > 0) {
-        // If no unset items, select the last set item
-        setSelectedQueueIndex(setItems.length - 1);
-        selectSeed(setItems[setItems.length - 1].seed);
-        setModNumber(setItems[setItems.length - 1].modNumber || "000000000000000");
-        setAttunementNumber(setItems[setItems.length - 1].attunementNumber || initialAttunementRef.current);
-        updateUIFromModNumber(setItems[setItems.length - 1].modNumber || "000000000000000");
-      } else {
-        setSelectedQueueIndex(null);
-        selectSeed(BigInt(0));
-        resetEditorToDefaults();
-      }
-    } else if (selectedQueueIndex !== null && index < selectedQueueIndex) {
-      // If a set item above the selected item was removed, update the selected index
-      setSelectedQueueIndex(selectedQueueIndex - 1);
-    }
-    
+    dispatch(resetQueueItem(index));
+    dispatch(updateQueueOrder());
+    dispatch(selectNextUnsetItem());
     updateSavedSeeds();
+
+    resetEditorToDefaults();
+    dispatch(setSeed('0'));
   };
 
   const handleQueueItemLock = (event: React.MouseEvent, index: number) => {
     event.stopPropagation();
-    setQueueItems(prevItems => {
-      const newItems = [...prevItems];
-      newItems[index] = { ...newItems[index], locked: !newItems[index].locked };
-      return newItems;
-    });
+    dispatch(toggleQueueItemLock(index));
   };
 
   const updateSavedSeeds = () => {
     const validSeeds = queueItems
       .filter(item => item.seed !== BigInt(0))
-      .map(item => ({ seed: item.seed }));
-    setSavedSeeds(validSeeds);
+      .map(item => ({ seed: item.seed.toString() }));
+    dispatch(setSavedSeeds(validSeeds));
   };
 
   useEffect(() => {
     const validSeeds = queueItems
       .filter(item => item.seed !== BigInt(0))
-      .map(item => ({ seed: item.seed }));
-    setSavedSeeds(validSeeds);
-  }, [queueItems]);
-
-  const isQueueModified = queueItems.some(item => item.seed !== BigInt(0));
+      .map(item => ({ seed: item.seed.toString() }));
+    dispatch(setSavedSeeds(validSeeds));
+  }, [queueItems, dispatch]);
 
   const isDefaultModNumber = modNumber === "000000000000000";
 
@@ -396,23 +329,14 @@ export default function Home() {
 
   const isDefaultAttunement = attunementNumber === initialAttunementRef.current;
 
-  const handleAttunementChange = (value: string) => {
-    const parsedValue = parseInt(value, 10);
-    if (!isNaN(parsedValue) && parsedValue >= 0 && parsedValue <= 9) {
-      setAttunementNumber(parsedValue);
-    } else {
-      setAttunementNumber(initialAttunementRef.current);
-    }
-  };
-
   const resetAttunement = (e: React.MouseEvent) => {
     // Check if the click target is not the attunement-label or its children
     if (!e.currentTarget.querySelector('.attunement-label')?.contains(e.target as Node)) {
-      setAttunementNumber(initialAttunementRef.current);
+      dispatch(setAttunementNumber(initialAttunementRef.current));
     }
   };
 
-  const isSeedSet = seed !== BigInt(0);
+  const isSeedSet = seed !== "0";
 
   const modNumberInputRef = useRef<HTMLSpanElement>(null);
   const attunementInputRef = useRef<HTMLSpanElement>(null);
@@ -428,9 +352,10 @@ export default function Home() {
     // Update other UI elements as needed
   }, [modNumber, attunementNumber, selectedButtons, sliderValues]);
 
-  const resetEditorToDefaults = () => {
-    setModNumber("000000000000000");
-    setAttunementNumber(initialAttunementRef.current);
+  const resetEditorToDefaults = useCallback(() => {
+    dispatch(resetSeed());
+    dispatch(setModNumber("000000000000000"));
+    dispatch(setAttunementNumber(initialAttunementRef.current));
     setSelectedButtons(new Set());
     setTempSelectedButtons(new Set());
     setSliderValues({
@@ -441,15 +366,7 @@ export default function Home() {
       tint: 0,
       "tint%": 100
     });
-  };
-
-  const updateQueueItem = (index: number, updates: Partial<QueueItem>) => {
-    setQueueItems(prevItems => {
-      const newItems = [...prevItems];
-      newItems[index] = { ...newItems[index], ...updates };
-      return newItems;
-    });
-  };
+  }, [dispatch, initialAttunementRef]);
 
   useEffect(() => {
     // Call handleEditorInteraction when the component mounts
@@ -463,7 +380,7 @@ export default function Home() {
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
+      dispatch(setCurrentPage(newPage));
     }
   };
 
@@ -481,8 +398,7 @@ export default function Home() {
         // Check if the double-click is outside editor-wrapper-v2 or directly on it
         if (!editorWrapper.contains(event.target as Node) || event.target === editorWrapper) {
           // Deselect the queue item
-          setSelectedQueueIndex(null);
-          resetSeed();
+          dispatch(setSelectedIndex(null));
           resetEditorToDefaults();
         }
       }
@@ -493,25 +409,158 @@ export default function Home() {
     return () => {
       document.removeEventListener('dblclick', handleDoubleClickOutside);
     };
-  }, []);
+  }, [dispatch, resetEditorToDefaults]);
 
   const isSelectedItemLocked = useCallback(() => {
     if (selectedQueueIndex === null) return false;
     return queueItems[selectedQueueIndex].locked;
   }, [selectedQueueIndex, queueItems]);
 
+  const inputRef = useRef<HTMLDivElement>(null);
+
+  const handleSeedInputChange = (updatedSeed: string) => {
+    if (!isSelectedItemLocked()) {
+      dispatch(setSeed(updatedSeed));
+      
+      if (selectedQueueIndex === null || queueItems[selectedQueueIndex].seed === '0') {
+        const nextUnsetIndex = queueItems.findIndex(item => item.seed === '0');
+        if (nextUnsetIndex !== -1) {
+          dispatch(setSelectedIndex(nextUnsetIndex));
+        }
+      }
+    }
+  };
+
+  const handleResetSeed = () => {
+    if (!isSelectedItemLocked()) {
+      dispatch(resetSeed());
+    }
+  };
+
+  const handleInscribeClick = () => {
+    if (isQueueModified) {
+      dispatch(setShowInscribeModal(true));
+    }
+  };
+
+  const handleSeedChange = useCallback(() => {
+    if (selectedQueueIndex === null) {
+      dispatch(selectNextUnsetItem());
+    }
+  }, [selectedQueueIndex, dispatch]);
+
+  useEffect(() => {
+    if (seed === BigInt(0)) {
+      dispatch(prepareToChangeSeed());
+    }
+  }, [seed, dispatch]);
+
+  // Modify the randomizeBits and toggleBit handlers
+  const handleRandomizeBits = () => {
+    if (!isSelectedItemLocked()) {
+      handleSeedChange();
+      dispatch(randomizeBits());
+    }
+  };
+
+  const handleToggleBit = (index: number) => {
+    if (!isSelectedItemLocked()) {
+      handleSeedChange();
+      dispatch(toggleBit(index));
+    }
+  };
+
+  useEffect(() => {
+    // Initialize the queue when the component mounts
+    dispatch(initializeQueue());
+  }, [dispatch]);
+
+  // Effect to handle modToggled state based on seed value
+  useEffect(() => {
+    if (seed === '0' && modToggled) {
+      setModToggled(false);
+    }
+  }, [seed, modToggled]);
+
+  const renderQueueItem = (item: QueueItem, index: number) => {
+    const isSeedZero = item.seed === '0';
+
+    return (
+      <li
+        className={`queue-item ${
+          index === selectedQueueIndex ? "selected" : ""
+        } ${!isSeedZero ? 'set' : ''}`}
+        key={index}
+        onClick={() => handleQueueItemSelect(index)}
+      >
+        <div className={`queued-seed-number ${!isSeedZero ? 'set' : ''}`}>
+          <span 
+            className={`queue-lock ${item.locked ? 'locked' : ''} ${isSeedZero ? 'disabled' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!isSeedZero) {
+                dispatch(toggleQueueItemLock(index));
+              }
+            }}
+          ></span>
+          <strong>{item.seed}</strong>
+          <span 
+            className="queue-remove"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleQueueItemReset(e, index);
+            }}
+          ></span>
+        </div>
+      </li>
+    );
+  };
+
+  const handleConnect = () => {
+    dispatch(connectWalletAndLoadData());
+  };
+
+  const handleDisconnect = () => {
+    dispatch(setWalletConnected(false));
+    // Optionally, clear the queue here if needed
+  };
+
   return (
     <>
       <div className="editor-v2">
         <div className="editor-wrapper-v2">
+          <div className="seed-indicator-v2">
+            <div className="seed-touchable">
+              <div className="label navlabel">SEED:</div>
+              <div
+                ref={inputRef}
+                className={`seed navseed ${isSelectedItemLocked() ? 'disabled' : ''}`}
+                contentEditable={!isSelectedItemLocked()}
+                inputMode="numeric"
+                onClick={(e) => !isSelectedItemLocked() && selectElementContents(e.currentTarget)}
+                onBlur={(e) => {
+                  e.preventDefault();
+                  if (!isSelectedItemLocked()) {
+                    const updatedSeed = e.currentTarget.textContent?.trim() || '0';
+                    handleSeedInputChange(updatedSeed);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                  }
+                }}
+                dangerouslySetInnerHTML={{ __html: seed }}
+              />
+              {seed !== '0' && !isSelectedItemLocked() && (
+                <div className="reset-text-button reset show" onClick={handleResetSeed}>
+                  Reset
+                </div>
+              )}
+            </div>
+          </div>
           <>
-            <SeedInput 
-              queueItems={queueItems} 
-              selectedQueueIndex={selectedQueueIndex} 
-              setSelectedQueueIndex={setSelectedQueueIndex} 
-              updateQueueItem={updateQueueItem}
-              isLocked={isSelectedItemLocked()}
-            />
             <div className="options-v2">
               <div
                 style={{
@@ -521,7 +570,7 @@ export default function Home() {
               >
                 <a
                   className={`ui-button randomize z-button ${isSelectedItemLocked() ? 'disabled' : ''}`}
-                  onClick={() => !isSelectedItemLocked() && randomizeBits()}
+                  onClick={handleRandomizeBits}
                 >
                   Random
                 </a>
@@ -541,11 +590,11 @@ export default function Home() {
                 <a
                   className={`ui-button advanced mod-button shrink z-button ${
                     modToggled ? "selected" : ""
-                  } ${isSeedSet ? "" : "disabled"} ${isSelectedItemLocked() ? 'disabled' : ''}`}
+                  } ${seed !== '0' ? "" : "disabled"} ${isSelectedItemLocked() ? 'disabled' : ''}`}
                   onClick={() => {
-                    if (isSeedSet && !isSelectedItemLocked()) {
-                      setAdvancedToggled(false)
-                      setModToggled(!modToggled)
+                    if (seed !== '0' && !isSelectedItemLocked()) {
+                      setAdvancedToggled(false);
+                      setModToggled(!modToggled);
                     }
                   }}
                 >
@@ -553,11 +602,11 @@ export default function Home() {
                 </a>
               </div>
               <div className={`grid-wrap ${advancedToggled ? "show" : ""}`}>
-                <BitsArray bitsArray={bitsArray} toggleBit={toggleBit} />
+                <BitsArray bitsArray={bitsArray} toggleBit={handleToggleBit} />
                 <a
                   href="#"
                   className="ui-button reset-button reset z-button show"
-                  onClick={resetSeed}
+                  onClick={() => dispatch(resetSeed())}
                 >
                   Reset
                 </a>
@@ -582,7 +631,8 @@ export default function Home() {
                         }}
                         onBlur={(e) => {
                           e.preventDefault();
-                          handleAttunementChange(e.currentTarget.textContent || "");
+                          const newValue = parseInt(e.currentTarget.textContent || "0", 10);
+                          dispatch(setAttunementNumber(isNaN(newValue) ? 0 : newValue));
                           e.currentTarget.textContent = attunementNumber.toString();
                           clearSelection();
                         }}
@@ -643,7 +693,7 @@ export default function Home() {
                       onClick={(e) => selectElementContents(e.currentTarget)}
                       onBlur={(e) => {
                         e.preventDefault();
-                        handleModNumberChange(e.currentTarget.textContent || "");
+                        dispatch(setModNumber(e.currentTarget.textContent || ""));
                         e.currentTarget.textContent = modNumber; // Update the input to reflect the current modNumber
                         clearSelection();
                       }}
@@ -657,7 +707,7 @@ export default function Home() {
                       {modNumber}
                     </span>
                     <span className="mod-reset" onClick={() => {
-                      setModNumber("000000000000000");
+                      dispatch(setModNumber("000000000000000"));
                       updateUIFromModNumber("000000000000000");
                     }}>Reset</span>
                   </div>
@@ -665,7 +715,7 @@ export default function Home() {
                 <a
                   href="#"
                   className="ui-button reset-button reset z-button show"
-                  onClick={resetSeed}
+                  onClick={() => dispatch(resetSeed())}
                 >
                   Reset
                 </a>
@@ -720,8 +770,8 @@ export default function Home() {
               <div className="queue-container">
                 <div className={`page-selector ${totalPages > 1 ? '' : 'disabled'}`}>
                   <div 
-                    className="page-nav prev" 
-                    onClick={() => handlePageChange(currentPage - 1)}
+                    className={`page-nav prev ${currentPage === 1 ? 'disabled' : ''}`}
+                    onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
                   >
                     &lt;
                   </div>
@@ -732,7 +782,7 @@ export default function Home() {
                         contentEditable="true"
                         inputMode="numeric"
                         onClick={(e) => {
-                          e.stopPropagation(); // Prevent triggering goToFirstPage
+                          e.stopPropagation();
                           selectElementContents(e.currentTarget);
                         }}
                         onBlur={(e) => {
@@ -752,48 +802,26 @@ export default function Home() {
                     </div>
                   </div>
                   <div 
-                    className="page-nav next" 
-                    onClick={() => handlePageChange(currentPage + 1)}
+                    className={`page-nav next ${currentPage === totalPages ? 'disabled' : ''}`}
+                    onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
                   >
                     &gt;
                   </div>
                 </div>
                 <ul role="list" className="seed-queue">
-                  {currentPageItems.map(({ seed, modNumber, attunementNumber, locked }, index) => (
-                    <li
-                      className={`queue-item ${
-                        startIndex + index === selectedQueueIndex ? "selected" : ""
-                      } ${seed !== BigInt(0) ? 'set' : ''}`}
-                      key={startIndex + index}
-                      onClick={() => handleQueueItemSelect(startIndex + index)}
-                    >
-                      <div className={`queued-seed-number ${seed !== BigInt(0) ? 'set' : ''}`}>
-                        <span 
-                          className={`queue-lock ${locked ? 'locked' : ''}`}
-                          onClick={(e) => handleQueueItemLock(e, startIndex + index)}
-                        ></span>
-                        <strong>{seed.toString()}</strong>
-                        <span 
-                          className="queue-remove"
-                          onClick={(e) => handleQueueItemReset(e, startIndex + index)}
-                        ></span>
-                      </div>
-                    </li>
-                  ))}
+                  {currentPageItems.map((item, index) => renderQueueItem(item, startIndex + index))}
                 </ul>
                 <a
                   className={`ui-button inscribe z-button ${
                     isQueueModified ? "" : "disabled"
                   }`}
-                  onClick={() => {
-                    setShowInscribeModal(true);
-                  }}
+                  onClick={handleInscribeClick}
                 >
                   Inscribe
-                  {queueItems.filter(item => item.seed !== BigInt(0)).length > 0 && (
+                  {isQueueModified && (
                     <span className="queue-count">
                       <span>(</span>
-                      {queueItems.filter(item => item.seed !== BigInt(0)).length}
+                      {queueItems.filter(item => item.seed !== '0').length}
                       <span>)</span>
                     </span>
                   )}
@@ -803,7 +831,7 @@ export default function Home() {
           </>
         </div>
       </div>
-      <InscribeModal />
+      <InscribeModal show={showInscribeModal} queueItems={setQueueItems} />
     </>
   );
 }
@@ -894,60 +922,3 @@ function clearSelection() {
     activeEl.selectionStart = activeEl.selectionEnd;
   }
 }
-
-const SeedInput = ({ queueItems, selectedQueueIndex, setSelectedQueueIndex, updateQueueItem, isLocked }) => {
-  const { seed, handleSeedChange, resetSeed } = useSeed();
-  const inputRef = useRef<HTMLDivElement>(null);
-
-  const handleSeedInputChange = (updatedSeed: string) => {
-    if (!isLocked) {
-      const newSeed = BigInt(updatedSeed);
-      handleSeedChange(updatedSeed);
-      
-      if (selectedQueueIndex === null || queueItems[selectedQueueIndex].seed === BigInt(0)) {
-        const nextUnsetIndex = queueItems.findIndex(item => item.seed === BigInt(0));
-        if (nextUnsetIndex !== -1) {
-          setSelectedQueueIndex(nextUnsetIndex);
-        }
-      }
-    }
-  };
-
-  const handleEnterPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (inputRef.current) {
-        inputRef.current.blur();
-      }
-    }
-  };
-
-  return (
-    <div className="seed-indicator-v2">
-      <div className="seed-touchable">
-        <div className="label navlabel">SEED:</div>
-        <div
-          ref={inputRef}
-          className={`seed navseed ${isLocked ? 'disabled' : ''}`}
-          contentEditable={!isLocked}
-          inputMode="numeric"
-          onClick={(e) => !isLocked && selectElementContents(e.currentTarget)}
-          onBlur={(e) => {
-            e.preventDefault();
-            if (!isLocked) {
-              const updatedSeed = e.target.innerText.trim();
-              handleSeedInputChange(updatedSeed);
-            }
-          }}
-          onKeyDown={handleEnterPress}
-          dangerouslySetInnerHTML={{ __html: seed.toString() }}
-        />
-        {seed !== BigInt(0) && !isLocked && (
-          <div className="reset-text-button reset show" onClick={resetSeed}>
-            Reset
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};

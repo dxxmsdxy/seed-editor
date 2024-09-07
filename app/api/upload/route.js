@@ -63,10 +63,12 @@ export async function POST(request) {
       );
     }
   } catch (error) {
+    console.error("Error in POST /api/upload:", error);
     return new Response(
-      { error: JSON.stringify(error) },
+      JSON.stringify({ error: error.message || "Internal Server Error" }),
       {
-        status: 400,
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
       }
     );
   }

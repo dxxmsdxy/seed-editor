@@ -1,6 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from 'next/link';
+import { useDispatch, useSelector } from 'react-redux';
+import { connectWalletAndLoadData, setWalletConnected } from '@/store/slices/walletSlice';
+import { setQueueItems } from '@/store/slices/queueSlice';
 
 import { MenuDesktop } from "./MenuDesktop";
 import { MenuMobileContent, MenuMobileTrigger } from "./MenuMobile";
@@ -13,6 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export const Navbar = () => {
+  const dispatch = useDispatch();
+  const { connected, loading, error } = useSelector((state) => state.wallet);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(null);
 
@@ -23,17 +28,33 @@ export const Navbar = () => {
   }, []);
 
   useEffect(() => {
-    // Define the resize handler
     const handleResize = () => {
       setIsMobile(window.innerWidth < 992);
     };
 
-    // Set up the event listener
     window.addEventListener("resize", handleResize);
-
-    // Cleanup function to remove the event listener
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const handleConnect = async () => {
+    try {
+      const resultAction = await dispatch(connectWalletAndLoadData());
+      console.log('Result action:', resultAction); // Add this line
+      if (connectWalletAndLoadData.fulfilled.match(resultAction)) {
+        console.log('Payload:', resultAction.payload); // Add this line
+        dispatch(setQueueItems(resultAction.payload));
+      } else if (connectWalletAndLoadData.rejected.match(resultAction)) {
+        console.error('Failed to connect wallet and load data:', resultAction.error);
+      }
+    } catch (error) {
+      console.error('Unexpected error during wallet connection:', error);
+    }
+  };
+
+  const handleDisconnect = () => {
+    dispatch(setWalletConnected(false));
+    dispatch(setQueueItems([])); // Clear the queue when disconnecting
+  };
 
   return (
     <div
@@ -62,11 +83,18 @@ export const Navbar = () => {
                 setDropdownOpen={setDropdownOpen}
               />
             )}
-            <div className="navbar-disconnect disabled">
-              <Link href="/" className="ui-button disconnect">D/C</Link>
-            </div>
             <div className="navbar-connect">
-              <Link href="/" className="ui-button connect">Connect</Link>
+              {loading ? (
+                <span>Loading...</span>
+              ) : (
+                <Link
+                  href="#"
+                  onClick={connected ? handleDisconnect : handleConnect}
+                  className={`ui-button ${connected ? 'disconnect' : 'connect'}`}
+                >
+                  {connected ? 'D/C' : 'Connect'}
+                </Link>
+              )}
             </div>
           </div>
           {isMobile && (
@@ -77,6 +105,7 @@ export const Navbar = () => {
           )}
         </>
       </DropdownMenu>
+      {error && <div className="error-message">{error}</div>}
     </div>
   );
 };

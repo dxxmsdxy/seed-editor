@@ -1,3 +1,4 @@
+import { ReduxProvider } from './ReduxProvider';
 import type { Metadata } from "next";
 import Script from "next/script";
 import { SeedProvider, ArtworkProvider, WalletProvider } from "@/context";
@@ -58,16 +59,18 @@ export default function RootLayout({
         {/*
          */}
       </head>
-      <WalletProvider>
-        <SeedProvider>
-          <ArtworkProvider>
-            <body className={`body ${inconsolata.className} `}>
-              <Navbar />
-              {children}
-            </body>
-          </ArtworkProvider>
-        </SeedProvider>
-      </WalletProvider>
+      <ReduxProvider>
+        <WalletProvider>
+          <SeedProvider>
+            <ArtworkProvider>
+              <body className={`body ${inconsolata.className} `}>
+                <Navbar />
+                {children}
+              </body>
+            </ArtworkProvider>
+          </SeedProvider>
+        </WalletProvider>
+      </ReduxProvider>
     </html>
   );
 }

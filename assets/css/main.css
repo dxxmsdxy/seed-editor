@@ -2879,13 +2879,12 @@ a {
 
 .page-selector {
   margin-bottom: 0;
-  border: none;
+  border: 2px solid #000;
+  border-bottom: none;
 }
 
 .attunement-label-container,
 .page-label-container {
-  border-left: 2px solid #000;
-  border-right: 2px solid #000;
   flex: 1;
   justify-content: center;
   align-self: center;
@@ -2911,8 +2910,6 @@ a {
 
 .page-label-container {
   border: none;
-  border-top: 2px solid #000000;
-  border-bottom: none;
 }
 
 .attunement-label,
@@ -2956,14 +2953,36 @@ a {
 }
 
 .page-nav {
-  border: 2px solid #000000;
-  border-bottom: none;
+  border:none;
+  background-color: #00000000;
 }
 
 .attune-nav:active,
 .page-nav:active {
   background-color: #000000;
   color: #fff;
+}
+
+.page-nav.prev {
+  border-right: solid 2px #000000;
+  color: #000000;
+}
+
+.page-nav.next{
+  border-left: solid 2px #000000;
+  color: #000000;
+}
+
+.page-nav.prev.disabled {
+  border-right: solid 2px #0000000d;
+  background-color: #00000003;
+  color: #0000000f;
+}
+
+.page-nav.next.disabled {
+  border-left: solid 2px #0000000d;
+  background-color: #00000003;
+  color: #0000000f;
 }
 
 .mod-number-container {

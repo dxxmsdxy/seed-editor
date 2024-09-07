@@ -1,17 +1,45 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSeed, useArtwork, useWallet } from "@/context";
+import { useArtwork, useWallet } from "@/context";
 import Image from "next/image";
+import { useAppDispatch } from '@/app/hooks';
+import { setShowInscribeModal } from '@/store/slices/modalSlice';
+import { QueueItem } from '@/store/slices/queueSlice';
 
-const InscribeModal = () => {
+interface InscribeModalProps {
+  show: boolean;
+  queueItems: QueueItem[];
+}
+
+const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems }) => {
+  const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(false);
   const [loadingIndex, setLoadingIndex] = useState(0);
-  const { savedSeeds, setSavedSeeds, showInscribeModal, setShowInscribeModal } =
-    useSeed();
   const { getArtworkUrls } = useArtwork();
-  const { wallets, inscribe, checkInscriptionStatus, initWallet } = useWallet();
+  const { wallets, inscribe, initWallet } = useWallet();
   const router = useRouter();
+  const [artworkUrls, setArtworkUrls] = useState<string[]>([]);
+  const [itemsWithUrls, setItemsWithUrls] = useState<QueueItem[]>([]);
+
+  useEffect(() => {
+    const generateLocalUrls = async () => {
+      const updatedItems = await Promise.all(
+        queueItems.map(async (item) => {
+          if (item.seed !== '0') {
+            const url = await getArtworkUrls(item.seed);
+            return { ...item, url };
+          }
+          return item;
+        })
+      );
+      setItemsWithUrls(updatedItems);
+    };
+  
+    if (show) {
+      generateLocalUrls();
+    }
+  }, [show, queueItems, getArtworkUrls]);
 
   const purchaseSeeds = async () => {
     setLoading(true);
@@ -23,24 +51,26 @@ const InscribeModal = () => {
     }
 
     const seeds = [];
-    for (const { seed } of savedSeeds) {
+    for (const item of queueItems) {
       setLoadingIndex((ind) => ind + 1);
 
       const { commit_txid, reveal_txid, inscription_id } = await inscribe(
-        seed,
+        item.seed,
         wal
       );
 
-      const pngUrl = await getArtworkUrls(seed);
+      const pngUrl = await getArtworkUrls(item.seed);
       const walletAddress = wal.info[0].address;
 
       const seedObj = {
-        seedNumber: seed.toString(),
+        seedNumber: item.seed,
         pngUrl,
         wallet: walletAddress,
         inscriptionId: inscription_id,
         commitTxId: commit_txid,
         revealTxId: reveal_txid,
+        modNumber: item.modNumber,
+        attunementNumber: item.attunementNumber,
       };
       console.log(seedObj);
 
@@ -69,26 +99,24 @@ const InscribeModal = () => {
 
     setLoading(false);
     setLoadingIndex(0);
-    setSavedSeeds([]);
-    setShowInscribeModal(false);
-    window.localStorage.setItem("savedSeeds", JSON.stringify([]));
+    dispatch(setShowInscribeModal(false));
     router.push("/collection?tab=mine");
   };
 
   return (
     <section
-      className={`modal mint-modal ${showInscribeModal ? "show" : ""}`}
+      className={`modal mint-modal ${show ? "show" : ""}`}
       onClick={(e) => {
         if (e.currentTarget === e.target) {
-          setShowInscribeModal(false);
+          dispatch(setShowInscribeModal(false));
         }
       }}
     >
       <div className="modal-inner">
         <h3 className="mint-preview-item-name">
-          {savedSeeds.length === 1
-            ? `Seed: ${savedSeeds[0].seed.toString()}`
-            : `${savedSeeds.length} seeds`}
+          {queueItems.length === 1
+            ? `Seed: ${queueItems[0].seed}`
+            : `${queueItems.length} seeds`}
         </h3>
         <div
           id="z-node-63ba5078"
@@ -99,18 +127,16 @@ const InscribeModal = () => {
             className="z-layout-cell"
             style={{ position: "relative" }}
           >
-            {savedSeeds.map(({ seed, url }, index) => (
+            {itemsWithUrls.map((item, index) => (
               <div
                 className="mint-preview"
-                key={seed.toString()}
+                key={item.seed}
                 style={{
                   width: "143px",
-                  // position: "relative",
                   opacity: 1,
                   transform: `translate3d(0px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg)`,
                   transformStyle: "preserve-3d",
                   minHeight: "auto",
-
                   ...(index > 0 && {
                     position: "absolute",
                     top: 12 * index,
@@ -127,13 +153,12 @@ const InscribeModal = () => {
                   className="svg-ratio-v2"
                 >
                   <div className="svg-image-container-v2">
-                    {url && (
+                    {item.url && (
                       <Image
-                        // fill
                         width={143}
                         height={190}
-                        src={url}
-                        alt={`seed-${seed.toString()}`}
+                        src={item.url}
+                        alt={`seed-${item.seed}`}
                       />
                     )}
                   </div>
@@ -156,138 +181,35 @@ const InscribeModal = () => {
               </div>
             </div>
             <div className="mint-preview-item-price">
-              Price: {0.001 * savedSeeds.length}&nbsp;BTC
+              Price: {0.001 * queueItems.length}&nbsp;BTC
             </div>
             <div className="mint-preview-item-fees">+ Network fees</div>
           </div>
         </div>
-        {/*
-        <div className="mint-preview-item">
-          <img
-            src="/icons/seed-frame-2.svg"
-            loading="lazy"
-            alt=""
-            className="mint-preview"
-          />
-          <div className="mint-details">
-            <div className="mint-preview-item-collection">
-              Seeds&nbsp;Genesis&nbsp;Collection
-            </div>
-            <div className="mint-item-metadata-category">Chain: Bitcoin</div>
-            <div className="mint-preview-item-price">
-              Price: {0.001 * savedSeeds.length}&nbsp;BTC
-            </div>
+        <div
+          className="wallet-approve-message"
+          onClick={purchaseSeeds}
+          style={{
+            marginTop: (queueItems.length - 1) * 12,
+          }}
+        >
+          <div className="text-block">
+            {loading
+              ? loadingIndex > 0
+                ? `Inscribing seed ${queueItems[loadingIndex - 1].seed} (${loadingIndex}/${queueItems.length})...`
+                : "Loading..."
+              : "Purchase"}
           </div>
         </div>
-        */}
-        {false ? (
-          <div
-            className="wallet-approve-message"
-            onClick={() => {
-              initWallet();
-            }}
-            style={{
-              marginTop: (savedSeeds.length - 1) * 12,
-            }}
-          >
-            <div className="text-block">Connect wallet to inscribe</div>
-          </div>
-        ) : (
-          <div
-            className="wallet-approve-message"
-            onClick={() => {
-              purchaseSeeds();
-            }}
-            style={{
-              marginTop: (savedSeeds.length - 1) * 12,
-            }}
-          >
-            <div className="text-block">
-              {loading
-                ? loadingIndex > 0
-                  ? `Inscribing seed ${savedSeeds[
-                      loadingIndex - 1
-                    ].seed.toString()} (${loadingIndex}/${
-                      savedSeeds.length
-                    })...`
-                  : "Loading..."
-                : "Purchase"}
-            </div>
-          </div>
-        )}
         <a href="#" className="mint-finalize z-button">
-          Mint <span className="mint-price">{0.001 * savedSeeds.length}</span>
+          Mint <span className="mint-price">{0.001 * queueItems.length}</span>
         </a>
         <a
           className="close z-inline-block"
-          onClick={() => setShowInscribeModal(false)}
+          onClick={() => dispatch(setShowInscribeModal(false))}
         >
           <div></div>
         </a>
-        {/*
-        <button
-          onClick={async () => {
-            const wa = await initWallet();
-          }}
-        >
-          Init wallet
-        </button>
-        <button
-          onClick={() => {
-            inscribe(savedSeeds[0].seed, wallets);
-          }}
-        >
-          Inscribe
-        </button>
-        <button
-          onClick={() => {
-            // providing inscription id here
-            checkInscriptionStatus(
-              "6ccc545e44d98a6cc55b60738954006551f6bebb554765d03da128fa2b27fe60i0"
-            );
-
-            // checkTransaction(
-            //   "7725ad5fa61c45e5631579d279b1416a602046c4271cc422c4f9b060800ca8d3i0"
-            // );
-
-            // checkTransaction(
-            //   "7725ad5fa61c45e5631579d279b1416a602046c4271cc422c4f9b060800ca8d3"
-            // );
-            // checkTransaction(
-            //   "dfb5fc2c9055b5ee1adc28c9ffe6695d90e81399faead9873405c3735d198b1d"
-            // );
-            // checkTransaction(
-            //   "7725ad5fa61c45e5631579d279b1416a602046c4271cc422c4f9b060800ca8d3"
-            // );
-
-            // checkTransaction(
-            //   "e1796288303a66950a3e591f21cb68cbb169a7be3a4139c7a9587f74c30b39aei0"
-            // );
-
-            // checkTransaction(
-            //   "15e9554e078ddb4a66b537ab19575937edb2760ee3dee650025f71a594f10ceai0"
-            // );
-            // checkTransaction(
-            //   "dfb5fc2c9055b5ee1adc28c9ffe6695d90e81399faead9873405c3735d198b1d"
-            // );
-            // checkTransaction(
-            //   "d5997e52feeb206161acbbfc758a4ed4cffc0ec87bdc5ddc9044f1541cdec1d0"
-            // );
-            // checkTransaction(
-            //   "6443cd9ca638862c77abe05308202423aa13beaf6057ee67dfa030c6bdc821a1"
-            // );
-
-            // checkTransaction(
-            //   "3b87558e70515e3b52d05170e4ae13fd7a8eb120eec0fb476806fed1d0559857"
-            // );
-            // checkTransaction(
-            //   "a48dd62d1fc9e01ec13c843be809e3009b208a0e80a97d0e5451bc6d87d5e73e"
-            // );
-          }}
-        >
-          Check
-        </button>
-         */}
       </div>
     </section>
   );
