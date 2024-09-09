@@ -1,17 +1,19 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
-import { prepareToChangeSeed } from '@/store/slices/seedSlice';
+import { prepareToChangeSeed } from '@/store/slices/editorSlice';
 import { RootState } from '../store'; // Make sure to import RootState
 import { setWalletConnected } from './walletSlice'; // We'll create this slice
 
-// Define the structure of a queue item
+// Update the QueueItem interface
 interface QueueItem {
   id: string;
   seed: string;  // Initial seed from wallet data
+  newSeed: string | null;  // New seed set in the editor
   modNumber: string | null;
+  newModNumber: string | null;
   attunementNumber: number | null;
+  newAttunementNumber: number | null;
   locked: boolean;
-  isSet: boolean;  // New field to indicate if it's been set in the UI
-  url?: string; // Add this line
+  isSet: boolean;
 }
 
 // Define the overall state structure for the queue
@@ -40,29 +42,47 @@ const queueSlice = createSlice({
     },
     
     // Update a specific item in the queue
-    updateQueueItem: (state, action: PayloadAction<{ index: number; item: Partial<QueueItem> }>) => {
-      const { index, item } = action.payload;
-      state.items[index] = { 
-        ...state.items[index], 
-        ...item,
-        // Ensure locked is false if seed is '0'
-        locked: item.seed === '0' ? false : (item.locked ?? state.items[index].locked)
-      };
+    updateQueueItem: (state, action: PayloadAction<{ index: number; item: Partial<QueueItem>; isExplicitSet?: boolean }>) => {
+      const { index, item, isExplicitSet } = action.payload;
+      if (index >= 0 && index < state.items.length) {
+        const currentItem = state.items[index];
+        let hasChanged = false;
+
+        for (const [key, value] of Object.entries(item)) {
+          if (currentItem[key as keyof QueueItem] !== value) {
+            if (key === 'seed') {
+              currentItem.newSeed = value as string;
+            } else if (key === 'modNumber') {
+              currentItem.newModNumber = value as string;
+            } else if (key === 'attunementNumber') {
+              currentItem.newAttunementNumber = value as number;
+            } else {
+              (currentItem as any)[key] = value;
+            }
+            hasChanged = true;
+          }
+        }
+
+        if (isExplicitSet && hasChanged) {
+          currentItem.isSet = true;
+        }
+
+        // Only update the queue order if changes were made
+        if (hasChanged) {
+          queueSlice.caseReducers.updateQueueOrder(state);
+        }
+      }
     },
 
     // Reset a specific item in the queue and reorder items
     resetQueueItem: (state, action: PayloadAction<number>) => {
       const index = action.payload;
-      state.items[index] = { seed: '0', modNumber: null, attunementNumber: null, locked: false };
-
-      // Update selectedIndex if necessary
-      if (state.selectedIndex !== null) {
-        if (index === state.selectedIndex) {
-          state.selectedIndex = null;
-        } else if (index < state.selectedIndex) {
-          state.selectedIndex--;
-        }
-      }
+      const item = state.items[index];
+      item.newSeed = null;
+      item.newModNumber = null;
+      item.newAttunementNumber = null;
+      item.isSet = false;
+      // We don't change the original seed, modNumber, or attunementNumber
     },
     
     // Toggle the locked state of a queue item
@@ -81,14 +101,32 @@ const queueSlice = createSlice({
 
     // Move all set items to the front of the queue
     updateQueueOrder: (state) => {
-      const setItems = state.items.filter(item => item.seed !== '0');
-      const unsetItems = state.items.filter(item => item.seed === '0');
-      state.items = [...setItems, ...unsetItems];
+      const itemsWithIndices = state.items.map((item, index) => ({ item, originalIndex: index }));
+      
+      itemsWithIndices.sort((a, b) => {
+        const getPriority = (item: QueueItem) => {
+          if (item.isSet) return 0; // Set items (highest priority)
+          if (item.seed !== '0' || item.newSeed !== null) return 1; // Non-zero seed items
+          return 2; // Zero seed items (lowest priority)
+        };
+
+        const priorityA = getPriority(a.item);
+        const priorityB = getPriority(b.item);
+
+        if (priorityA !== priorityB) {
+          return priorityA - priorityB;
+        }
+
+        // If priorities are the same, maintain original order
+        return a.originalIndex - b.originalIndex;
+      });
+
+      state.items = itemsWithIndices.map(({ item }) => item);
     },
 
     // Select the next unset item in the queue
     selectNextUnsetItem: (state) => {
-      const nextUnsetIndex = state.items.findIndex(item => item.seed === '0');
+      const nextUnsetIndex = state.items.findIndex(item => !item.isSet);
       if (nextUnsetIndex !== -1) {
         state.selectedIndex = nextUnsetIndex;
         state.currentPage = Math.floor(nextUnsetIndex / state.itemsPerPage) + 1;
@@ -113,10 +151,22 @@ const queueSlice = createSlice({
       state.items = action.payload.map(item => ({
         id: item.id,
         seed: item.seed || '0',
+        newSeed: null,  // Initialize newSeed as null
         modNumber: item.modNumber || null,
+        newModNumber: null,
         attunementNumber: item.attunementNumber || null,
-        locked: item.locked || false
+        newAttunementNumber: null,
+        locked: item.locked || false,
+        isSet: false,
       }));
+
+      // Sort the items immediately after setting them
+      queueSlice.caseReducers.updateQueueOrder(state);
+
+      if (state.items.length === 0) {
+        state.selectedIndex = null;
+        state.currentPage = 1;
+      }
     },
   },
   extraReducers: (builder) => {
@@ -164,4 +214,4 @@ export default queueSlice.reducer;
 
 // Add this selector at the end of the file
 export const selectSetQueueItems = (state: RootState) => 
-  state.queue.items.filter(item => item.seed !== '0');
+  state.queue.items.filter(item => (item.newSeed !== null && item.newSeed !== '0') || (item.seed !== '0' && item.isSet));

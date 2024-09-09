@@ -4,7 +4,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/UI/dropdownMenu";
 
 export const MenuDesktop = ({ dropdownOpen, setDropdownOpen }) => {
   const pathname = usePathname();

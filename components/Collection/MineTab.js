@@ -1,10 +1,8 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { useWallet } from "@/context";
 import CollectionItem from "./CollectionItem";
 
 const MineTab = () => {
-  const { wallets, initWallet } = useWallet();
   const [seeds, setSeeds] = useState([]);
   const [loading, setLoading] = useState(true);
 

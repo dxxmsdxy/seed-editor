@@ -1,13 +1,11 @@
 import Image from "next/image";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useState } from "react";
-import { useWallet } from "@/context";
 import { getArtworkPlaceholderDataURL } from "@/lib/utils/artwork/helpers";
 
 const CollectionItemModal = ({ seed }) => {
   const [isCheckingStatus, setIsChecking] = useState(false);
   const [inscriptionStatus, setInscriptionStatus] = useState(undefined);
-  const { checkInscriptionStatus } = useWallet();
 
   const checkStatus = async () => {
     setIsChecking(true);

@@ -1,19 +1,10 @@
 "use client";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useSeed } from "@/context";
-import { BitsArray } from "@/components/Bits";
+import { BitsArray } from "@/components/Editor/LayersUI";
+import DisplaySettings from '@/components/Editor/DisplaySettingsUI';
 import Artwork from "@/components/Artwork";
-import InscribeModal from "@/components/InscribeModal";
-import IconEye from "@/public/icons/seeds-editor-icons_eye.svg";
-import IconInvert from "@/public/icons/seeds-editor-icons_invert.svg";
-import IconFlip from "@/public/icons/seeds-editor-icons_flip.svg";
-import IconRemove from "@/public/icons/seeds-editor-icons_remove.svg";
-import IconLayers from "@/public/icons/seeds-editor-icons_layers.svg";
-import IconRed from "@/public/icons/seeds-editor-icons_red.svg";
-import IconBlue from "@/public/icons/seeds-editor-icons_blue.svg";
-import IconGreen from "@/public/icons/seeds-editor-icons_green.svg";
-import IconCMYK from "@/public/icons/seeds-editor-icons_cmyk.svg";
-import IconBolt from "@/public/icons/seeds-editor-icons_bolt.svg";
+import InscribeModal from "@/components/Editor/InscribeModal";
 
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import {
@@ -27,7 +18,11 @@ import {
   deleteSaved,
   setSavedSeeds,
   prepareToChangeSeed,
-} from '@/store/slices/seedSlice';
+  resetUnsavedChanges,
+  updateDisplaySetting,
+  updateSliderValue,
+  calculateModNumber,
+} from '@/store/slices/editorSlice';
 import { setShowInscribeModal } from '@/store/slices/modalSlice';
 import { RootState } from '@/store/store';
 import { setSelectedIndex, updateQueueItem, resetQueueItem, updateQueueOrder, selectNextUnsetItem, initializeQueue, toggleQueueItemLock, setCurrentPage } from '@/store/slices/queueSlice';
@@ -35,7 +30,7 @@ import { selectSetQueueItems } from '@/store/slices/queueSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { connectWalletAndLoadData } from '@/store/slices/walletSlice';
 
-// Add this custom debounce function at the top of your file or in a separate utils file
+// Custom debounce function
 function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
@@ -62,11 +57,10 @@ export default function Home() {
   const setQueueItems = useAppSelector(selectSetQueueItems);
   const isQueueModified = setQueueItems.length > 0;
   const walletConnected = useSelector((state: RootState) => state.wallet.connected);
+  const hasUnsavedChanges = useAppSelector((state) => state.seed.hasUnsavedChanges);
 
-  const [advancedToggled, setAdvancedToggled] = useState(false);
-  const [modToggled, setModToggled] = useState(false);
-
-  const [selectedButtons, setSelectedButtons] = useState<Set<number>>(new Set());
+  const [layersUIToggled, setLayersUIToggled] = useState(false);
+  const [displaySettingsToggled, setDisplaySettingsToggled] = useState(false);
 
   const [isSelecting, setIsSelecting] = useState(false);
   const [tempSelectedButtons, setTempSelectedButtons] = useState<Set<number>>(new Set());
@@ -75,9 +69,8 @@ export default function Home() {
   const endSelection = useCallback(() => {
     if (isSelecting) {
       setIsSelecting(false);
-      setSelectedButtons(tempSelectedButtons);
     }
-  }, [isSelecting, tempSelectedButtons]);
+  }, [isSelecting]);
 
   const selectNextUnsetQueueItem = useCallback(() => {
     const nextUnsetIndex = queueItems.findIndex(item => item.seed === BigInt(0));
@@ -97,7 +90,7 @@ export default function Home() {
 
   useEffect(() => {
     // Set up event listeners for editor interactions
-    const editorElements = document.querySelectorAll('.editor-v2 .options-v2 *');
+    const editorElements = document.querySelectorAll('.editor .app-pane *');
     editorElements.forEach(element => {
       element.addEventListener('click', handleEditorInteraction);
     });
@@ -139,10 +132,10 @@ export default function Home() {
 
   const startSelection = useCallback((index: number) => {
     setIsSelecting(true);
-    initialSelectionRef.current = new Set(selectedButtons);
-    setTempSelectedButtons(new Set(selectedButtons));
+    initialSelectionRef.current = new Set();
+    setTempSelectedButtons(new Set());
     toggleButton(index);
-  }, [selectedButtons, toggleButton]);
+  }, [toggleButton]);
 
   const debouncedHandleSliderChange = useCallback(
     debounce((name: string, value: number) => {
@@ -176,105 +169,54 @@ export default function Home() {
 
   const initialAttunementRef = useRef(0);
 
-  const updateModNumber = useCallback(() => {
-    const displaySettingsValue = Array.from(selectedButtons)
-      .reduce((sum, index) => sum + [256, 128, 64, 32, 16, 8, 4, 2, 1][index], 0)
-      .toString()
-      .padStart(3, '0');
-
-    const colorValue = sliderValues.color.toString().padStart(3, '0');
-    const depthValue = sliderValues.depth.toString().padStart(3, '0');
-    const spinValue = sliderValues.spin.toString().padStart(3, '0');
-    const tintValue = sliderValues.tint.toString();
-    
-    // If tint is 0, set tintPercentValue to "00", otherwise calculate as before
-    const tintPercentValue = sliderValues.tint === 0
-      ? "00"
-      : sliderValues["tint%"] === 100 
-        ? "99" 
-        : sliderValues["tint%"].toString().padStart(2, '0');
-
-    const newModNumber = `${displaySettingsValue}${colorValue}${depthValue}${spinValue}${tintValue}${tintPercentValue}`;
-    dispatch(setModNumber(newModNumber));
-  }, [selectedButtons, sliderValues, dispatch]);
-
-  useEffect(() => {
-    updateModNumber();
-  }, [selectedButtons, sliderValues, updateModNumber]);
-
   const handleQueueItemSelect = (index: number) => {
-    if (index === selectedQueueIndex) {
+    if (index >= 0 && index < queueItems.length) {
+      if (index === selectedQueueIndex) {
+        dispatch(setSelectedIndex(null));
+        dispatch(resetSeed());
+        resetEditorToDefaults();
+      } else {
+        dispatch(setSelectedIndex(index));
+        const selectedItem = queueItems[index];
+        dispatch(setSeed(selectedItem.newSeed || selectedItem.seed));
+        dispatch(setModNumber(selectedItem.newModNumber || selectedItem.modNumber || "000000000000000"));
+        dispatch(setAttunementNumber(selectedItem.newAttunementNumber || selectedItem.attunementNumber || initialAttunementRef.current));
+        updateUIFromModNumber(selectedItem.newModNumber || selectedItem.modNumber || "000000000000000");
+      }
+
+      // Update the current page to show the selected item
+      const newPage = Math.floor(index / itemsPerPage) + 1;
+      dispatch(setCurrentPage(newPage));
+    } else {
       dispatch(setSelectedIndex(null));
       dispatch(resetSeed());
-      resetEditorToDefaults();
-      
-    } else {
-      dispatch(setSelectedIndex(index));
-      dispatch(setSeed(queueItems[index].seed.toString()));
-      if (queueItems[index].seed !== '0') {
-        dispatch(setModNumber(queueItems[index].modNumber || "000000000000000"));
-        dispatch(setAttunementNumber(queueItems[index].attunementNumber || initialAttunementRef.current));
-        updateUIFromModNumber(queueItems[index].modNumber || "000000000000000");
-      } else {
-        resetEditorToDefaults();
-      }
     }
-
-    // Update the current page to show the selected item
-    const newPage = Math.floor(index / itemsPerPage) + 1;
-    dispatch(setCurrentPage(newPage));
   };
 
-  const isSelectButtonEnabled = useCallback(() => {
-    if (selectedQueueIndex === null) return false;
-    
-    const currentQueueItem = queueItems[selectedQueueIndex];
-    
-    // If the item is locked, only allow changes to mod and attunement
-    if (currentQueueItem.locked) {
-      return modNumber !== (currentQueueItem.modNumber || "000000000000000") ||
-             attunementNumber !== (currentQueueItem.attunementNumber ?? initialAttunementRef.current);
-    }
-    
-    // If not locked, allow all changes
-    return seed !== currentQueueItem.seed.toString() ||
-           modNumber !== (currentQueueItem.modNumber || "000000000000000") ||
-           attunementNumber !== (currentQueueItem.attunementNumber ?? initialAttunementRef.current);
-  }, [selectedQueueIndex, queueItems, seed, modNumber, attunementNumber]);
+  const isSelectButtonEnabled = () => {
+    return hasUnsavedChanges && seed !== '0';
+  };
 
   const handleSelectButtonClick = () => {
-    if (selectedQueueIndex !== null) {
-      const currentItem = queueItems[selectedQueueIndex];
-      
-      const selectedItem = {
-        seed: currentItem.locked ? currentItem.seed : seed,
-        modNumber: modNumber !== "000000000000000" ? modNumber : null,
-        attunementNumber: attunementNumber !== initialAttunementRef.current ? attunementNumber : null,
-        locked: currentItem.locked
-      };
-
-      dispatch(updateQueueItem({ index: selectedQueueIndex, item: selectedItem }));
-      dispatch(updateQueueOrder());
-
-      // Check if all items are set after updating the current item
-      const allItemsSet = queueItems.every((item, index) => 
-        index === selectedQueueIndex ? selectedItem.seed !== '0' : item.seed !== '0'
-      );
-
-      if (allItemsSet) {
-        // If all items are set, clear the selection but don't reset the editor
-        dispatch(setSelectedIndex(null));
-      } else {
-        // If not all items are set, try to select the next unset item
-        resetEditorToDefaults();
-        dispatch(selectNextUnsetItem());
-      }
-
-      // Reset UI toggles
-      setAdvancedToggled(false);
-      setModToggled(false);
+    if (isSelectButtonEnabled()) {
+      handleSetQueueItem();
+      dispatch(resetUnsavedChanges());
     }
   };
+
+  const handleSetQueueItem = useCallback(() => {
+    if (selectedQueueIndex !== null) {
+      dispatch(updateQueueItem({
+        index: selectedQueueIndex,
+        item: {
+          newSeed: seed,
+          newModNumber: modNumber,
+          newAttunementNumber: attunementNumber,
+        },
+        isExplicitSet: true,
+      }));
+    }
+  }, [dispatch, selectedQueueIndex, seed, modNumber, attunementNumber]);
 
   const handleQueueItemReset = (event: React.MouseEvent, index: number) => {
     event.stopPropagation();
@@ -283,8 +225,10 @@ export default function Home() {
     dispatch(selectNextUnsetItem());
     updateSavedSeeds();
 
-    resetEditorToDefaults();
-    dispatch(setSeed('0'));
+    if (index === selectedQueueIndex) {
+      resetEditorToDefaults();
+      dispatch(setSeed('0'));
+    }
   };
 
   const handleQueueItemLock = (event: React.MouseEvent, index: number) => {
@@ -315,8 +259,7 @@ export default function Home() {
     [256, 128, 64, 32, 16, 8, 4, 2, 1].forEach((value, index) => {
       if (displaySettings & value) newSelectedButtons.add(index);
     });
-    setSelectedButtons(newSelectedButtons);
-    setTempSelectedButtons(newSelectedButtons); // Update tempSelectedButtons as well
+    setTempSelectedButtons(newSelectedButtons);
 
     setSliderValues({
       color: parseInt(modNumber.slice(3, 6), 10),
@@ -327,7 +270,7 @@ export default function Home() {
     });
   };
 
-  const isDefaultAttunement = attunementNumber === initialAttunementRef.current;
+  
 
   const resetAttunement = (e: React.MouseEvent) => {
     // Check if the click target is not the attunement-label or its children
@@ -350,13 +293,12 @@ export default function Home() {
       attunementInputRef.current.textContent = attunementNumber.toString();
     }
     // Update other UI elements as needed
-  }, [modNumber, attunementNumber, selectedButtons, sliderValues]);
+  }, [modNumber, attunementNumber]);
 
   const resetEditorToDefaults = useCallback(() => {
     dispatch(resetSeed());
     dispatch(setModNumber("000000000000000"));
     dispatch(setAttunementNumber(initialAttunementRef.current));
-    setSelectedButtons(new Set());
     setTempSelectedButtons(new Set());
     setSliderValues({
       attune: 0,
@@ -393,9 +335,9 @@ export default function Home() {
 
   useEffect(() => {
     const handleDoubleClickOutside = (event: MouseEvent) => {
-      const editorWrapper = document.querySelector('.editor-wrapper-v2');
+      const editorWrapper = document.querySelector('.editor-inner');
       if (editorWrapper) {
-        // Check if the double-click is outside editor-wrapper-v2 or directly on it
+        // Check if the double-click is outside editor-inner or directly on it
         if (!editorWrapper.contains(event.target as Node) || event.target === editorWrapper) {
           // Deselect the queue item
           dispatch(setSelectedIndex(null));
@@ -412,7 +354,7 @@ export default function Home() {
   }, [dispatch, resetEditorToDefaults]);
 
   const isSelectedItemLocked = useCallback(() => {
-    if (selectedQueueIndex === null) return false;
+    if (selectedQueueIndex === null || selectedQueueIndex >= queueItems.length) return false;
     return queueItems[selectedQueueIndex].locked;
   }, [selectedQueueIndex, queueItems]);
 
@@ -434,6 +376,7 @@ export default function Home() {
   const handleResetSeed = () => {
     if (!isSelectedItemLocked()) {
       dispatch(resetSeed());
+      updateQueueItemWithSeed('0');
     }
   };
 
@@ -475,25 +418,27 @@ export default function Home() {
     dispatch(initializeQueue());
   }, [dispatch]);
 
-  // Effect to handle modToggled state based on seed value
+  // Effect to handle displaySettingsToggled state based on seed value
   useEffect(() => {
-    if (seed === '0' && modToggled) {
-      setModToggled(false);
+    if (seed === '0' && displaySettingsToggled) {
+      setDisplaySettingsToggled(false);
     }
-  }, [seed, modToggled]);
+  }, [seed, displaySettingsToggled]);
 
   const renderQueueItem = (item: QueueItem, index: number) => {
-    const isSeedZero = item.seed === '0';
+    const displaySeed = item.newSeed !== null ? item.newSeed : item.seed;
+    const isSet = item.isSet;
+    const isSeedZero = displaySeed === '0';
 
     return (
       <li
         className={`queue-item ${
           index === selectedQueueIndex ? "selected" : ""
-        } ${!isSeedZero ? 'set' : ''}`}
+        } ${isSet ? 'set' : ''}`}
         key={index}
         onClick={() => handleQueueItemSelect(index)}
       >
-        <div className={`queued-seed-number ${!isSeedZero ? 'set' : ''}`}>
+        <div className={`queued-seed-number ${isSet ? 'set' : ''}`}>
           <span 
             className={`queue-lock ${item.locked ? 'locked' : ''} ${isSeedZero ? 'disabled' : ''}`}
             onClick={(e) => {
@@ -503,7 +448,7 @@ export default function Home() {
               }
             }}
           ></span>
-          <strong>{item.seed}</strong>
+          <strong>{displaySeed}</strong>
           <span 
             className="queue-remove"
             onClick={(e) => {
@@ -516,25 +461,92 @@ export default function Home() {
     );
   };
 
-  const handleConnect = () => {
-    dispatch(connectWalletAndLoadData());
+  const handleConnect = async () => {
+    await dispatch(connectWalletAndLoadData());
+    // Force a re-render of the queue items
+    dispatch(setCurrentPage(1));
   };
 
   const handleDisconnect = () => {
     dispatch(setWalletConnected(false));
-    // Optionally, clear the queue here if needed
+    dispatch(setQueueItems([])); // Clear the queue when disconnecting
+    dispatch(setSelectedIndex(null)); // Reset the selected index
   };
+
+  const prevSeedRef = useRef(seed);
+  const prevModNumberRef = useRef(modNumber);
+    const prevAttunementNumberRef = useRef(attunementNumber);
+  const updateQueueItemTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const debouncedUpdateQueueItem = useCallback(() => {
+    if (updateQueueItemTimeoutRef.current) {
+      clearTimeout(updateQueueItemTimeoutRef.current);
+    }
+    updateQueueItemTimeoutRef.current = setTimeout(() => {
+      if (selectedQueueIndex !== null && selectedQueueIndex < queueItems.length) {
+        const currentItem = queueItems[selectedQueueIndex];
+        if (seed.toString() !== prevSeedRef.current ||
+            modNumber !== prevModNumberRef.current ||
+            attunementNumber !== prevAttunementNumberRef.current) {
+          dispatch(updateQueueItem({
+            index: selectedQueueIndex,
+            item: {
+              newSeed: seed.toString(),
+              modNumber,
+              attunementNumber
+            }
+          }));
+          prevSeedRef.current = seed.toString();
+          prevModNumberRef.current = modNumber;
+          prevAttunementNumberRef.current = attunementNumber;
+        }
+      }
+    }, 300); // Debounce for 300ms
+  }, [seed, modNumber, attunementNumber, selectedQueueIndex, queueItems, dispatch]);
+
+  useEffect(() => {
+    debouncedUpdateQueueItem();
+    return () => {
+      if (updateQueueItemTimeoutRef.current) {
+        clearTimeout(updateQueueItemTimeoutRef.current);
+      }
+    };
+  }, [debouncedUpdateQueueItem]);
+
+  const updateQueueItemWithSeed = useCallback((seed: string) => {
+    if (selectedQueueIndex !== null && selectedQueueIndex < queueItems.length) {
+      const currentItem = queueItems[selectedQueueIndex];
+      if (currentItem.newSeed !== seed) {
+        dispatch(updateQueueItem({
+          index: selectedQueueIndex,
+          item: { newSeed: seed }
+        }));
+      }
+    }
+  }, [selectedQueueIndex, queueItems, dispatch]);
+
+  useEffect(() => {
+    updateQueueItemWithSeed(seed.toString());
+  }, [seed, updateQueueItemWithSeed]);
+
+  // Add this check
+  useEffect(() => {
+    if (!walletConnected || queueItems.length === 0) {
+      dispatch(setSelectedIndex(null));
+      dispatch(resetSeed());
+    }
+  }, [walletConnected, queueItems, dispatch]);
 
   return (
     <>
-      <div className="editor-v2">
-        <div className="editor-wrapper-v2">
-          <div className="seed-indicator-v2">
+      <div className="editor">
+        <div className="editor-inner">
+          <div className="seed-indicator">
             <div className="seed-touchable">
-              <div className="label navlabel">SEED:</div>
+              <div className="label seed-label">SEED:</div>
               <div
                 ref={inputRef}
-                className={`seed navseed ${isSelectedItemLocked() ? 'disabled' : ''}`}
+                className={`seed-input ${isSelectedItemLocked() ? 'disabled' : ''}`}
                 contentEditable={!isSelectedItemLocked()}
                 inputMode="numeric"
                 onClick={(e) => !isSelectedItemLocked() && selectElementContents(e.currentTarget)}
@@ -554,19 +566,19 @@ export default function Home() {
                 dangerouslySetInnerHTML={{ __html: seed }}
               />
               {seed !== '0' && !isSelectedItemLocked() && (
-                <div className="reset-text-button reset show" onClick={handleResetSeed}>
+                <div className="reset-seed-button reset show" onClick={handleResetSeed}>
                   Reset
                 </div>
               )}
             </div>
           </div>
           <>
-            <div className="options-v2">
+            <div className="app-pane">
               <div
                 style={{
                   opacity: 1
                 }}
-                className="seed-buttons-container"
+                className="basic-actions"
               >
                 <a
                   className={`ui-button randomize z-button ${isSelectedItemLocked() ? 'disabled' : ''}`}
@@ -576,12 +588,12 @@ export default function Home() {
                 </a>
                 <a
                   className={`ui-button advanced shrink z-button ${
-                    advancedToggled ? "selected" : ""
+                    layersUIToggled ? "selected" : ""
                   } ${isSelectedItemLocked() ? 'disabled' : ''}`}
                   onClick={() => {
                     if (!isSelectedItemLocked()) {
-                      setAdvancedToggled(!advancedToggled)
-                      setModToggled(false)
+                      setLayersUIToggled(!layersUIToggled)
+                      setDisplaySettingsToggled(false)
                     }
                   }}
                 >
@@ -589,19 +601,19 @@ export default function Home() {
                 </a>
                 <a
                   className={`ui-button advanced mod-button shrink z-button ${
-                    modToggled ? "selected" : ""
+                    displaySettingsToggled ? "selected" : ""
                   } ${seed !== '0' ? "" : "disabled"} ${isSelectedItemLocked() ? 'disabled' : ''}`}
                   onClick={() => {
                     if (seed !== '0' && !isSelectedItemLocked()) {
-                      setAdvancedToggled(false);
-                      setModToggled(!modToggled);
+                      setLayersUIToggled(false);
+                      setDisplaySettingsToggled(!displaySettingsToggled);
                     }
                   }}
                 >
                   +
                 </a>
               </div>
-              <div className={`grid-wrap ${advancedToggled ? "show" : ""}`}>
+              <div className={`layer-grid-wrap ${layersUIToggled ? "show" : ""}`}>
                 <BitsArray bitsArray={bitsArray} toggleBit={handleToggleBit} />
                 <a
                   href="#"
@@ -611,117 +623,18 @@ export default function Home() {
                   Reset
                 </a>
               </div>
-              <div className={`settings-wrap ${modToggled ? "show" : ""}`}>
-                <div className={`attunement-selector ${isDefaultAttunement ? 'default' : ''}`}>
-                  <div className="attune-nav prev" onClick={decrementAttunement}>&lt;</div>
-                  <div 
-                    className="attunement-label-container"
-                    onClick={resetAttunement}
-                  >
-                    <div className="attunement-label">
-                      Attunement: 
-                      <span
-                        ref={attunementInputRef}
-                        className="attunement-value"
-                        contentEditable="true"
-                        inputMode="numeric"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          selectElementContents(e.currentTarget);
-                        }}
-                        onBlur={(e) => {
-                          e.preventDefault();
-                          const newValue = parseInt(e.currentTarget.textContent || "0", 10);
-                          dispatch(setAttunementNumber(isNaN(newValue) ? 0 : newValue));
-                          e.currentTarget.textContent = attunementNumber.toString();
-                          clearSelection();
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            e.currentTarget.blur();
-                          }
-                        }}
-                      >{attunementNumber}</span>
-                    </div>
-                  </div>
-                  <div className="attune-nav next" onClick={incrementAttunement}>&gt;</div>
-                </div>
-                <div className="display-settings-grid">
-                  {[IconEye, IconRemove, IconInvert, IconFlip, IconBolt, IconCMYK, IconRed, IconBlue, IconGreen].map((Icon, index) => (
-                    <a
-                      key={index}
-                      href="#" 
-                      className={`btn-display-setting ${selectedButtons.has(index) ? 'selected' : ''}`}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        startSelection(index);
-                      }}
-                      onMouseEnter={() => {
-                        if (isSelecting) {
-                          toggleButton(index);
-                        }
-                      }}
-                      onMouseUp={(e) => e.preventDefault()} // Prevent default to avoid text selection
-                    >
-                      <Icon />
-                    </a>
-                  ))}
-                </div>
-                <RangeSlider name="color" value={sliderValues.color} onChange={debouncedHandleSliderChange} min={0} max={999} defaultValue={0} />
-                <RangeSlider name="depth" value={sliderValues.depth} onChange={debouncedHandleSliderChange} min={0} max={999} defaultValue={0} />
-                <RangeSlider name="spin" value={sliderValues.spin} onChange={debouncedHandleSliderChange} min={0} max={999} defaultValue={0} />
-                <RangeSlider name="tint" value={sliderValues.tint} onChange={debouncedHandleSliderChange} min={0} max={9} step={1} defaultValue={0} />
-                <RangeSlider 
-                  name="tint%" 
-                  value={sliderValues["tint%"]} 
-                  onChange={debouncedHandleSliderChange} 
-                  min={0} 
-                  max={100} 
-                  disabled={sliderValues.tint === 0}
-                  defaultValue={100}
-                  checkDefault={false}
-                />
-                <div className={`mod-number-container ${isDefaultModNumber ? 'default' : ''}`}>
-                  <div className="mod-number">
-                    <span className="mod-label">Mod:</span>
-                    <span
-                      ref={modNumberInputRef}
-                      className="mod-number-input"
-                      contentEditable="true"
-                      inputMode="numeric"
-                      onClick={(e) => selectElementContents(e.currentTarget)}
-                      onBlur={(e) => {
-                        e.preventDefault();
-                        dispatch(setModNumber(e.currentTarget.textContent || ""));
-                        e.currentTarget.textContent = modNumber; // Update the input to reflect the current modNumber
-                        clearSelection();
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          e.currentTarget.blur();
-                        }
-                      }}
-                    >
-                      {modNumber}
-                    </span>
-                    <span className="mod-reset" onClick={() => {
-                      dispatch(setModNumber("000000000000000"));
-                      updateUIFromModNumber("000000000000000");
-                    }}>Reset</span>
-                  </div>
-                </div>
-                <a
-                  href="#"
-                  className="ui-button reset-button reset z-button show"
-                  onClick={() => dispatch(resetSeed())}
-                >
-                  Reset
-                </a>
+              <div className={`display-settings-wrap ${displaySettingsToggled ? "show" : ""}`}>
+                {selectedQueueIndex !== null && selectedQueueIndex < queueItems.length && (
+                  <DisplaySettings
+                    isLocked={queueItems[selectedQueueIndex].locked}
+                    selectedQueueIndex={selectedQueueIndex}
+                    queueItems={queueItems}
+                    updateQueueItem={updateQueueItem}
+                  />
+                )}
               </div>
             </div>
-            <div className="artwork-preview-v2">
+            <div className="artwork-preview">
               <div
                 style={{
                   opacity: 1,
@@ -729,20 +642,21 @@ export default function Home() {
                     "translate3d(0px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg)",
                   transformStyle: "preserve-3d",
                 }}
-                className="svg-ratio-v2"
+                className="svg-aspect-ratio"
               >
-                <div className="svg-image-container-v2">
+                <div className="svg-container">
                   <Artwork seed={seed} />
                 </div>
               </div>
-              <div className="select-button-container">
+              <div className="set-queue-item-container">
                 <a
+                  id="set-queue-item-button"
                   className={`ui-button select z-button ${
                     isSelectButtonEnabled() ? "" : "disabled"
                   }`}
                   onClick={handleSelectButtonClick}
                 >
-                  Select
+                  Set Queue Item
                 </a>
                 <div className="select-icon z-embed">
                   <svg
@@ -766,7 +680,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className={`options-v2 right ${(advancedToggled || modToggled) ? 'deactivated' : ''}`}>
+            <div className={`app-pane right ${(layersUIToggled || displaySettingsToggled) ? 'deactivated' : ''}`}>
               <div className="queue-container">
                 <div className={`page-selector ${totalPages > 1 ? '' : 'disabled'}`}>
                   <div 
@@ -808,7 +722,7 @@ export default function Home() {
                     &gt;
                   </div>
                 </div>
-                <ul role="list" className="seed-queue">
+                <ul role="list" className="queue-list">
                   {currentPageItems.map((item, index) => renderQueueItem(item, startIndex + index))}
                 </ul>
                 <a
@@ -830,78 +744,19 @@ export default function Home() {
             </div>
           </>
         </div>
+        <div 
+          className="btn-centralize"
+          className={`btn-centralize ${layersUIToggled || displaySettingsToggled ? '' : 'hidden'}`}
+          onClick={() => {
+              setLayersUIToggled(false);
+              setDisplaySettingsToggled(false);
+          }}
+        ></div>
       </div>
       <InscribeModal show={showInscribeModal} queueItems={setQueueItems} />
     </>
   );
 }
-
-interface RangeSliderProps {
-  name: string;
-  value: number;
-  onChange: (name: string, value: number) => void;
-  min: number;
-  max: number;
-  step?: number;
-  disabled?: boolean;
-  displayValue?: (value: number) => string;
-  defaultValue?: number;
-  checkDefault?: boolean;
-}
-
-const RangeSlider: React.FC<RangeSliderProps> = ({ 
-  name, 
-  value, 
-  onChange, 
-  min, 
-  max, 
-  step = 1, 
-  disabled = false, 
-  displayValue = (value) => value.toString(), 
-  defaultValue = 0, 
-  checkDefault = true
-}) => {
-  const isDefault = checkDefault ? value === defaultValue : false;
-  const [localValue, setLocalValue] = useState(value);
-  const [isActive, setIsActive] = useState(false);
-
-  useEffect(() => {
-    setLocalValue(value);
-  }, [value]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = parseInt(e.target.value);
-    setLocalValue(newValue);
-    onChange(name, newValue);
-  };
-
-  return (
-    <div className={`setting-slider ${disabled ? 'disabled' : ''} ${isDefault && !isActive ? 'default' : ''}`}>
-      <div className="setting-label">{name}:</div>
-      <div className="range-slider-container">
-        <div className="range-slider">
-          <input
-            className="range-slider__range"
-            type="range"
-            value={localValue}
-            min={min}
-            max={max}
-            step={step}
-            onChange={handleChange}
-            disabled={disabled}
-            onMouseDown={() => setIsActive(true)}
-            onMouseUp={() => setIsActive(false)}
-            onTouchStart={() => setIsActive(true)}
-            onTouchEnd={() => setIsActive(false)}
-          />
-          <span className="range-slider__value">
-            {displayValue(localValue)}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 function selectElementContents(el: HTMLElement) {
   const range = document.createRange();

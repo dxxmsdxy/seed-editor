@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
-import { setQueueItems } from './queueSlice';
+import { setQueueItems, updateQueueOrder } from './queueSlice';  // Add updateQueueOrder here
 
 interface WalletState {
   connected: boolean;
@@ -22,7 +22,14 @@ export const connectWalletAndLoadData = createAsyncThunk(
         throw new Error('Failed to fetch simulated wallet data');
       }
       const data = await response.json();
-      console.log('Fetched data:', data); // Keep this line for debugging
+      console.log('Fetched data:', data);
+      
+      // Dispatch setQueueItems action
+      await dispatch(setQueueItems(data));
+      
+      // Dispatch updateQueueOrder action after setting queue items
+      await dispatch(updateQueueOrder());
+      
       return data.map((item: any) => ({
         id: item.id,
         seed: item.seed,

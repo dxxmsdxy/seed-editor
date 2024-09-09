@@ -1,7 +1,7 @@
-import { ReduxProvider } from './ReduxProvider';
+import { ReduxProvider } from '../context/ReduxProvider';
 import type { Metadata } from "next";
 import Script from "next/script";
-import { SeedProvider, ArtworkProvider, WalletProvider } from "@/context";
+import { SeedProvider, ArtworkProvider } from "@/context";
 import { Navbar } from "@/components/Navbar";
 
 import { Inconsolata } from "next/font/google";
@@ -60,16 +60,14 @@ export default function RootLayout({
          */}
       </head>
       <ReduxProvider>
-        <WalletProvider>
-          <SeedProvider>
-            <ArtworkProvider>
-              <body className={`body ${inconsolata.className} `}>
-                <Navbar />
-                {children}
-              </body>
-            </ArtworkProvider>
-          </SeedProvider>
-        </WalletProvider>
+        <SeedProvider>
+          <ArtworkProvider>
+            <body className={`body ${inconsolata.className} `}>
+              <Navbar />
+              {children}
+            </body>
+          </ArtworkProvider>
+        </SeedProvider>
       </ReduxProvider>
     </html>
   );

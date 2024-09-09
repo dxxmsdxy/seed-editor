@@ -1,5 +1,5 @@
 import { combineReducers } from '@reduxjs/toolkit';
-import seedReducer from './slices/seedSlice';
+import seedReducer from './slices/editorSlice';
 import queueReducer from './slices/queueSlice';
 
 const rootReducer = combineReducers({

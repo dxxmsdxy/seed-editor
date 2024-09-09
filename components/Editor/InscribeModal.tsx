@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useArtwork, useWallet } from "@/context";
+import { useArtwork } from "@/context";
 import Image from "next/image";
 import { useAppDispatch } from '@/app/hooks';
 import { setShowInscribeModal } from '@/store/slices/modalSlice';
@@ -17,7 +17,6 @@ const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems }) => {
   const [loading, setLoading] = useState(false);
   const [loadingIndex, setLoadingIndex] = useState(0);
   const { getArtworkUrls } = useArtwork();
-  const { wallets, inscribe, initWallet } = useWallet();
   const router = useRouter();
   const [artworkUrls, setArtworkUrls] = useState<string[]>([]);
   const [itemsWithUrls, setItemsWithUrls] = useState<QueueItem[]>([]);
@@ -150,9 +149,9 @@ const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems }) => {
                     overflow: "hidden",
                     position: "relative",
                   }}
-                  className="svg-ratio-v2"
+                  className="svg-aspect-ratio"
                 >
-                  <div className="svg-image-container-v2">
+                  <div className="svg-container">
                     {item.url && (
                       <Image
                         width={143}

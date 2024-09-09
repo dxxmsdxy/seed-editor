@@ -2,9 +2,8 @@
 /* @tailwind components; */
 /* @tailwind utilities; */
 
-@import "@/assets/css/artwork.css";
+@import "@/assets/css/previewsvg.css";
 @import "@/assets/css/main.css";
-@import "@/assets/css/bis.css";
 @import "@/assets/css/radix-modal.css";
 
 body {
@@ -19,7 +18,7 @@ body {
   box-sizing: border-box;
 }
 
-.svg-ratio-v2 {
+.svg-aspect-ratio {
   aspect-ratio: 3 / 4;
 }
 
@@ -37,7 +36,7 @@ input::placeholder {
 
 .disabled,
 .artwork-preview img,
-.artwork-preview-v2 img,
+.artwork-preview img,
 .select-icon {
   pointer-events: none;
 }
@@ -62,9 +61,9 @@ p *,
 }
 
 .seed-indicator,
-.seed-indicator-v2,
+.seed-indicator,
 .editor-wrapper,
-.editor-v2,
+.editor,
 .navbar,
 .navbar-container,
 .nav-menu {
@@ -73,8 +72,8 @@ p *,
 
 .reset,
 .editor-wrapper,
-.editor-wrapper-v2,
-.editor-v2 > div,
+.editor-inner,
+.editor > div,
 .seed-touchable,
 .g2-ui-button,
 .navbar-container *:not(.nav-menu),
@@ -116,7 +115,7 @@ p *,
   transform: translate(0, 0);
 }
 
-.grid-wrap,
+.layer-grid-wrap,
 .btn-layer {
   transition: background-color 0.3s linear;
 }
@@ -134,7 +133,7 @@ p *,
 /* body:has(svg.destruction) .nav-menu, */
 /* body:has(svg.destruction) .dropdown-link, */
 /* body:has(svg.destruction) .colorbkg, */
-/* body:has(svg.destruction) .grid-wrap { */
+/* body:has(svg.destruction) .layer-grid-wrap { */
 /*   background-color: #ffb4c6; */
 /* } */
 /* body:has(svg.destruction) .btn-layer.selected, */
@@ -147,7 +146,7 @@ p *,
 /* body:has(svg.perception) .nav-menu, */
 /* body:has(svg.perception) .dropdown-link, */
 /* body:has(svg.perception) .colorbkg, */
-/* body:has(svg.perception) .grid-wrap { */
+/* body:has(svg.perception) .layer-grid-wrap { */
 /*   background-color: #b6e9c9; */
 /* } */
 /* body:has(svg.perception) .btn-layer.selected, */
@@ -160,7 +159,7 @@ p *,
 /* body:has(svg.protection) .nav-menu, */
 /* body:has(svg.protection) .dropdown-link, */
 /* body:has(svg.protection) .colorbkg, */
-/* body:has(svg.protection) .grid-wrap { */
+/* body:has(svg.protection) .layer-grid-wrap { */
 /*   background-color: #bfd6f5; */
 /* } */
 /* body:has(svg.protection) .btn-layer.selected, */
@@ -173,7 +172,7 @@ p *,
 /* body:has(svg.passion) .nav-menu, */
 /* body:has(svg.passion) .dropdown-link, */
 /* body:has(svg.passion) .colorbkg, */
-/* body:has(svg.passion) .grid-wrap { */
+/* body:has(svg.passion) .layer-grid-wrap { */
 /*   background-color: #fdb9f9; */
 /* } */
 /* body:has(svg.passion) .btn-layer.selected, */
@@ -186,7 +185,7 @@ p *,
 /* body:has(svg.fortune) .nav-menu, */
 /* body:has(svg.fortune) .dropdown-link, */
 /* body:has(svg.fortune) .colorbkg, */
-/* body:has(svg.fortune) .grid-wrap { */
+/* body:has(svg.fortune) .layer-grid-wrap { */
 /*   background-color: #f7df9c; */
 /* } */
 /* body:has(svg.fortune) .btn-layer.selected, */
@@ -199,7 +198,7 @@ p *,
 /* body:has(svg.wisdom) .nav-menu, */
 /* body:has(svg.wisdom) .dropdown-link, */
 /* body:has(svg.wisdom) .colorbkg, */
-/* body:has(svg.wisdom) .grid-wrap { */
+/* body:has(svg.wisdom) .layer-grid-wrap { */
 /*   background-color: #bdb2f3; */
 /* } */
 /* body:has(svg.wisdom) .btn-layer.selected, */
@@ -212,7 +211,7 @@ p *,
 /* body:has(svg.transformation) .nav-menu, */
 /* body:has(svg.transformation) .dropdown-link, */
 /* body:has(svg.transformation) .colorbkg, */
-/* body:has(svg.transformation) .grid-wrap { */
+/* body:has(svg.transformation) .layer-grid-wrap { */
 /*   background-color: #a4f5f4; */
 /* } */
 /* body:has(svg.transformation) .btn-layer.selected, */
@@ -225,7 +224,7 @@ p *,
 /* body:has(svg.resilience) .nav-menu, */
 /* body:has(svg.resilience) .dropdown-link, */
 /* body:has(svg.resilience) .colorbkg, */
-/* body:has(svg.resilience) .grid-wrap { */
+/* body:has(svg.resilience) .layer-grid-wrap { */
 /*   background-color: #c5c5cf; */
 /* } */
 /* body:has(svg.resilience) .btn-layer.selected, */
@@ -238,7 +237,7 @@ p *,
 /* body:has(svg.eternity) .nav-menu, */
 /* body:has(svg.eternity) .dropdown-link, */
 /* body:has(svg.eternity) .colorbkg, */
-/* body:has(svg.eternity) .grid-wrap { */
+/* body:has(svg.eternity) .layer-grid-wrap { */
 /*   background-color: #959499; */
 /* } */
 /* body:has(svg.eternity) .btn-layer.selected, */
@@ -255,20 +254,20 @@ body .dropdown-link.z--current {
   width: 100%;
 }
 
-body:has(.advanced.selected) .options-v2.right {
+body:has(.advanced.selected) .app-pane.right {
   position: absolute;
   opacity: 0;
   pointer-events: none !important;
 }
 
-body:has(.advanced.selected) .options-v2.right * {
+body:has(.advanced.selected) .app-pane.right * {
   pointer-events: none !important;
 }
 
 /*body .randomize{width:auto}
-  body .seed-buttons-container{flex-direction:column}
-  body .seed-buttons-container .ui-button{width:150px}*/
-body:has(.advanced.selected) .seed-buttons-container {
+  body .basic-actions{flex-direction:column}
+  body .basic-actions .ui-button{width:150px}*/
+body:has(.advanced.selected) .basic-actions {
   flex-direction: row;
 }
 
@@ -276,19 +275,19 @@ body:has(.advanced.selected) .randomize {
   width: 100%;
 }
 
-body:has(.advanced.selected) .seed-buttons-container {
+body:has(.advanced.selected) .basic-actions {
   height: auto;
 }
 
-body:has(.advanced.selected) .seed-buttons-container {
+body:has(.advanced.selected) .basic-actions {
   height: auto;
 }
 
-body:has(.advanced.selected) .options-v2 {
+body:has(.advanced.selected) .app-pane {
   margin-bottom: 0;
 }
 
-body:has(.advanced.selected) .seed-indicator-v2 {
+body:has(.advanced.selected) .seed-indicator {
 }
 
 @keyframes colorShift {
@@ -365,20 +364,20 @@ body:has(svg.pauseColor) .colorbkg {
     padding-bottom: none;
   }
 
-  body:has(.advanced.selected) .options-v2 {
+  body:has(.advanced.selected) .app-pane {
     margin-bottom: 12px;
   }
 }
 
-.select-button-container:has(.disabled) #checkmark {
+.set-queue-item-container:has(.disabled) #checkmark {
   opacity: 15%;
 }
 
-.select-button-container:has(.select:active) #checkmark path {
+.set-queue-item-container:has(.select:active) #checkmark path {
   stroke: #fff;
 }
 
-.editor-v2 #select-icon,
+.editor #select-icon,
 #checkmark {
   pointer-events: none;
 }
@@ -430,8 +429,8 @@ li.queue-item .queue-remove:hover {
     stroke: #959499;
   }
 
-  .select-button-container:has(.select:active) #checkmark path,
-  .select-button-container:has(.disabled) #checkmark path {
+  .set-queue-item-container:has(.select:active) #checkmark path,
+  .set-queue-item-container:has(.disabled) #checkmark path {
     stroke: #000;
   }
 }
