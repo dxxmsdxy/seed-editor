@@ -18,7 +18,6 @@ const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems }) => {
   const [loadingIndex, setLoadingIndex] = useState(0);
   const { getArtworkUrls } = useArtwork();
   const router = useRouter();
-  const [artworkUrls, setArtworkUrls] = useState<string[]>([]);
   const [itemsWithUrls, setItemsWithUrls] = useState<QueueItem[]>([]);
 
   useEffect(() => {

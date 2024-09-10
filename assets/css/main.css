@@ -2255,7 +2255,7 @@ a {
   border: 1px solid #000;
   justify-content: center;
   align-items: center;
-  padding: 1vh 1vw;
+  padding: 10px;
   font-family: Inconsolata, monospace;
   font-size: 14px;
   font-weight: 700;
@@ -2918,7 +2918,7 @@ a {
   pointer-events: none;
 }
 
-.attunement-value,
+.attunement-input,
 .page-value {
   font-size: 22px;
   line-height: 22px;
@@ -3022,8 +3022,8 @@ a {
   position: relative;
 }
 
-.mod-number-input,
-.attunement-value,
+.mod-input,
+.attunement-input,
 .page-value {
   outline: none;
   padding: 5px 7px;
@@ -3036,13 +3036,13 @@ a {
   border-radius: 3px;
 }
 
-.mod-number-input:hover,
-.attunement-value:hover,
+.mod-input:hover,
+.attunement-input:hover,
 .page-value:hover {
   background-color: #e6e6e6;
 }
 
-.display-settings-grid {
+.mod-controls {
   display: grid;
   grid-auto-columns: 1fr;
   grid-column-gap: 0vw;
@@ -3830,23 +3830,23 @@ input::-moz-focus-outer {
   display: flex;
 }
 
-.btn-centralize {
+.reset-editor {
   position: fixed;
   top: 99px;
   right: 0;
   bottom: 35px;
-  width: 5vw;
+  width: 7vw;
   background-color: #00000014;
   cursor: pointer;
   transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
   opacity: 0;
 }
 
-.btn-centralize:hover {
+.reset-editor:hover {
   opacity: 1;
 }
 
-.btn-centralize.hidden {
+.reset-editor.hidden {
   opacity: 0;
   pointer-events: none;
   transform:translateX(5vw);
@@ -3873,7 +3873,7 @@ input::-moz-focus-outer {
   flex: 1;
   justify-content: center;
   align-items: center;
-  padding-top: 80px;
+  padding-top: 100px;
   padding-bottom: 2vh;
   display: flex;
   position: relative;
@@ -4159,7 +4159,7 @@ input::-moz-focus-outer {
   opacity: 1;
 }
 
-.queue-item:has(.queued-seed-number.set):active .queue-remove {
+.queue-item:has(.queued-seed-number.set):active .queue-reset {
   opacity: 1;
 }
 
@@ -4265,7 +4265,7 @@ li.queue-item.selected:has(.queued-seed-number.set) .queue-lock:hover {
   opacity: 1;
 }
 
-.queue-remove {
+.queue-reset {
   width: 32px;
   height: 100%;
   opacity: 0;
@@ -4283,44 +4283,44 @@ li.queue-item.selected:has(.queued-seed-number.set) .queue-lock:hover {
   bottom: 0px;
 }
 
-li.queue-item.selected .queued-seed-number .queue-remove,
-li.queue-item.selected:hover .queued-seed-number .queue-remove {
+li.queue-item.selected .queued-seed-number .queue-reset,
+li.queue-item.selected:hover .queued-seed-number .queue-reset {
   
 }
 
-li.queue-item:hover .queued-seed-number .queue-remove {
+li.queue-item:hover .queued-seed-number .queue-reset {
   opacity: 0;
 }
 
-li.queue-item:hover .queued-seed-number.set .queue-remove {
+li.queue-item:hover .queued-seed-number.set .queue-reset {
   opacity: 1;
 }
 
-li.queue-item:hover .queued-seed-number.set .queue-remove:hover {
+li.queue-item:hover .queued-seed-number.set .queue-reset:hover {
   opacity: 1
 }
 
-li.queue-item.selected .queued-seed-number.set .queue-remove {
+li.queue-item.selected .queued-seed-number.set .queue-reset {
   background-color: #ffffff00;
   background-image: url("/icons/icon-minus.svg");
 }
 
-li.queue-item:hover .queued-seed-number .queue-remove:hover {
+li.queue-item:hover .queued-seed-number .queue-reset:hover {
   opacity: 1;
   background-color: #00000014;
 }
 
-li.queue-item.selected:hover .queued-seed-number .queue-remove:hover {
+li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   opacity: 1;
   background-color: #fff;
   background-image: url("/icons/icon-minus_black.svg");
 }
 
-.queued-seed-number.set .queue-remove {
+.queued-seed-number.set .queue-reset {
   opacity: 0;
 }
 
-.queued-seed-number.set .queue-remove {
+.queued-seed-number.set .queue-reset {
   opacity: 0.2;
   pointer-events: auto;
   background-color: #ffffff00;
@@ -4634,12 +4634,6 @@ li.queue-item.selected:hover .queued-seed-number .queue-remove:hover {
     line-height: 29px;
   }
 
-  .editor {
-    padding-top: 6vh;
-    padding-left: 4vw;
-    padding-right: 4vw;
-  }
-
   .editor-wrapper {
     grid-column-gap: 4vw;
     grid-row-gap: 4vw;
@@ -4666,7 +4660,6 @@ li.queue-item.selected:hover .queued-seed-number .queue-remove:hover {
   }
 
   .btn-layer {
-    font-size: 16px;
   }
 
   .ui-button {
@@ -4926,10 +4919,12 @@ li.queue-item.selected:hover .queued-seed-number .queue-remove:hover {
     grid-row-gap: 4vw;
     padding-left: 0;
     padding-right: 0;
+    padding-top: 15vh;
   }
 
   .app-pane {
-    max-width: 520px;
+    max-width: 560px;
+    max-height: 73vh;
   }
 
   .svg-aspect-ratio {

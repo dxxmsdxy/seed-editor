@@ -12,7 +12,6 @@ export interface SeedContextType {
   seed: BigInt;
   setSeed: React.Dispatch<React.SetStateAction<BigInt | bigint>>;
   selectedSeed: BigInt | null;
-  setSelectedSeed: (value: BigInt | null) => void;
   savedSeeds: { seed: bigint | BigInt; url?: string }[];
   setSavedSeeds: (seeds: { seed: bigint | BigInt; url?: string }[]) => void;
   bitsArray: number[];
@@ -20,7 +19,7 @@ export interface SeedContextType {
   saveSeed: () => void;
   selectSeed: (seed: BigInt) => void;
   deleteSeed: (seed: BigInt) => void;
-  resetSeed: () => void;
+  resetEditorState: () => void;
   handleSeedChange: (value: string) => void;
   toggleBit: (index: number) => void;
   getRandomNumber: (min: number, max: number) => number;
@@ -34,10 +33,10 @@ const SeedContext = createContext<SeedContextType | undefined>(undefined);
 
 export const SeedProvider = ({ children }: { children: ReactNode }) => {
   const [bitsArray, setBitsArray] = useState<number[]>(new Array(100).fill(0));
-  const [seed, setSeed] = useState<BigInt | bigint>(bitsToSeed(bitsArray));
+  const [editorSeed, setEditorSeed] = useState<BigInt | bigint>(bitsToSeed(bitsArray));
   // Update the state initialization
   const [savedSeeds, setSavedSeeds] = useState<
-    { seed: bigint | BigInt; url?: string }[]
+    { editorSeed: bigint | BigInt; url?: string }[]
   >([]);
 
   useEffect(() => {
@@ -45,8 +44,8 @@ export const SeedProvider = ({ children }: { children: ReactNode }) => {
     setSavedSeeds(
       localSavedSeeds
         ? JSON.parse(localSavedSeeds).map(
-            ({ seed, url }: { seed: BigInt; url: string }) => ({
-              seed: seed.toString(),
+            ({ editorSeed, url }: { editorSeed: BigInt; url: string }) => ({
+              editorSeed: editorSeed.toString(),
               url,
             })
           )
@@ -54,11 +53,11 @@ export const SeedProvider = ({ children }: { children: ReactNode }) => {
     );
   }, []);
 
-  const [selectedSeed, setSelectedSeed] = useState<BigInt | null>(null);
+  const [selectedSeed] = useState<BigInt | null>(null);
 
   const [showInscribeModal, setShowInscribeModal] = useState(false);
 
-  const resetSeed = () => {
+  const resetEditorState = () => {
     setSeed(BigInt(0));
     setBitsArray(new Array(100).fill(0));
   };
@@ -72,7 +71,7 @@ export const SeedProvider = ({ children }: { children: ReactNode }) => {
     const updatedSavedSeeds = [
       ...savedSeeds,
       {
-        seed,
+        editorSeed,
         // url
       },
     ];
@@ -81,34 +80,16 @@ export const SeedProvider = ({ children }: { children: ReactNode }) => {
       "savedSeeds",
 
       JSON.stringify(
-        updatedSavedSeeds.map(({ seed, url }) => ({
-          seed: seed.toString(),
+        updatedSavedSeeds.map(({ editorSeed, url }) => ({
+          editorSeed: editorSeed.toString(),
           url,
         }))
       )
     );
-    resetSeed();
+    resetEditorState();
   };
 
-  const selectSeed = (seedValue: BigInt) => {
-    setSelectedSeed(seedValue);
-    setSeed(seedValue);
-    setBitsArray(seedToBits(seedValue));
-  };
-
-  const deleteSeed = (seedValue: BigInt) => {
-    const updatedSavedSeeds = savedSeeds.filter((s) => s.seed !== seedValue);
-    setSavedSeeds(updatedSavedSeeds);
-    window.localStorage.setItem(
-      "savedSeeds",
-      JSON.stringify(
-        updatedSavedSeeds.map((BigIntSeed) => BigIntSeed.toString())
-      )
-    );
-    if (seedValue === selectedSeed) {
-      resetSeed();
-    }
-  };
+  
 
   const toggleBit = (index: number) => {
     const newBitsArray = [...bitsArray];
@@ -140,26 +121,16 @@ export const SeedProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const randomizeBits = () => {
-    let newBitsArray = new Array(100).fill(0);
-    const numSelected = getRandomNumber(3, 30);
-    const shuffledIndices = shuffleArray(Array.from(Array(100).keys()));
-
-    for (let i = 0; i < numSelected; i++) {
-      newBitsArray[shuffledIndices[i]] = 1;
-    }
-
-    setBitsArray(newBitsArray);
-    setSeed(bitsToSeed(newBitsArray));
+    
   };
 
   return (
     <SeedContext.Provider
       value={{
-        seed,
-        setSeed,
+        editorSeed,
+        setEditorSeed,
 
         selectedSeed,
-        setSelectedSeed,
 
         savedSeeds,
         setSavedSeeds,
@@ -168,9 +139,7 @@ export const SeedProvider = ({ children }: { children: ReactNode }) => {
         setBitsArray,
 
         saveSeed,
-        selectSeed,
-        deleteSeed,
-        resetSeed,
+        resetEditorState,
         handleSeedChange,
 
         toggleBit,

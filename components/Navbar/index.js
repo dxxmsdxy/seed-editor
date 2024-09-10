@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
 import { connectWalletAndLoadData, setWalletConnected } from '@/store/slices/walletSlice';
-import { setSelectedIndex, setQueueItems } from '@/store/slices/queueSlice';
+import { selectedIndex, setQueueItems } from '@/store/slices/queueSlice';
 
 import { MenuDesktop } from "./MenuDesktop";
 import { MenuMobileContent, MenuMobileTrigger } from "./MenuMobile";
@@ -54,7 +54,7 @@ export const Navbar = () => {
   const handleDisconnect = () => {
     dispatch(setWalletConnected(false));
     dispatch(setQueueItems([])); // Clear the queue when disconnecting
-    dispatch(setSelectedIndex(null)); // Reset the selected index
+    dispatch(selectedIndex(null)); // Reset the selected index
   };
 
   return (

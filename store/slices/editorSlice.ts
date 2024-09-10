@@ -1,9 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { bitsToSeed, seedToBits } from "@/lib/utils";
 
 // Define the structure of the seed state
 interface SeedState {
-  seed: string;  // Using string to represent BigInt for Redux compatibility
-  bitsArray: boolean[];  // Array of 256 bits representing the seed
+  seed: string;
+  bitsArray: boolean[];
   modNumber: string;
   attunementNumber: number;
   savedSeeds: { seed: string }[];  // Array of saved seeds
@@ -13,17 +14,27 @@ interface SeedState {
   spinValue: number;  // Spin value
   tintValue: number;  // Tint value
   tintPercentValue: number;  // Tint percent value
-  hasUnsavedChanges: boolean;
   layersUIToggled: boolean;
   displaySettingsToggled: boolean;
   isSelecting: boolean;
   tempSelectedButtons: number[];
   isActive: { [key: string]: boolean };
+  newSeed: string;
+  newMod: string;
+  newAttunement: number;
+  editorSeed: string;
+  editorMod: string;
+  editorAttunement: number;
+  hasEditorChanges: boolean;
+  history: {
+    past: Partial<SeedState>[];
+    future: Partial<SeedState>[];
+  };
 }
 
 // Set up the initial state
 const initialState: SeedState = {
-  seed: '0',
+  seed: '',
   bitsArray: Array(100).fill(false),
   modNumber: "000000000000000",
   attunementNumber: 0,
@@ -34,12 +45,22 @@ const initialState: SeedState = {
   spinValue: 0,
   tintValue: 0,
   tintPercentValue: 100,
-  hasUnsavedChanges: false,
   layersUIToggled: false,
   displaySettingsToggled: false,
   isSelecting: false,
   tempSelectedButtons: [],
   isActive: {},
+  newSeed: '',
+  newMod: "000000000000000",
+  newAttunement: 0,
+  editorSeed: '0',
+  editorMod: "000000000000000",
+  editorAttunement: 0,
+  hasEditorChanges: false,
+  history: {
+    past: [],
+    future: [],
+  },
 };
 
 const shuffleArray = (array: number[]) => {
@@ -59,57 +80,93 @@ const seedSlice = createSlice({
   name: 'seed',
   initialState,
   reducers: {
+
+    undo: (state) => {
+      const previous = state.history.past.pop();
+      if (previous) {
+        state.history.future.push({ ...state });
+        Object.assign(state, previous);
+      }
+    },
+
+    redo: (state) => {
+      const next = state.history.future.pop();
+      if (next) {
+        state.history.past.push({ ...state });
+        Object.assign(state, next);
+      }
+    },
+
+    setEditorState: (state, action: PayloadAction<{ seed: string; mod: string; attunement: number }>) => {
+      state.editorSeed = action.payload.seed;
+      state.editorMod = action.payload.mod;
+      state.editorAttunement = action.payload.attunement;
+      state.bitsArray = seedToBits(BigInt(action.payload.seed));
+      updateStateFromModNumber(state, action.payload.mod);
+      state.hasEditorChanges = false;
+    },
+
     // Set the current seed
-    setSeed: (state, action: PayloadAction<string>) => {
-      state.seed = action.payload;
+    setNewSeed: (state, action: PayloadAction<string>) => {
+      state.newSeed = action.payload;
       state.bitsArray = BigInt(action.payload)
         .toString(2)
         .padStart(100, '0')
         .split('')
         .map(bit => bit === '1');
-      state.hasUnsavedChanges = true;
+      state.hasEditorChanges = true;
     },
 
     // Set the mod number
-    setModNumber: (state, action: PayloadAction<string>) => {
-      state.modNumber = action.payload;
+    setNewMod: (state, action: PayloadAction<string>) => {
+      state.newMod = action.payload;
       updateStateFromModNumber(state, action.payload);
-      state.hasUnsavedChanges = true;
+      state.hasEditorChanges = true;
     },
 
     // Set the attunement number
-    setAttunementNumber: (state, action: PayloadAction<number>) => {
-      state.attunementNumber = action.payload;
-      state.hasUnsavedChanges = true;
+    setNewAttunement: (state, action: PayloadAction<number>) => {
+      state.newAttunement = action.payload;
+      state.hasEditorChanges = true;
     },
 
     // Increment the attunement number
     incrementAttunementNumber: (state) => {
-      state.attunementNumber = (state.attunementNumber + 1) % 10;
-      state.hasUnsavedChanges = true;
+      if (state.hasEditorChanges = true) {
+        state.newAttunement = (state.newAttunement + 1) % 10;
+        state.hasEditorChanges = true;
+      } else {
+        state.newAttunement = (state.attunementNumber + 1) % 10;
+        state.hasEditorChanges = true;
+      }
     },
 
     // Decrement the attunement number
     decrementAttunementNumber: (state) => {
-      state.attunementNumber = (state.attunementNumber - 1 + 10) % 10;
-      state.hasUnsavedChanges = true;
+      if (state.hasEditorChanges = true) {
+        state.newAttunement = (state.newAttunement - 1) % 10;
+        state.hasEditorChanges = true;
+      } else {
+        state.newAttunement = (state.attunementNumber - 1) % 10;
+        state.hasEditorChanges = true;
+      }
     },
 
-    // Reset the seed to initial state
-    resetSeed: (state) => {
-      state.seed = '0';
-      state.modNumber = "000000000000000";
-      state.attunementNumber = 0;
+    // Reset the editor to initial state
+    resetEditorState: (state) => {
+      state.editorSeed = '0';
+      state.editorMod = "000000000000000";
+      state.editorAttunement = 0;
       state.bitsArray = Array(100).fill(false);
-      state.hasUnsavedChanges = false;
+      state.hasEditorChanges = false;
     },
 
     // Toggle a specific bit in the bitsArray
     toggleBit: (state, action: PayloadAction<number>) => {
       const index = action.payload;
       state.bitsArray[index] = !state.bitsArray[index];
-      state.seed = BigInt('0b' + state.bitsArray.map(b => b ? '1' : '0').join('')).toString();
-      state.hasUnsavedChanges = true;
+      state.editorSeed = BigInt('0b' + state.bitsArray.map(b => b ? '1' : '0').join('')).toString();
+      state.hasEditorChanges = true;
     },
 
     // Randomize all bits in the bitsArray
@@ -123,30 +180,13 @@ const seedSlice = createSlice({
       }
       
       state.bitsArray = bitArray;
-      state.seed = BigInt('0b' + bitArray.map(b => b ? '1' : '0').join('')).toString();
-      state.hasUnsavedChanges = true;
-    },
-
-    // Save the current seed
-    saveSeed: (state) => {
-      if (state.seed !== '0' && !state.savedSeeds.some(saved => saved.seed === state.seed)) {
-        state.savedSeeds.push({ seed: state.seed });
-      }
-    },
-
-    // Remove a saved seed
-    deleteSaved: (state, action: PayloadAction<string>) => {
-      state.savedSeeds = state.savedSeeds.filter(saved => saved.seed !== action.payload);
-    },
-
-    // Set the list of saved seeds
-    setSavedSeeds: (state, action: PayloadAction<{ seed: string }[]>) => {
-      state.savedSeeds = action.payload;
+      state.editorSeed = BigInt('0b' + bitArray.map(b => b ? '1' : '0').join('')).toString();
+      state.hasEditorChanges = true;
     },
 
     // Prepare to change seed
     prepareToChangeSeed: (state) => {
-      // This action doesn't modify the state, but will be used as a signal
+      // This action doesn't modify the state, is used as a signal
     },
 
     // Update display setting
@@ -159,7 +199,7 @@ const seedSlice = createSlice({
         }
       }
       state.modNumber = calculateModNumber(state);
-      state.hasUnsavedChanges = true;
+      state.hasEditorChanges = true;
     },
 
     // Update slider value
@@ -169,13 +209,8 @@ const seedSlice = createSlice({
       if (state[key] !== value) {
         state[key] = value;
         state.modNumber = calculateModNumber(state);
-        state.hasUnsavedChanges = true;
+        state.hasEditorChanges = true;
       }
-    },
-    
-    // Reset unsaved changes
-    resetUnsavedChanges: (state) => {
-      state.hasUnsavedChanges = false;
     },
 
     // Toggle layers UI
@@ -195,14 +230,40 @@ const seedSlice = createSlice({
       state.isSelecting = action.payload;
     },
 
-    // Update temp selected buttons
-    updateTempSelectedButtons: (state, action: PayloadAction<number[]>) => {
-      state.tempSelectedButtons = action.payload;
-    },
-
     // Set slider active
     setSliderActive: (state, action: PayloadAction<{ name: string; isActive: boolean }>) => {
       state.isActive[action.payload.name] = action.payload.isActive;
+    },
+
+    // Set editor seed
+    setEditorSeed: (state, action: PayloadAction<{ seed: string; updateChanges?: boolean }>) => {
+      state.editorSeed = action.payload.seed;
+      state.bitsArray = seedToBits(BigInt(action.payload.seed || '0'));
+      if (action.payload.updateChanges) {
+        state.hasEditorChanges = true;
+      }
+    },
+
+    // Set editor mod number
+    setEditorMod: (state, action: PayloadAction<{ modNumber: string; updateChanges?: boolean }>) => {
+      state.editorMod = action.payload.modNumber;
+      updateStateFromModNumber(state, action.payload.modNumber);
+      if (action.payload.updateChanges) {
+        state.hasEditorChanges = true;
+      }
+    },
+
+    // Set editor attunement number
+    setEditorAttunement: (state, action: PayloadAction<{ attunementNumber: number; updateChanges?: boolean }>) => {
+      state.editorAttunement = action.payload.attunementNumber;
+      if (action.payload.updateChanges) {
+        state.hasEditorChanges = true;
+      }
+    },
+
+    // Reset editor changes
+    resetEditorChangedStatus: (state) => {
+      state.hasEditorChanges = false;
     },
   },
 });
@@ -237,26 +298,28 @@ export const calculateModNumber = (state: SeedState): string => {
 
 // Export the action creators
 export const {
-  setSeed,
-  setModNumber,
-  setAttunementNumber,
+  setNewSeed,
+  setNewMod,
+  setNewAttunement,
   incrementAttunementNumber,
   decrementAttunementNumber,
-  resetSeed,
+  resetEditorState,
   toggleBit,
   randomizeBits,
-  saveSeed,
-  deleteSaved,
-  setSavedSeeds,
   prepareToChangeSeed,
   updateDisplaySetting,
   updateSliderValue,
-  resetUnsavedChanges,
   toggleLayersUI,
   toggleDisplaySettings,
   setIsSelecting,
-  updateTempSelectedButtons,
   setSliderActive,
+  setEditorSeed,
+  setEditorMod,
+  setEditorAttunement,
+  resetEditorChangedStatus,
+  setEditorState,
+  undo,
+  redo,
 } = seedSlice.actions;
 
 // Export the reducer

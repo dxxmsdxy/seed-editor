@@ -1,8 +1,11 @@
 "use client";
 import { useState } from "react";
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import { seedToBits } from '@/lib/utils';
 
 export type Bit = {
-  bit: boolean;  // Change this to boolean
+  bit: boolean;
   index: number;
   toggleBit: (index: number) => void;
   isSelecting: boolean;
@@ -51,12 +54,12 @@ export const Bit = ({
 };
 
 export const BitsArray = ({
-  bitsArray,
   toggleBit,
 }: {
-  bitsArray: boolean[];  // Change this to boolean[]
   toggleBit: (index: number) => void;
 }) => {
+  const editorSeed = useSelector((state: RootState) => state.seed.editorSeed);
+  const bitsArray = seedToBits(BigInt(editorSeed));
   const [isSelecting, setIsSelecting] = useState(false);
 
   const startSelection = () => {

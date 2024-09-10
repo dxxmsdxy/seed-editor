@@ -46,19 +46,6 @@ const ArtworkPreview = ({ seed, imgRef, index }) => {
   return (
     <svg
       ref={imgRef}
-      // onClick={async () => {
-      //   const url = await generateTempUrl({
-      //     width: 200,
-      //     height: 300,
-      //     seed,
-      //   });
-      //   console.log(url);
-
-      //   const downloadLink = document.createElement("a");
-      //   downloadLink.href = url;
-      //   downloadLink.download = "seed" + seed + ".png";
-      //   downloadLink.click();
-      // }}
       xmlns="http://www.w3.org/2000/svg"
       xmlnsXlink="http://www.w3.org/1999/xlink"
       version="1.1"

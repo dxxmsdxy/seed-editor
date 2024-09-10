@@ -349,7 +349,7 @@ body:has(svg.pauseColor) .colorbkg {
   white-space: nowrap;
 }
 
-.queue-item.selected .queue-remove {
+.queue-item.selected .queue-reset {
   background-image: url("/icons/icon-minus.svg");
 }
 @media screen and (min-width: 992px) {
@@ -386,10 +386,10 @@ body:has(svg.pauseColor) .colorbkg {
   transition: stroke 0.5s linear;
 }
 
-li.queue-item:hover .queue-remove {
+li.queue-item:hover .queue-reset {
   opacity: 0.1;
 }
-li.queue-item .queue-remove:hover {
+li.queue-item .queue-reset:hover {
   opacity: 1;
 }
 

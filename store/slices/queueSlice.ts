@@ -1,19 +1,20 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { prepareToChangeSeed } from '@/store/slices/editorSlice';
-import { RootState } from '../store'; // Make sure to import RootState
-import { setWalletConnected } from './walletSlice'; // We'll create this slice
+import { RootState } from '../store';
+import { setWalletConnected } from './walletSlice';
 
 // Update the QueueItem interface
 interface QueueItem {
   id: string;
   seed: string;  // Initial seed from wallet data
-  newSeed: string | null;  // New seed set in the editor
+  newSeed: string | null;  // set from editorSeed
   modNumber: string | null;
-  newModNumber: string | null;
+  newMod: string | null; // set from editorMod
   attunementNumber: number | null;
-  newAttunementNumber: number | null;
+  newAttunement: number | null; // set from editorAttunement
   locked: boolean;
-  isSet: boolean;
+  isSet: boolean;  // Add this property
+  initialLocked: boolean;  // Add this property to store the initial lock status
 }
 
 // Define the overall state structure for the queue
@@ -37,52 +38,59 @@ const queueSlice = createSlice({
   initialState,
   reducers: {
     // Set the currently selected queue item index
-    setSelectedIndex: (state, action: PayloadAction<number | null>) => {
+    selectedIndex: (state, action: PayloadAction<number | null>) => {
       state.selectedIndex = action.payload;
     },
     
     // Update a specific item in the queue
-    updateQueueItem: (state, action: PayloadAction<{ index: number; item: Partial<QueueItem>; isExplicitSet?: boolean }>) => {
+    updateQueueItem: (state, action: PayloadAction<{ index: number; item: Partial<QueueItem>; isExplicitSet: boolean }>) => {
       const { index, item, isExplicitSet } = action.payload;
       if (index >= 0 && index < state.items.length) {
         const currentItem = state.items[index];
         let hasChanged = false;
-
-        for (const [key, value] of Object.entries(item)) {
-          if (currentItem[key as keyof QueueItem] !== value) {
-            if (key === 'seed') {
-              currentItem.newSeed = value as string;
-            } else if (key === 'modNumber') {
-              currentItem.newModNumber = value as string;
-            } else if (key === 'attunementNumber') {
-              currentItem.newAttunementNumber = value as number;
-            } else {
-              (currentItem as any)[key] = value;
-            }
+    
+        if (isExplicitSet) {
+          // Always update values when explicitly set
+          if (item.newSeed !== undefined) {
+            currentItem.newSeed = item.newSeed;
             hasChanged = true;
           }
-        }
-
-        if (isExplicitSet && hasChanged) {
+          if (item.newMod !== undefined) {
+            currentItem.newMod = item.newMod;
+            hasChanged = true;
+          }
+          if (item.newAttunement !== undefined) {
+            currentItem.newAttunement = item.newAttunement;
+            hasChanged = true;
+          }
           currentItem.isSet = true;
         }
-
-        // Only update the queue order if changes were made
+    
         if (hasChanged) {
           queueSlice.caseReducers.updateQueueOrder(state);
         }
       }
     },
-
     // Reset a specific item in the queue and reorder items
     resetQueueItem: (state, action: PayloadAction<number>) => {
       const index = action.payload;
       const item = state.items[index];
+      
+      // Reset to original values
       item.newSeed = null;
-      item.newModNumber = null;
-      item.newAttunementNumber = null;
+      item.newMod = null;
+      item.newAttunement = null;
+      
+      // Reset the isSet flag
       item.isSet = false;
-      // We don't change the original seed, modNumber, or attunementNumber
+      
+      // Reset the lock status to its initial state
+      item.locked = item.initialLocked;
+
+      // Update the selected index if necessary
+      if (state.selectedIndex === index) {
+        state.selectedIndex = null;
+      }
     },
     
     // Toggle the locked state of a queue item
@@ -90,7 +98,33 @@ const queueSlice = createSlice({
       const index = action.payload;
       // Only toggle if seed is not '0'
       if (state.items[index].seed !== '0') {
-        state.items[index].locked = !state.items[index].locked;
+        const item = state.items[index];
+        item.locked = !item.locked;
+        
+        // Set the item if the lock status changes from its initial state
+        if (item.locked !== item.initialLocked) {
+          item.isSet = true;
+          // If the item is now set, update its new values
+          if (!item.newSeed) item.newSeed = item.seed;
+          if (!item.newMod) item.newMod = item.modNumber;
+          if (!item.newAttunement) item.newAttunement = item.attunementNumber;
+        } else {
+          // If the lock status is back to its initial state, check if other values are unchanged
+          const isUnchanged = 
+            item.newSeed === item.seed &&
+            item.newMod === item.modNumber &&
+            item.newAttunement === item.attunementNumber;
+          
+          if (isUnchanged) {
+            item.isSet = false;
+            item.newSeed = null;
+            item.newMod = null;
+            item.newAttunement = null;
+          }
+        }
+        
+        // Update queue order
+        queueSlice.caseReducers.updateQueueOrder(state);
       }
     },
 
@@ -136,27 +170,17 @@ const queueSlice = createSlice({
       }
     },
 
-    initializeQueue: (state) => {
-      if (state.selectedIndex === null) {
-        const nextUnsetIndex = state.items.findIndex(item => item.seed === '0');
-        if (nextUnsetIndex !== -1) {
-          state.selectedIndex = nextUnsetIndex;
-          state.currentPage = Math.floor(nextUnsetIndex / state.itemsPerPage) + 1;
-        }
-      }
-    },
-
-    // Add this to the reducers
     setQueueItems: (state, action: PayloadAction<QueueItem[]>) => {
       state.items = action.payload.map(item => ({
         id: item.id,
         seed: item.seed || '0',
         newSeed: null,  // Initialize newSeed as null
         modNumber: item.modNumber || null,
-        newModNumber: null,
+        newMod: null,
         attunementNumber: item.attunementNumber || null,
-        newAttunementNumber: null,
+        newAttunement: null,
         locked: item.locked || false,
+        initialLocked: item.locked || false,  // Store the initial lock status
         isSet: false,
       }));
 
@@ -182,20 +206,17 @@ const queueSlice = createSlice({
   },
 });
 
-// Export the action creators
 export const {
-  setSelectedIndex,
+  selectedIndex,
   updateQueueItem,
   resetQueueItem,
   toggleQueueItemLock,
   setCurrentPage,
   selectNextUnsetItem,
   updateQueueOrder,
-  initializeQueue, // Make sure this is included
-  setQueueItems, // Add this to the exported actions
+  setQueueItems,
 } = queueSlice.actions;
 
-// Add this new thunk
 export const loadSimulatedWalletData = createAsyncThunk(
   'queue/loadSimulatedWalletData',
   async (_, { dispatch }) => {
@@ -212,6 +233,10 @@ export const loadSimulatedWalletData = createAsyncThunk(
 // Export the reducer
 export default queueSlice.reducer;
 
-// Add this selector at the end of the file
 export const selectSetQueueItems = (state: RootState) => 
-  state.queue.items.filter(item => (item.newSeed !== null && item.newSeed !== '0') || (item.seed !== '0' && item.isSet));
+  state.queue.items.filter(item => 
+    (item.newSeed !== null && item.newSeed !== '0') || 
+    (item.newMod !== null) || 
+    (item.newAttunement !== null) || 
+    item.isSet
+  );

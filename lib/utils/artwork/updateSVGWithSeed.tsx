@@ -6,7 +6,7 @@ import {
 } from "./helpers";
 
 export function updateSVGWithSeed(
-  seed: bigint,
+  editorSeed: bigint,
   artwork: HTMLElement,
   context: Document | DocumentFragment = document,
   removeUnusedElements: boolean = false
@@ -26,7 +26,7 @@ export function updateSVGWithSeed(
     element.classList.remove("on");
     // element.remove();
   });
-  const lrCount = setLayersVisibility(BigInt(seed.toString()), artwork);
+  const lrCount = setLayersVisibility(BigInt(editorSeed.toString()), artwork);
   if (lrCount >= 3 && lrCount <= 20) {
     artwork.classList.add("type");
   }
@@ -74,9 +74,9 @@ export function updateSVGWithSeed(
   }
 
   // Call the updateDataAttunementAttribute function after rendering a new seed
-  updateDataAttunementAttribute(seed, artwork);
+  updateDataAttunementAttribute(editorSeed, artwork);
 
-  const mostFrequentNumeral = calculateMostFrequentNumeral(seed);
+  const mostFrequentNumeral = calculateMostFrequentNumeral(editorSeed);
   // Assign the appropriate attunement class to the artwork
   if (
     mostFrequentNumeral !== null &&
@@ -102,10 +102,10 @@ export function updateSVGWithSeed(
 
   const seedText = context.getElementById("seednumber");
   if (seedText) {
-    seedText.innerHTML = seed.toString();
+    seedText.innerHTML = editorSeed.toString();
   }
 
-  let seedRemainder = BigInt(seed) % BigInt(13);
+  let seedRemainder = BigInt(editorSeed) % BigInt(13);
   let charElements = artwork.getElementsByClassName("char");
   for (let i = 0; i < charElements.length; i++) {
     let charElement = charElements[i] as HTMLElement;
@@ -116,7 +116,7 @@ export function updateSVGWithSeed(
   }
 
   // REMOVE UNUSED ELEMENTS FROM THE ARTWORK
-  if (removeUnusedElements && seed && artwork) {
+  if (removeUnusedElements && editorSeed && artwork) {
     const nonOnElements = Array.from(
       artwork.querySelectorAll(
         ".lr:not(.on), .pattern path:not(.on), .sub:not(.on)"

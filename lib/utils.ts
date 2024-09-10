@@ -15,6 +15,6 @@ export const bitsToSeed = (bitsArray: number[]) => {
   return seed;
 };
 
-export const seedToBits = (seed: BigInt) => {
-  return seed.toString(2).padStart(100, "0").split("").map(Number).reverse();
-};
+export function seedToBits(seed: bigint): boolean[] {
+  return seed.toString(2).padStart(100, '0').split('').map(bit => bit === '1');
+}
