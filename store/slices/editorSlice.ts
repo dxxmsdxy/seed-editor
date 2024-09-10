@@ -160,6 +160,12 @@ const seedSlice = createSlice({
       state.bitsArray = Array(100).fill(false);
       state.hasEditorChanges = false;
     },
+    
+    resetEditorSeed: (state, action: PayloadAction<string>) => {
+      state.editorSeed = action.payload;
+      state.bitsArray = seedToBits(BigInt(action.payload));
+      state.hasEditorChanges = false;
+    },
 
     // Toggle a specific bit in the bitsArray
     toggleBit: (state, action: PayloadAction<number>) => {
@@ -304,6 +310,7 @@ export const {
   incrementAttunementNumber,
   decrementAttunementNumber,
   resetEditorState,
+  resetEditorSeed,
   toggleBit,
   randomizeBits,
   prepareToChangeSeed,

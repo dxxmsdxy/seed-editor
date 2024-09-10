@@ -67,7 +67,11 @@ const queueSlice = createSlice({
         }
     
         if (hasChanged) {
+          const selectedItemId = state.selectedIndex !== null ? state.items[state.selectedIndex].id : null;
           queueSlice.caseReducers.updateQueueOrder(state);
+          if (selectedItemId !== null) {
+            state.selectedIndex = state.items.findIndex(item => item.id === selectedItemId);
+          }
         }
       }
     },
@@ -75,6 +79,7 @@ const queueSlice = createSlice({
     resetQueueItem: (state, action: PayloadAction<number>) => {
       const index = action.payload;
       const item = state.items[index];
+      const originalId = item.id;
       
       // Reset to original values
       item.newSeed = null;
@@ -87,9 +92,20 @@ const queueSlice = createSlice({
       // Reset the lock status to its initial state
       item.locked = item.initialLocked;
 
+      // Update the queue order
+      queueSlice.caseReducers.updateQueueOrder(state);
+
+      // Find the new index of the reset item
+      const newIndex = state.items.findIndex(item => item.id === originalId);
+
       // Update the selected index if necessary
       if (state.selectedIndex === index) {
-        state.selectedIndex = null;
+        state.selectedIndex = newIndex;
+      }
+
+      // Update the current page if necessary
+      if (newIndex !== -1) {
+        state.currentPage = Math.floor(newIndex / state.itemsPerPage) + 1;
       }
     },
     
@@ -122,8 +138,6 @@ const queueSlice = createSlice({
             item.newAttunement = null;
           }
         }
-        
-        // Update queue order
         queueSlice.caseReducers.updateQueueOrder(state);
       }
     },
@@ -135,6 +149,7 @@ const queueSlice = createSlice({
 
     // Move all set items to the front of the queue
     updateQueueOrder: (state) => {
+      const selectedItemId = state.selectedIndex !== null ? state.items[state.selectedIndex] : null;
       const itemsWithIndices = state.items.map((item, index) => ({ item, originalIndex: index }));
       
       itemsWithIndices.sort((a, b) => {
@@ -156,6 +171,11 @@ const queueSlice = createSlice({
       });
 
       state.items = itemsWithIndices.map(({ item }) => item);
+
+      // Update the selectedIndex if a item was selected
+      if (selectedItemId !== null) {
+        state.selectedIndex = state.items.findIndex(item => item.id === selectedItemId);
+      }
     },
 
     // Select the next unset item in the queue
@@ -240,3 +260,6 @@ export const selectSetQueueItems = (state: RootState) =>
     (item.newAttunement !== null) || 
     item.isSet
   );
+
+export const selectSelectedQueueItem = (state: RootState) => state.queue.selectedIndex !== null ? state.queue.items[state.queue.selectedIndex] : null;
+  
