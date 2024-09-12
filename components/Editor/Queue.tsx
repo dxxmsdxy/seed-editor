@@ -1,4 +1,5 @@
-import React, { useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
+import { FixedSizeList as List } from 'react-window';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import {
   getQueueItemsForRendering,
@@ -8,6 +9,7 @@ import {
   resetQueueItemThunk,
 } from '@/store/slices/queueSlice';
 import { setShowInscribeModal } from '@/store/slices/modalSlice';
+import { selectElementContents, clearSelection } from '@/lib/utils';
 
 const Queue: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -17,9 +19,11 @@ const Queue: React.FC = () => {
 
   // DERIVED STATE ----------------------------------------
 
-  const totalPages = Math.ceil(queueItems.length / itemsPerPage);
+  const totalPages = Math.ceil(queueItemsForRendering.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, queueItemsForRendering.length);
+
+  const memoizedQueueItems = useMemo(() => queueItemsForRendering.slice(startIndex, endIndex), [queueItemsForRendering, startIndex, endIndex]);
 
   // EVENT HANDLERS ---------------------------------------
 
@@ -58,8 +62,47 @@ const Queue: React.FC = () => {
   return (
     <div className="queue-container">
       <div className={`page-selector ${totalPages > 1 ? '' : 'disabled'}`} onClick={goToFirstPage}>
-        {/* Page selector content */}
-        {/* You'll need to implement the page selector UI here */}
+        <div 
+        className={`page-nav prev ${currentPage === 1 ? 'disabled' : ''}`}
+        onClick={(e) => {
+            e.stopPropagation();
+            if (currentPage > 1) handlePageChange(currentPage - 1);
+        }}
+        >&lt;</div>
+        <div className="page-label-container" onClick={goToFirstPage}>
+            <div className="page-label">
+                <span 
+                className="page-value"
+                contentEditable="true"
+                inputMode="numeric"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    selectElementContents(e.currentTarget);
+                }}
+                onBlur={(e) => {
+                    e.preventDefault();
+                    const newPage = parseInt(e.currentTarget.textContent || "1", 10);
+                    handlePageChange(newPage);
+                    e.currentTarget.textContent = currentPage.toString();
+                    clearSelection();
+                }}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                    }
+                }}
+                >{currentPage}</span> / {totalPages}
+            </div>
+        </div>
+        <div 
+        className={`page-nav next ${currentPage === totalPages ? 'disabled' : ''}`}
+        onClick={(e) => {
+            e.stopPropagation();
+            if (currentPage < totalPages) handlePageChange(currentPage + 1);
+        }}
+        >&gt;
+        </div>
       </div>
       <ul role="list" className="queue-list">
         {queueItemsForRendering.slice(startIndex, endIndex).map((item) => (

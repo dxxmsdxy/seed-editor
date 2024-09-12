@@ -31,7 +31,6 @@ export const connectWalletAndLoadData = createAsyncThunk(
   'wallet/connectAndLoadData',
   async (_, { dispatch }) => {
     try {
-      // Fetch simulated wallet data
       const response = await fetch('/simulatedWalletData.json');
       if (!response.ok) {
         throw new Error('Failed to fetch simulated wallet data');
@@ -39,14 +38,23 @@ export const connectWalletAndLoadData = createAsyncThunk(
       const data = await response.json();
       console.log('Fetched data:', data);
       
+      const transformedData = transformWalletData(data);
+      await dispatch(initializeQueue(transformedData));
       await dispatch(updateQueueOrder());
       
-      // Transform and return the data
-      return transformWalletData(data);
+      return transformedData;
     } catch (error) {
       console.error('Error in connectWalletAndLoadData:', error);
       throw error;
     }
+  }
+);
+
+export const disconnectWalletAndClearQueue = createAsyncThunk(
+  'wallet/disconnectAndClear',
+  async (_, { dispatch }) => {
+    dispatch(disconnectWallet());
+    dispatch(initializeQueue([]));
   }
 );
 
@@ -81,12 +89,3 @@ const walletSlice = createSlice({
 
 export const { disconnectWallet } = walletSlice.actions;
 export default walletSlice.reducer;
-
-// Async thunk to disconnect wallet and clear queue
-export const disconnectWalletAndClearQueue = createAsyncThunk(
-  'wallet/disconnectAndClear',
-  async (_, { dispatch }) => {
-    dispatch(disconnectWallet());
-    dispatch(initializeQueue([]));
-  }
-);

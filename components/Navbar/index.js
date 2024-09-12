@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
-import { connectWalletAndLoadData, disconnectWallet } from '@/store/slices/walletSlice';
-import { initializeQueue, setSelectedIndex } from '@/store/slices/queueSlice';
+import { connectWalletAndLoadData, disconnectWalletAndClearQueue } from '@/store/slices/walletSlice';
+import { initializeQueue } from '@/store/slices/queueSlice';
 import { MenuDesktop } from "./MenuDesktop";
 import { MenuMobileContent, MenuMobileTrigger } from "./MenuMobile";
 
@@ -33,9 +33,8 @@ export const Navbar = () => {
   const handleConnect = async () => {
     try {
       const resultAction = await dispatch(connectWalletAndLoadData());
-      console.log('Result action:', resultAction);
       if (connectWalletAndLoadData.fulfilled.match(resultAction)) {
-        console.log('Payload:', resultAction.payload);
+        console.log('Wallet connected and data loaded:', resultAction.payload);
         dispatch(initializeQueue(resultAction.payload));
       } else if (connectWalletAndLoadData.rejected.match(resultAction)) {
         console.error('Failed to connect wallet and load data:', resultAction.error);
@@ -45,10 +44,13 @@ export const Navbar = () => {
     }
   };
 
-  const handleDisconnect = () => {
-    dispatch(disconnectWallet());
-    dispatch(initializeQueue([])); // Clear the queue when disconnecting
-    dispatch(setSelectedIndex(null)); // Reset the selected index
+  const handleDisconnect = async () => {
+    try {
+      await dispatch(disconnectWalletAndClearQueue());
+      console.log('Wallet disconnected and queue cleared');
+    } catch (error) {
+      console.error('Unexpected error during wallet disconnection:', error);
+    }
   };
 
   return (

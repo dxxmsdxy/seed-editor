@@ -49,9 +49,9 @@ const queueSlice = createSlice({
         initialLocked: item.locked || false,
         isSet: false,
       }));
-
+    
       queueSlice.caseReducers.updateQueueOrder(state);
-
+    
       if (state.items.length === 0) {
         state.selectedIndex = null;
         state.currentPage = 1;

@@ -33,5 +33,75 @@
     "modNumber": null,
     "attunementNumber": null,
     "locked": false
+    },
+    {
+      "id": "1",
+      "seed": "633864590217163795449776181249",
+      "modNumber": "000100200300400",
+      "attunementNumber": 1,
+      "locked": false
+    },
+    {
+      "id": "2",
+      "seed": "0",
+      "modNumber": null,
+      "attunementNumber": null,
+      "locked": false
+    },
+    {
+      "id": "3",
+      "seed": "39638261014068143273812557824",
+      "modNumber": null,
+      "attunementNumber": null,
+      "locked": false
+    },
+    {
+    "id": "4",
+    "seed": "0",
+    "modNumber": null,
+    "attunementNumber": null,
+    "locked": false
+    },
+    {
+    "id": "5",
+    "seed": "0",
+    "modNumber": null,
+    "attunementNumber": null,
+    "locked": false
+    },
+    {
+      "id": "1",
+      "seed": "1067221282294934385853268505283",
+      "modNumber": "000100200300400",
+      "attunementNumber": 3,
+      "locked": false
+    },
+    {
+      "id": "2",
+      "seed": "0",
+      "modNumber": null,
+      "attunementNumber": null,
+      "locked": false
+    },
+    {
+      "id": "3",
+      "seed": "0",
+      "modNumber": null,
+      "attunementNumber": null,
+      "locked": false
+    },
+    {
+    "id": "4",
+    "seed": "454",
+    "modNumber": null,
+    "attunementNumber": 2,
+    "locked": true
+    },
+    {
+    "id": "5",
+    "seed": "0",
+    "modNumber": null,
+    "attunementNumber": null,
+    "locked": false
     }
   ]

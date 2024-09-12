@@ -15,20 +15,14 @@ import Artwork from "@/components/Artwork";
 import InscribeModal from "@/components/Editor/InscribeModal";
 import { setShowInscribeModal } from '@/store/slices/modalSlice';
 import {
-  getQueueItemsForRendering,
+  initializeQueue,
   getSetQueueItems,
-  setCurrentPage,
   setSelectedIndex,
   updateQueueItem,
-  toggleQueueItemLock,
-  selectAndUpdateQueueItemThunk,
-  resetQueueItemThunk,
 } from '@/store/slices/queueSlice';
 import {
   setEditorState,
   setEditorSeed,
-  setEditorMod,
-  setEditorAttunement,
   updateHasEditorChanges,
   resetEditorState,
   resetEditorSeed,
@@ -56,10 +50,9 @@ export default function Home() {
     seed, bitsArray, modNumber, attunementNumber,
     editorSeed, editorMod, editorAttunement, hasEditorChanges
   } = useAppSelector((state: RootState) => state.seed);
-  const { items: queueItems, selectedIndex: selectedQueueIndex, currentPage, itemsPerPage } = useAppSelector((state: RootState) => state.queue);
+  const { items: queueItems, selectedIndex: selectedQueueIndex} = useAppSelector((state: RootState) => state.queue);
   const showInscribeModal = useAppSelector((state) => state.modal.showInscribeModal);
   const setQueueItems = useAppSelector(getSetQueueItems);
-  const isQueueModified = useAppSelector(state => state.queue.items.some(item => item.isSet));
   const walletConnected = useSelector((state: RootState) => state.wallet.connected);
   const layersUIToggled = useSelector(selectLayersUIToggled);
   const displaySettingsToggled = useSelector(selectDisplaySettingsToggled);
@@ -217,6 +210,9 @@ export default function Home() {
       dispatch(resetEditorState());
       dispatch(toggleLayersUI(false));
       dispatch(toggleDisplaySettings(false));
+    } else if (walletConnected) {
+      dispatch(initializeQueue([]));
+      dispatch(setSelectedIndex(null));
     }
   }, [walletConnected, dispatch]);
 

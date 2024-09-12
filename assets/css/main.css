@@ -2883,7 +2883,7 @@ a {
 .page-selector {
   margin-bottom: 0;
   border: 2px solid #000;
-  border-bottom: none;
+  border-bottom: 0px solid #000;
 }
 
 .attunement-label-container,
@@ -4081,7 +4081,7 @@ input::-moz-focus-outer {
 }
 
 ul li.set + li:not(.set) {
-  margin-bottom: 35px;
+  margin-bottom: 15px;
 }
 
 .queue-item:last-child {
@@ -4099,7 +4099,7 @@ ul li + li::after {
   left:-2px;
   padding:0 5px;
   z-index: -1;
-  background-color: #000;
+  background-color: #795e5e;
   border: 2px solid #000000;
   box-sizing:content-box;
   color:#fff;
@@ -4113,6 +4113,7 @@ ul li + li::after {
   transition: transform 1s, opacity 0.5s 0.2s;
   opacity: 0;
   pointer-events: none;
+  display: none;
 }
 
 ul li + li.set::after {
@@ -4171,8 +4172,8 @@ ul li + li.set::after {
   pointer-events: none;
 }
 
-.queue-container:has(.page-selector:not(.disabled)) .queue-item:first-child {
-  border-bottom: 2px solid #000000;
+.queue-container:has(.page-selector:not(.disabled)) .queue-item:last-child {
+  border-top: 2px solid #000000;
 }
 
 .queue-item.set:first-child {
