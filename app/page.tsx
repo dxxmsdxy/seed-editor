@@ -36,7 +36,8 @@ import {
   selectLayersUIToggled,
   selectDisplaySettingsToggled,
   toggleLayersUI,
-  toggleDisplaySettings
+  toggleDisplaySettings,
+  checkEditorMatchesSelectedItem,
 } from '@/store/slices/editorSlice';
 import { selectElementContents, clearSelection } from '@/lib/utils';
 
@@ -101,6 +102,11 @@ export default function Home() {
     } else {
       const selectedItem = queueItems[selectedQueueIndex];
       seedToReset = selectedItem.seed;
+
+      // Check if editor matches selected item
+      if (dispatch(checkEditorMatchesSelectedItem(selectedItem))) {
+        dispatch(updateHasEditorChanges(false));
+      }
     }
   
     dispatch(resetEditorSeed(seedToReset));
@@ -118,11 +124,7 @@ export default function Home() {
         },
         isExplicitSet: true,
       }));
-      dispatch(setEditorState({
-        seed: editorSeed,
-        mod: editorMod,
-        attunement: editorAttunement
-      }));
+      dispatch(updateHasEditorChanges(false));
       dispatch(toggleLayersUI(false));
       dispatch(toggleDisplaySettings(false));
     }
@@ -227,7 +229,7 @@ export default function Home() {
     }
   }, [queueItems, selectedQueueIndex, seed, modNumber, editorSeed, editorMod]);
 
-  // Update selected Queue Item preview
+  // Update selected queue item's Editor preview
   useEffect(() => {
     if (selectedQueueIndex !== null && selectedQueueIndex < queueItems.length) {
       const selectedItem = queueItems[selectedQueueIndex];

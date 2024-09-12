@@ -134,7 +134,8 @@ const editorSlice = createSlice({
     setEditorSeed: (state, action: PayloadAction<{ seed: string; updateChanges?: boolean }>) => {
       const newState = {
         editorSeed: action.payload.seed,
-        bitsArray: seedToBits(BigInt(action.payload.seed || '0'))
+        bitsArray: seedToBits(BigInt(action.payload.seed || '0')),
+        hasEditorChanges: action.payload.updateChanges
       };
       pushToHistory(state, newState);
       Object.assign(state, newState);
@@ -336,6 +337,21 @@ const editorSlice = createSlice({
         state.displaySettingsToggled = !state.displaySettingsToggled;
       }
     },
+
+    checkEditorMatchesSelectedItem: (state, action: PayloadAction<QueueItem | null>) => {
+      const selectedItem = action.payload;
+      if (!selectedItem) {
+        state.hasEditorChanges = false;
+        return;
+      }
+
+      const editorMatchesItem =
+        state.editorSeed === selectedItem.seed &&
+        state.editorMod === (selectedItem.modNumber || "000000000000000") &&
+        state.editorAttunement === (selectedItem.attunementNumber || 0);
+
+      state.hasEditorChanges = !editorMatchesItem;
+    },
   },
 });
 
@@ -415,6 +431,7 @@ export const {
   toggleLayersUI,
   toggleDisplaySettings,
   setSliderActive,
+  checkEditorMatchesSelectedItem,
 } = editorSlice.actions;
 
 export default editorSlice.reducer;

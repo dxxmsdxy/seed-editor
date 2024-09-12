@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
-import { setEditorState, resetEditorState, resetEditorChangedStatus } from './editorSlice';
+import { setEditorState, resetEditorState, checkEditorMatchesSelectedItem } from './editorSlice';
 import { RootState } from '@/store';
 
 // INTERFACES -------------------------------------
@@ -209,10 +209,8 @@ export const selectAndUpdateQueueItemThunk = createAsyncThunk(
         attunement: isSet ? selectedItem.newAttunement ?? selectedItem.attunementNumber : selectedItem.attunementNumber ?? 0
       }));
     } else {
-      const selectedItem = selectedQueueIndex !== null ? queueItems[selectedQueueIndex] : null;
-      dispatch(resetEditorState({ selectedItem }));
+      dispatch(resetEditorState());
     }
-    dispatch(resetEditorChangedStatus());
   }
 );
 
