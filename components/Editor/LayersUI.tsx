@@ -8,7 +8,7 @@ export type Bit = {
   bit: boolean;
   index: number;
   toggleBit: (index: number) => void;
-  isSelecting: boolean;
+  activeSelection: boolean;
   startSelection: () => void;
   updateSelection: () => void;
   endSelection: () => void;
@@ -18,9 +18,8 @@ export const Bit = ({
   bit,
   index,
   toggleBit,
-  isSelecting,
+  activeSelection,
   startSelection,
-  updateSelection,
   endSelection,
 }: Bit) => {
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -30,13 +29,13 @@ export const Bit = ({
   };
 
   const handleMouseEnter = () => {
-    if (isSelecting) {
+    if (activeSelection) {
       toggleBit(index);
     }
   };
 
   const handleMouseUp = () => {
-    if (isSelecting) {
+    if (activeSelection) {
       endSelection();
     }
   };
@@ -60,20 +59,20 @@ export const BitsArray = ({
 }) => {
   const editorSeed = useSelector((state: RootState) => state.seed.editorSeed);
   const bitsArray = seedToBits(BigInt(editorSeed));
-  const [isSelecting, setIsSelecting] = useState(false);
+  const [activeSelection, setActiveSelection] = useState(false);
 
   const startSelection = () => {
-    setIsSelecting(true);
+    setActiveSelection(true);
   };
 
   const updateSelection = () => {
-    if (!isSelecting) {
-      setIsSelecting(true);
+    if (!activeSelection) {
+      setActiveSelection(true);
     }
   };
 
   const endSelection = () => {
-    setIsSelecting(false);
+    setActiveSelection(false);
   };
 
   return (
@@ -84,7 +83,7 @@ export const BitsArray = ({
           bit={bit}
           index={bitsArray.length - 1 - index}  // Reverse the index
           toggleBit={(reversedIndex) => toggleBit(bitsArray.length - 1 - reversedIndex)}  // Reverse the toggle index
-          isSelecting={isSelecting}
+          activeSelection={activeSelection}
           startSelection={startSelection}
           updateSelection={updateSelection}
           endSelection={endSelection}

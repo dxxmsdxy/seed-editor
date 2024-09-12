@@ -89,8 +89,6 @@ export const SeedProvider = ({ children }: { children: ReactNode }) => {
     resetEditorState();
   };
 
-  
-
   const toggleBit = (index: number) => {
     const newBitsArray = [...bitsArray];
     newBitsArray[index] = newBitsArray[index] === 0 ? 1 : 0;

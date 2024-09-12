@@ -62,7 +62,8 @@ export default function RootLayout({
       <ReduxProvider>
         <SeedProvider>
           <ArtworkProvider>
-            <body className={`body ${inconsolata.className} `}>
+            <body className={`body ${inconsolata.className}`}>
+              <div className="theme-bkg"></div>
               <Navbar />
               {children}
             </body>

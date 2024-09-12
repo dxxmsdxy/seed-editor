@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 interface RangeSliderProps {
   name: string;
   value: number;
-  onChange: (name: string, value: number) => void;
+  onChange: (name: string, value: number, isSliding: boolean) => void;
   min: number;
   max: number;
   step?: number;
@@ -36,7 +36,12 @@ const RangeSlider: React.FC<RangeSliderProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = parseInt(e.target.value);
     setLocalValue(newValue);
-    onChange(name, newValue);
+    onChange(name, newValue, true);
+  };
+
+  const handleSlideEnd = () => {
+    setIsActive(false);
+    onChange(name, localValue, false);
   };
 
   return (
@@ -54,9 +59,9 @@ const RangeSlider: React.FC<RangeSliderProps> = ({
             onChange={handleChange}
             disabled={disabled}
             onMouseDown={() => setIsActive(true)}
-            onMouseUp={() => setIsActive(false)}
+            onMouseUp={handleSlideEnd}
             onTouchStart={() => setIsActive(true)}
-            onTouchEnd={() => setIsActive(false)}
+            onTouchEnd={handleSlideEnd}
           />
           <span className="range-slider__value">
             {displayValue(localValue)}

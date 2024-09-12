@@ -1,22 +1,24 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { bitsToSeed, seedToBits } from "@/lib/utils";
+import { seedToBits } from "@/lib/utils";
+import { RootState } from '@/store';
 
-// Define the structure of the seed state
-interface SeedState {
+// EDITOR STATE DEFINITION -----------------------------
+
+interface EditorState {
   seed: string;
   bitsArray: boolean[];
   modNumber: string;
   attunementNumber: number;
-  savedSeeds: { seed: string }[];  // Array of saved seeds
   displaySettings: number[];  // Array of display settings
   colorValue: number;  // Color value
   depthValue: number;  // Depth value
   spinValue: number;  // Spin value
   tintValue: number;  // Tint value
   tintPercentValue: number;  // Tint percent value
+  actualTintPercentValue: number;
   layersUIToggled: boolean;
   displaySettingsToggled: boolean;
-  isSelecting: boolean;
+  activeSelection: boolean;
   tempSelectedButtons: number[];
   isActive: { [key: string]: boolean };
   newSeed: string;
@@ -26,28 +28,39 @@ interface SeedState {
   editorMod: string;
   editorAttunement: number;
   hasEditorChanges: boolean;
-  history: {
-    past: Partial<SeedState>[];
-    future: Partial<SeedState>[];
+  editorHistory: {
+    past: Array<{
+      editorSeed: string;
+      editorMod: string;
+      editorAttunement: number;
+      bitsArray: boolean[];
+    }>;
+    future: Array<{
+      editorSeed: string;
+      editorMod: string;
+      editorAttunement: number;
+      bitsArray: boolean[];
+    }>;
   };
 }
 
-// Set up the initial state
-const initialState: SeedState = {
-  seed: '',
+// INITIALIZE STATE ------------------------------------
+
+const initialState: EditorState = {
+  seed: '0',
   bitsArray: Array(100).fill(false),
   modNumber: "000000000000000",
   attunementNumber: 0,
-  savedSeeds: [],
   displaySettings: [],
   colorValue: 0,
   depthValue: 0,
   spinValue: 0,
   tintValue: 0,
   tintPercentValue: 100,
+  actualTintPercentValue: 100,
   layersUIToggled: false,
   displaySettingsToggled: false,
-  isSelecting: false,
+  activeSelection: false,
   tempSelectedButtons: [],
   isActive: {},
   newSeed: '',
@@ -57,81 +70,97 @@ const initialState: SeedState = {
   editorMod: "000000000000000",
   editorAttunement: 0,
   hasEditorChanges: false,
-  history: {
+  editorHistory: {
     past: [],
     future: [],
   },
 };
 
-const shuffleArray = (array: number[]) => {
-  const shuffledArray = array.slice();
-  for (let i = shuffledArray.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
-  }
-  return shuffledArray;
-};
+// MODULE FUNCTIONS -----------------------------------
 
-const getRandomNumber = (min: number, max: number) => {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-};
-
-const seedSlice = createSlice({
+const editorSlice = createSlice({
   name: 'seed',
   initialState,
   reducers: {
 
+    // Revert to previous Editor state
     undo: (state) => {
-      const previous = state.history.past.pop();
-      if (previous) {
-        state.history.future.push({ ...state });
-        Object.assign(state, previous);
+      if (state.editorHistory.past.length > 0) {
+        const previous = state.editorHistory.past.pop()!;
+        state.editorHistory.future.push({
+          editorSeed: state.editorSeed,
+          editorMod: state.editorMod,
+          editorAttunement: state.editorAttunement,
+          bitsArray: state.bitsArray,
+        });
+        state.editorSeed = previous.editorSeed;
+        state.editorMod = previous.editorMod;
+        state.editorAttunement = previous.editorAttunement;
+        state.bitsArray = previous.bitsArray;
       }
     },
 
+    // Revert to previous Editor state
     redo: (state) => {
-      const next = state.history.future.pop();
-      if (next) {
-        state.history.past.push({ ...state });
-        Object.assign(state, next);
+      if (state.editorHistory.future.length > 0) {
+        const next = state.editorHistory.future.pop()!;
+        state.editorHistory.past.push({
+          editorSeed: state.editorSeed,
+          editorMod: state.editorMod,
+          editorAttunement: state.editorAttunement,
+          bitsArray: state.bitsArray,
+        });
+        state.editorSeed = next.editorSeed;
+        state.editorMod = next.editorMod;
+        state.editorAttunement = next.editorAttunement;
+        state.bitsArray = next.bitsArray;
       }
     },
 
+    // Set Editor state with specified values
     setEditorState: (state, action: PayloadAction<{ seed: string; mod: string; attunement: number }>) => {
-      state.editorSeed = action.payload.seed;
-      state.editorMod = action.payload.mod;
-      state.editorAttunement = action.payload.attunement;
-      state.bitsArray = seedToBits(BigInt(action.payload.seed));
-      updateStateFromModNumber(state, action.payload.mod);
-      state.hasEditorChanges = false;
+      const newState = {
+        editorSeed: action.payload.seed || '0',
+        editorMod: action.payload.mod,
+        editorAttunement: action.payload.attunement,
+        bitsArray: seedToBits(BigInt(action.payload.seed)),
+        hasEditorChanges: false,
+      };
+      pushToHistory(state, newState);
+      Object.assign(state, newState);
     },
 
-    // Set the current seed
-    setNewSeed: (state, action: PayloadAction<string>) => {
-      state.newSeed = action.payload;
-      state.bitsArray = BigInt(action.payload)
-        .toString(2)
-        .padStart(100, '0')
-        .split('')
-        .map(bit => bit === '1');
-      state.hasEditorChanges = true;
+    // Set Editor seed number
+    setEditorSeed: (state, action: PayloadAction<{ seed: string; updateChanges?: boolean }>) => {
+      const newState = {
+        editorSeed: action.payload.seed,
+        bitsArray: seedToBits(BigInt(action.payload.seed || '0'))
+      };
+      pushToHistory(state, newState);
+      Object.assign(state, newState);
     },
 
-    // Set the mod number
-    setNewMod: (state, action: PayloadAction<string>) => {
-      state.newMod = action.payload;
-      updateStateFromModNumber(state, action.payload);
-      state.hasEditorChanges = true;
+    // Set editor mod number
+    setEditorMod: (state, action: PayloadAction<{ modNumber: string; updateChanges: boolean }>) => {
+      const newState = {
+        editorMod: action.payload.modNumber,
+      };
+      pushToHistory(state, newState);
+      Object.assign(state, newState);
+      state.actualTintPercentValue = state.tintValue === 0 ? 100 : state.tintPercentValue; // Reset tint% to 100 if tint is 0
     },
 
-    // Set the attunement number
-    setNewAttunement: (state, action: PayloadAction<number>) => {
-      state.newAttunement = action.payload;
-      state.hasEditorChanges = true;
+    // Set editor attunement number
+    setEditorAttunement: (state, action: PayloadAction<{ attunementNumber: number; updateChanges?: boolean }>) => {
+      const newState = {
+        editorAttunement: action.payload.attunementNumber,
+      };
+      pushToHistory(state, newState);
+      Object.assign(state, newState);
     },
 
     // Increment the attunement number
-    incrementAttunementNumber: (state) => {
+    incrementNewAttunementNumber: (state) => {
       if (state.hasEditorChanges = true) {
         state.newAttunement = (state.newAttunement + 1) % 10;
         state.hasEditorChanges = true;
@@ -142,37 +171,94 @@ const seedSlice = createSlice({
     },
 
     // Decrement the attunement number
-    decrementAttunementNumber: (state) => {
-      if (state.hasEditorChanges = true) {
-        state.newAttunement = (state.newAttunement - 1) % 10;
-        state.hasEditorChanges = true;
-      } else {
-        state.newAttunement = (state.attunementNumber - 1) % 10;
-        state.hasEditorChanges = true;
-      }
+    decrementNewAttunementNumber: (state) => {
+      pushToHistory(state, { newAttunement: (state.attunementNumber - 1) % 10 });
+      state.newAttunement = (state.attunementNumber - 1) % 10;
+    },
+
+    // Update the hasEditorChanges state
+    updateHasEditorChanges: (state, action: PayloadAction<boolean>) => {
+      state.hasEditorChanges = action.payload;
     },
 
     // Reset the editor to initial state
-    resetEditorState: (state) => {
-      state.editorSeed = '0';
-      state.editorMod = "000000000000000";
-      state.editorAttunement = 0;
-      state.bitsArray = Array(100).fill(false);
-      state.hasEditorChanges = false;
+    resetEditorState: (state, action: PayloadAction<{ selectedItem?: QueueItem | null } | undefined>) => {
+      pushToHistory(state, {
+        editorSeed: state.editorSeed,
+        editorMod: state.editorMod,
+        editorAttunement: state.editorAttunement,
+        bitsArray: state.bitsArray,
+      }, true);
+    
+      const selectedItem = action.payload?.selectedItem;
+      const newState = {
+        editorSeed: selectedItem ? selectedItem.seed : '0',
+        editorMod: selectedItem ? selectedItem.modNumber || "000000000000000" : "000000000000000",
+        editorAttunement: selectedItem ? selectedItem.attunementNumber || 0 : 0,
+        hasEditorChanges: false,
+        actualTintPercentValue: 100, // Reset tint% to 100
+      };
+      Object.assign(state, newState);
+      
+      if (selectedItem) {
+        state.bitsArray = seedToBits(BigInt(selectedItem.seed));
+      }
+    },
+
+    // Reset the Editor's seed number
+    resetEditorSeed: (state, action: PayloadAction<string>) => {
+      pushToHistory(state, {
+        editorSeed: state.editorSeed,
+        editorMod: state.editorMod,
+        editorAttunement: state.editorAttunement,
+        bitsArray: state.bitsArray
+      }, true);
+    
+      const newState = {editorSeed: action.payload}
+      state.editorSeed = newState.editorSeed;
+      state.bitsArray = seedToBits(BigInt(newState.editorSeed));
+      Object.assign(state, newState);
     },
     
-    resetEditorSeed: (state, action: PayloadAction<string>) => {
-      state.editorSeed = action.payload;
-      state.bitsArray = seedToBits(BigInt(action.payload));
-      state.hasEditorChanges = false;
+    // Reset the Editor's mod number
+    resetEditorMod: (state, action: PayloadAction<string>) => {
+      pushToHistory(state, {
+        editorSeed: state.editorSeed,
+        editorMod: state.editorMod,
+        editorAttunement: state.editorAttunement,
+        bitsArray: state.bitsArray
+      }, true);
+
+      const newState = {editorMod: action.payload}
+      state.editorMod = newState.editorMod;
+      Object.assign(state, newState);
+    },
+
+    // Reset the Editor's attunement number
+    resetEditorAttunement: (state, action: PayloadAction<number>) => {
+      pushToHistory(state, {
+        editorSeed: state.editorSeed,
+        editorMod: state.editorMod,
+        editorAttunement: state.editorAttunement,
+        bitsArray: state.bitsArray
+      }, true);
+
+      const newState = {editorAttunement: action.payload}
+      state.editorAttunement = newState.editorAttunement;
     },
 
     // Toggle a specific bit in the bitsArray
     toggleBit: (state, action: PayloadAction<number>) => {
       const index = action.payload;
-      state.bitsArray[index] = !state.bitsArray[index];
-      state.editorSeed = BigInt('0b' + state.bitsArray.map(b => b ? '1' : '0').join('')).toString();
-      state.hasEditorChanges = true;
+      const newBitsArray = state.bitsArray.slice();
+      newBitsArray[index] = !newBitsArray[index];
+      const newState = {
+        bitsArray: newBitsArray,
+        editorSeed: BigInt('0b' + newBitsArray.map(b => b ? '1' : '0').join('')).toString(),
+        hasEditorChanges: true,
+      };
+      pushToHistory(state, newState);
+      Object.assign(state, newState);
     },
 
     // Randomize all bits in the bitsArray
@@ -185,14 +271,19 @@ const seedSlice = createSlice({
         bitArray[shuffledIndices[i]] = true;
       }
       
-      state.bitsArray = bitArray;
-      state.editorSeed = BigInt('0b' + bitArray.map(b => b ? '1' : '0').join('')).toString();
-      state.hasEditorChanges = true;
+      const newState = {
+        bitsArray: bitArray,
+        editorSeed: BigInt('0b' + bitArray.map(b => b ? '1' : '0').join('')).toString(),
+        hasEditorChanges: true,
+      };
+      pushToHistory(state, newState);
+      Object.assign(state, newState);
+      state.displaySettingsToggled = true;
     },
 
-    // Prepare to change seed
-    prepareToChangeSeed: (state) => {
-      // This action doesn't modify the state, is used as a signal
+    // Track click + hold while selecting bit buttons
+    setActiveSelection: (state, action: PayloadAction<boolean>) => {
+      state.activeSelection = action.payload;
     },
 
     // Update display setting
@@ -205,35 +296,7 @@ const seedSlice = createSlice({
         }
       }
       state.modNumber = calculateModNumber(state);
-      state.hasEditorChanges = true;
-    },
-
-    // Update slider value
-    updateSliderValue: (state, action: PayloadAction<{name: string, value: number}>) => {
-      const { name, value } = action.payload;
-      const key = name as keyof Pick<SeedState, 'colorValue' | 'depthValue' | 'spinValue' | 'tintValue' | 'tintPercentValue'>;
-      if (state[key] !== value) {
-        state[key] = value;
-        state.modNumber = calculateModNumber(state);
-        state.hasEditorChanges = true;
-      }
-    },
-
-    // Toggle layers UI
-    toggleLayersUI: (state) => {
-      state.layersUIToggled = !state.layersUIToggled;
-      state.displaySettingsToggled = false;
-    },
-
-    // Toggle display settings
-    toggleDisplaySettings: (state) => {
-      state.displaySettingsToggled = !state.displaySettingsToggled;
-      state.layersUIToggled = false;
-    },
-
-    // Set is selecting
-    setIsSelecting: (state, action: PayloadAction<boolean>) => {
-      state.isSelecting = action.payload;
+      state.displaySettingsToggled = true;
     },
 
     // Set slider active
@@ -241,93 +304,117 @@ const seedSlice = createSlice({
       state.isActive[action.payload.name] = action.payload.isActive;
     },
 
-    // Set editor seed
-    setEditorSeed: (state, action: PayloadAction<{ seed: string; updateChanges?: boolean }>) => {
-      state.editorSeed = action.payload.seed;
-      state.bitsArray = seedToBits(BigInt(action.payload.seed || '0'));
-      if (action.payload.updateChanges) {
-        state.hasEditorChanges = true;
+    // Update slider value
+    updateSliderValue: (state, action: PayloadAction<{name: string, value: number}>) => {
+      const { name, value } = action.payload;
+      const key = name as keyof Pick<EditorState, 'colorValue' | 'depthValue' | 'spinValue' | 'tintValue' | 'tintPercentValue'>;
+      if (state[key] !== value) {
+        state[key] = value;
+        state.modNumber = calculateModNumber(state);
       }
     },
 
-    // Set editor mod number
-    setEditorMod: (state, action: PayloadAction<{ modNumber: string; updateChanges?: boolean }>) => {
-      state.editorMod = action.payload.modNumber;
-      updateStateFromModNumber(state, action.payload.modNumber);
-      if (action.payload.updateChanges) {
-        state.hasEditorChanges = true;
+    // Addresses the Tint% conversion
+    updateActualTintPercent: (state, action: PayloadAction<number>) => {
+      state.actualTintPercentValue = action.payload;
+    },
+
+    // Toggle layers UI
+    toggleLayersUI: (state, action: PayloadAction<boolean | undefined>) => {
+      if (action.payload !== undefined) {
+        state.layersUIToggled = action.payload;
+      } else {
+        state.layersUIToggled = !state.layersUIToggled;
       }
     },
 
-    // Set editor attunement number
-    setEditorAttunement: (state, action: PayloadAction<{ attunementNumber: number; updateChanges?: boolean }>) => {
-      state.editorAttunement = action.payload.attunementNumber;
-      if (action.payload.updateChanges) {
-        state.hasEditorChanges = true;
+    // Toggle display settings
+    toggleDisplaySettings: (state, action: PayloadAction<boolean | undefined>) => {
+      if (action.payload !== undefined) {
+        state.displaySettingsToggled = action.payload;
+      } else {
+        state.displaySettingsToggled = !state.displaySettingsToggled;
       }
-    },
-
-    // Reset editor changes
-    resetEditorChangedStatus: (state) => {
-      state.hasEditorChanges = false;
     },
   },
 });
 
-// Helper function to update state from mod number
-const updateStateFromModNumber = (state: SeedState, modNumber: string) => {
-  state.displaySettings = [];
-  const displaySettingsValue = parseInt(modNumber.slice(0, 3), 10);
-  for (let i = 0; i < 9; i++) {
-    if (displaySettingsValue & (1 << (8 - i))) {
-      state.displaySettings.push(1 << (8 - i));
-    }
+// SELECTORS -----------------------------------------
+
+export const selectLayersUIToggled = (state: RootState) => state.seed.layersUIToggled;
+
+export const selectDisplaySettingsToggled = (state: RootState) => state.seed.displaySettingsToggled;
+
+// UTILITY FUNCTIONS ---------------------------------
+
+// Shuffle an array of bits
+const shuffleArray = (array: number[]) => {
+  const shuffledArray = array.slice();
+  for (let i = shuffledArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
   }
-  state.colorValue = parseInt(modNumber.slice(3, 6), 10);
-  state.depthValue = parseInt(modNumber.slice(6, 9), 10);
-  state.spinValue = parseInt(modNumber.slice(9, 12), 10);
-  state.tintValue = parseInt(modNumber.slice(12, 13), 10);
-  state.tintPercentValue = modNumber.slice(13) === "99" ? 100 : parseInt(modNumber.slice(13), 10);
+  return shuffledArray;
 };
 
-// Change this from a function declaration to an exported const
-export const calculateModNumber = (state: SeedState): string => {
+// Generate a random number
+const getRandomNumber = (min: number, max: number) => {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+// Update Editor history
+const MAX_HISTORY_LENGTH = 50;
+const pushToHistory = (state: EditorState, newState: Partial<EditorState>, force: boolean = false) => {
+  if (force || newState.editorSeed !== '0') {
+    state.editorHistory.past.push({
+      editorSeed: state.editorSeed,
+      editorMod: state.editorMod,
+      editorAttunement: state.editorAttunement,
+      bitsArray: state.bitsArray,
+    });
+    if (state.editorHistory.past.length > MAX_HISTORY_LENGTH) {
+      state.editorHistory.past.shift();
+    }
+    state.editorHistory.future = [];
+  }
+};
+
+// Calculate a Mod number
+export const calculateModNumber = (state: EditorState): string => {
   const displaySettingsValue = state.displaySettings.reduce((sum, value) => sum + value, 0).toString().padStart(3, '0');
   const colorValue = state.colorValue.toString().padStart(3, '0');
   const depthValue = state.depthValue.toString().padStart(3, '0');
   const spinValue = state.spinValue.toString().padStart(3, '0');
   const tintValue = state.tintValue.toString();
-  const tintPercentValue = state.tintValue === 0 ? "00" : state.tintPercentValue === 100 ? "99" : state.tintPercentValue.toString().padStart(2, '0');
+  const tintPercentValue = state.tintValue === 0 ? "00" : 
+    (state.actualTintPercentValue === 100 ? "99" : state.actualTintPercentValue.toString().padStart(2, '0'));
 
   return `${displaySettingsValue}${colorValue}${depthValue}${spinValue}${tintValue}${tintPercentValue}`;
 };
 
-// Export the action creators
+// EXPORTS ---------------------------------------------
+
 export const {
-  setNewSeed,
-  setNewMod,
-  setNewAttunement,
-  incrementAttunementNumber,
-  decrementAttunementNumber,
-  resetEditorState,
-  resetEditorSeed,
-  toggleBit,
-  randomizeBits,
-  prepareToChangeSeed,
-  updateDisplaySetting,
-  updateSliderValue,
-  toggleLayersUI,
-  toggleDisplaySettings,
-  setIsSelecting,
-  setSliderActive,
+  setEditorState,
   setEditorSeed,
   setEditorMod,
   setEditorAttunement,
-  resetEditorChangedStatus,
-  setEditorState,
+  updateHasEditorChanges,
+  resetEditorState,
+  resetEditorSeed,
   undo,
   redo,
-} = seedSlice.actions;
+  toggleBit,
+  randomizeBits,
+  setActiveSelection,
+  updateDisplaySetting,
+  updateSliderValue,
+  updateActualTintPercent,
+  incrementNewAttunementNumber,
+  decrementNewAttunementNumber,
+  toggleLayersUI,
+  toggleDisplaySettings,
+  setSliderActive,
+} = editorSlice.actions;
 
-// Export the reducer
-export default seedSlice.reducer;
+export default editorSlice.reducer;

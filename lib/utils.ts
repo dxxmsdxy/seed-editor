@@ -15,6 +15,27 @@ export const bitsToSeed = (bitsArray: number[]) => {
   return seed;
 };
 
+// Helper functions
+export function selectElementContents(el: HTMLElement) {
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  const sel = window.getSelection();
+  if (sel) {
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+}
+
+export function clearSelection() {
+  if (window.getSelection) {
+    window.getSelection()?.removeAllRanges();
+  }
+  const activeEl = document.activeElement;
+  if (activeEl instanceof HTMLInputElement || activeEl instanceof HTMLTextAreaElement) {
+    activeEl.selectionStart = activeEl.selectionEnd;
+  }
+}
+
 export function seedToBits(seed: bigint): boolean[] {
   return seed.toString(2).padStart(100, '0').split('').map(bit => bit === '1');
 }

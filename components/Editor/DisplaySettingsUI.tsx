@@ -1,17 +1,10 @@
-import React, { useCallback, useMemo, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { 
-  setEditorState,
-  updateDisplaySetting, 
-  updateSliderValue, 
-  calculateModNumber, 
-  setEditorSeed,
   setEditorMod, 
   setEditorAttunement,
-  randomizeBits,
-  toggleBit
+  updateSliderValue,
 } from '@/store/slices/editorSlice';
-import { updateQueueItem } from '@/store/slices/queueSlice';
 import RangeSlider from './RangeSlider';
 import IconEye from "@/public/icons/seeds-editor-icons_eye.svg";
 import IconRemove from "@/public/icons/seeds-editor-icons_remove.svg";
@@ -22,159 +15,160 @@ import IconCMYK from "@/public/icons/seeds-editor-icons_cmyk.svg";
 import IconRed from "@/public/icons/seeds-editor-icons_red.svg";
 import IconBlue from "@/public/icons/seeds-editor-icons_blue.svg";
 import IconGreen from "@/public/icons/seeds-editor-icons_green.svg";
+import { selectElementContents } from '@/lib/utils';
+
+// INTERFACES -------------------------------------
+
+interface DisplaySettingsProps {
+  isLocked: boolean;
+  selectedQueueIndex: number | null;
+}
+
+// COMPONENT LOGIC ---------------------------------
 
 const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, selectedQueueIndex }) => {
   const dispatch = useAppDispatch();
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const {
     editorSeed,
     editorMod,
     editorAttunement,
-    hasEditorChanges,
-    bitsArray
+    actualTintPercentValue,
   } = useAppSelector((state) => state.seed);
   const queueItems = useAppSelector((state) => state.queue.items);
-  const seedState = useAppSelector((state) => state.seed);
 
-  // Update local state when selected queue item changes
-  useEffect(() => {
-    if (selectedQueueIndex !== null && selectedQueueIndex < queueItems.length) {
-      const selectedItem = queueItems[selectedQueueIndex];
-      const newSeed = selectedItem.newSeed || selectedItem.seed;
-      const newMod = selectedItem.newMod || selectedItem.modNumber || "000000000000000";
-      const newAttunement = selectedItem.newAttunement || selectedItem.attunementNumber || 0;
-  
-      dispatch(setEditorState({ seed: newSeed, mod: newMod, attunement: newAttunement }));
-    } else {
-      dispatch(setEditorState({ 
-        seed: seedState.seed, 
-        mod: seedState.modNumber, 
-        attunement: seedState.attunementNumber 
-      }));
-    }
-  }, [selectedQueueIndex, queueItems, dispatch]);
-
-  const displaySettings = useMemo(() => {
-    const displaySettingsValue = parseInt(editorMod.slice(0, 3), 10);
-    return Array.from({ length: 9 }, (_, i) => !!(displaySettingsValue & (1 << (8 - i))));
-  }, [editorMod]);
-
-  const sliderValues = useMemo(() => ({
+  // Parse display settings and slider values from editorMod
+  const displaySettings = parseInt(editorMod.slice(0, 3), 10);
+  const sliderValues = {
     color: parseInt(editorMod.slice(3, 6), 10),
     depth: parseInt(editorMod.slice(6, 9), 10),
     spin: parseInt(editorMod.slice(9, 12), 10),
     tint: parseInt(editorMod.slice(12, 13), 10),
     "tint%": editorMod.slice(13) === "99" ? 100 : parseInt(editorMod.slice(13), 10),
-  }), [editorMod]);
+  };
 
-  const handleDisplaySettingToggle = useCallback((index: number) => {
-    if (!isLocked) {
-      const displaySettingsValue = parseInt(editorMod.slice(0, 3), 10);
-      const newDisplaySettingsValue = displaySettingsValue ^ (1 << (8 - index));
-      const newMod = newDisplaySettingsValue.toString().padStart(3, '0') + editorMod.slice(3);
-      setEditorMod(newMod);
-    }
-  }, [isLocked, editorMod]);
-
-  const handleSliderChange = useCallback((name: string, value: number) => {
-    if (!isLocked) {
-      let newMod = editorMod;
-      switch (name) {
-        case 'color':
-          newMod = newMod.slice(0, 3) + value.toString().padStart(3, '0') + newMod.slice(6);
-          break;
-        case 'depth':
-          newMod = newMod.slice(0, 6) + value.toString().padStart(3, '0') + newMod.slice(9);
-          break;
-        case 'spin':
-          newMod = newMod.slice(0, 9) + value.toString().padStart(3, '0') + newMod.slice(12);
-          break;
-        case 'tint':
-          newMod = newMod.slice(0, 12) + value.toString() + newMod.slice(13);
-          break;
-        case 'tint%':
-          newMod = newMod.slice(0, 13) + (value === 100 ? "99" : value.toString().padStart(2, '0'));
-          break;
-      }
-      setEditorMod(newMod);
-    }
-  }, [isLocked, editorMod]);
-
-  const handleModNumberChange = useCallback((newMod: string) => {
-    if (!isLocked) {
-      setEditorMod(newMod);
-    }
-  }, [isLocked]);
-
-  const resetMod = useCallback(() => {
-    if (!isLocked) {
-      setEditorMod("000000000000000");
-    }
-  }, [isLocked]);
-
+  // Render display setting icons
   const icons = [IconEye, IconRemove, IconInvert, IconFlip, IconBolt, IconCMYK, IconRed, IconBlue, IconGreen];
-
-  const memoizedIcons = useMemo(() => icons.map((Icon, index) => (
+  const renderDisplaySettingIcons = () => icons.map((Icon, index) => (
     <a
       key={index}
       href="#" 
-      className={`btn-display-setting ${displaySettings[index] ? 'selected' : ''}`}
+      className={`btn-display-setting ${displaySettings & (1 << (8 - index)) ? 'selected' : ''}`}
       onClick={() => handleDisplaySettingToggle(index)}
     >
       <Icon />
     </a>
-  )), [displaySettings, handleDisplaySettingToggle]);
+  ));
 
-  const attunementInputRef = useRef<HTMLSpanElement>(null);
-
-  const isDefaultAttunement = editorAttunement === 0;
-
-  const incrementAttunement = useCallback(() => {
+  // Toggle Display Settings buttons
+  const handleDisplaySettingToggle = React.useCallback((index: number) => {
     if (!isLocked) {
-      setEditorAttunement((prevAttunement) => (prevAttunement + 1) % 10);
+      let newDisplaySettingsValue = displaySettings;
+      
+      if (index >= 6) {
+        // For the last three buttons (index 6, 7, 8)
+        // Turn off all three buttons
+        newDisplaySettingsValue &= ~(0b111);
+        // Then turn on the clicked button if it was previously off
+        if (!(displaySettings & (1 << (8 - index)))) {
+          newDisplaySettingsValue |= (1 << (8 - index));
+        }
+      } else {
+        newDisplaySettingsValue ^= (1 << (8 - index));
+      }
+      
+      const newMod = newDisplaySettingsValue.toString().padStart(3, '0') + editorMod.slice(3);
+      dispatch(setEditorMod({ modNumber: newMod, updateChanges: true }));
     }
-  }, [isLocked]);
+  }, [isLocked, editorMod, displaySettings, dispatch]);
 
-  const decrementAttunement = useCallback(() => {
+  // Handle slider change
+  const handleSliderChange = useCallback((name: string, value: number, isSliding: boolean) => {
     if (!isLocked) {
-      setEditorAttunement((prevAttunement) => (prevAttunement - 1 + 10) % 10);
-    }
-  }, [isLocked]);
+      dispatch(updateSliderValue({ name, value }));
 
-  const handleAttunementChange = useCallback((value: string) => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+
+      if (!isSliding) {
+        debounceTimerRef.current = setTimeout(() => {
+          let newMod = editorMod;
+          switch (name) {
+            case 'color':
+              newMod = newMod.slice(0, 3) + value.toString().padStart(3, '0') + newMod.slice(6);
+              break;
+            case 'depth':
+              newMod = newMod.slice(0, 6) + value.toString().padStart(3, '0') + newMod.slice(9);
+              break;
+            case 'spin':
+              newMod = newMod.slice(0, 9) + value.toString().padStart(3, '0') + newMod.slice(12);
+              break;
+            case 'tint':
+              newMod = newMod.slice(0, 12) + value.toString() + (value === 0 ? "00" : newMod.slice(13));
+              break;
+            case 'tint%':
+              if (sliderValues.tint !== 0) {
+                newMod = newMod.slice(0, 13) + (value === 100 ? "99" : value.toString().padStart(2, '0'));
+              }
+              break;
+          }
+          dispatch(setEditorMod({ modNumber: newMod, updateChanges: true }));
+        }, 200); // Debounce 300ms
+      }
+    }
+  }, [isLocked, editorMod, dispatch, sliderValues.tint]);
+
+  // Handle mod number change via text input
+  const handleModNumberChange = React.useCallback((newMod: string) => {
+    if (!isLocked) {
+      dispatch(setEditorMod({ modNumber: newMod, updateChanges: true }));
+    }
+  }, [isLocked, dispatch]);
+
+  // Handle attunement change via text input
+  const handleAttunementChange = React.useCallback((value: string) => {
     if (!isLocked) {
       const newAttunement = parseInt(value, 10);
       if (!isNaN(newAttunement) && newAttunement >= 0 && newAttunement <= 9) {
-        setEditorAttunement(newAttunement);
+        dispatch(setEditorAttunement({ attunementNumber: newAttunement, updateChanges: true }));
       }
     }
-  }, [isLocked]);
+  }, [isLocked, dispatch]);
 
-  const clearSelection = useCallback(() => {
-    if (window.getSelection) {
-      window.getSelection()?.removeAllRanges();
-    }
-  }, []);
-
-  const resetAttunement = useCallback(() => {
+  // Reset mod number
+  const resetMod = React.useCallback(() => {
     if (!isLocked) {
-      setEditorAttunement(0);
+      dispatch(setEditorMod({ modNumber: "000000000000000", updateChanges: true }));
     }
-  }, [isLocked]);
+  }, [isLocked, dispatch]);
+
+  // Reset attunement
+  const resetAttunement = React.useCallback(() => {
+    if (!isLocked) {
+      dispatch(setEditorAttunement({ attunementNumber: 0, updateChanges: true }));
+    }
+  }, [isLocked, dispatch]);
+
+
+
+
+
+  // STRUCTURE -------------------------------------------
 
   return (
     <div className="display-settings-wrap show">
-      <div className={`attunement-selector ${isDefaultAttunement ? 'default' : ''}`}>
-        <div className="attune-nav prev" onClick={decrementAttunement}>&lt;</div>
-        <div 
-          className="attunement-label-container"
-          onClick={resetAttunement}
-        >
+      {/* Attunement selector */}
+      <div className={`attunement-selector ${editorAttunement === 0 ? 'default' : ''}`}>
+        <div className="attune-nav prev" onClick={() => !isLocked && dispatch(setEditorAttunement({ attunementNumber: (editorAttunement - 1 + 10) % 10, updateChanges: true }))}>
+          &lt;
+        </div>
+        <div className="attunement-label-container" onClick={resetAttunement}>
           <div className="attunement-label">
             Attunement: 
             <span
-              ref={attunementInputRef}
               className="attunement-input"
-              contentEditable="true"
+              contentEditable={!isLocked}
               inputMode="numeric"
               onClick={(e) => {
                 e.stopPropagation();
@@ -184,7 +178,6 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
                 e.preventDefault();
                 handleAttunementChange(e.currentTarget.textContent || "");
                 e.currentTarget.textContent = editorAttunement.toString();
-                clearSelection();
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -192,25 +185,33 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
                   e.currentTarget.blur();
                 }
               }}
-            >{editorAttunement}</span>
+            >
+              {editorAttunement}
+            </span>
           </div>
         </div>
-        <div className="attune-nav next" onClick={incrementAttunement}>&gt;</div>
+        <div className="attune-nav next" onClick={() => !isLocked && dispatch(setEditorAttunement({ attunementNumber: (editorAttunement + 1) % 10, updateChanges: true }))}>
+          &gt;
+        </div>
       </div>
+
+      {/* Display setting icons */}
       <div className="mod-controls">
-        {memoizedIcons}
+        {renderDisplaySettingIcons()}
       </div>
+
+      {/* Sliders */}
       <RangeSlider name="color" value={sliderValues.color} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
       <RangeSlider name="depth" value={sliderValues.depth} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
       <RangeSlider name="spin" value={sliderValues.spin} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
       <RangeSlider name="tint" value={sliderValues.tint} onChange={handleSliderChange} min={0} max={9} step={1} defaultValue={0} disabled={isLocked} />
       <RangeSlider 
         name="tint%" 
-        value={sliderValues["tint%"]} 
+        value={actualTintPercentValue} 
         onChange={handleSliderChange} 
         min={0} 
         max={100} 
-        disabled={sliderValues.tint === 0 || isLocked}
+        disabled={isLocked || sliderValues.tint === 0}
         defaultValue={100}
         checkDefault={false}
       />
@@ -244,15 +245,5 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
     </div>
   );
 });
-
-function selectElementContents(el: HTMLElement) {
-  const range = document.createRange();
-  range.selectNodeContents(el);
-  const sel = window.getSelection();
-  if (sel) {
-    sel.removeAllRanges();
-    sel.addRange(range);
-  }
-}
 
 export default DisplaySettings;

@@ -2429,6 +2429,17 @@ a {
   display: none;
 }
 
+.theme-bkg {
+  width: 100vw;
+  height: 100vh;
+  max-width: 100%;
+  max-height: 100%;
+  opacity: 0.6;
+  position: fixed;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
 .nav-main {
   order: -1;
   justify-content: flex-start;
@@ -2955,23 +2966,25 @@ a {
   color: #fff;
 }
 
-.page-nav.prev {
+.page-nav.prev,
+.attune-nav.prev {
   border-right: solid 2px #000000;
-  color: #000000;
 }
 
-.page-nav.next{
+.page-nav.next,
+.attune-nav.next{
   border-left: solid 2px #000000;
-  color: #000000;
 }
 
-.page-nav.prev.disabled {
+.page-nav.prev.disabled,
+.attune-nav.prev.disabled {
   border-right: solid 2px #0000000d;
   background-color: #00000003;
   color: #0000000f;
 }
 
-.page-nav.next.disabled {
+.page-nav.next.disabled,
+.attune-nav.next.disabled {
   border-left: solid 2px #0000000d;
   background-color: #00000003;
   color: #0000000f;
@@ -3873,7 +3886,7 @@ input::-moz-focus-outer {
   flex: 1;
   justify-content: center;
   align-items: center;
-  padding-top: 100px;
+  padding-top: 130px;
   padding-bottom: 2vh;
   display: flex;
   position: relative;
@@ -4044,7 +4057,7 @@ input::-moz-focus-outer {
   cursor: pointer;
   background-color: rgba(0, 0, 0, 0.05);
   border: 2px solid #00000011;
-  border-bottom: 2px solid #00000000;
+  border-top: 2px solid #00000000;
   justify-content: flex-start;
   align-items: center;
   padding: 6px 32px;
@@ -4061,14 +4074,82 @@ input::-moz-focus-outer {
   color:#000;
   background-color: #ffffff44;
   border: 2px solid #000000;
-  border-top: 0px solid #00000000;
+  border-bottom: 0px solid #00000000;
+}
+.queue-item.set.selected {
+  animation: justSet 1.6s ease-in-out forwards;
 }
 
-.queue-item.set:last-child {
-  margin-bottom: 12px;
+ul li.set + li:not(.set) {
+  margin-bottom: 35px;
 }
+
+.queue-item:last-child {
+  border-top: 2px solid #00000011;
+}
+.queue-item:first-child {
+  border-bottom: 0px solid #00000011;
+}
+
+ul li + li, ul li + li.set {overflow: visible;position: relative;}
+ul li + li::after {
+  content: "SET";
+  position:absolute;
+  bottom:100%;
+  left:-2px;
+  padding:0 5px;
+  z-index: -1;
+  background-color: #000;
+  border: 2px solid #000000;
+  box-sizing:content-box;
+  color:#fff;
+  height:20px;
+  width:calc(100% - 10px);
+  letter-spacing: 2px;
+  text-align: center;
+  font-weight: 700;
+  font-size:0.85em;
+  transform: translate3d(0, 5px, 0);
+  transition: transform 1s, opacity 0.5s 0.2s;
+  opacity: 0;
+  pointer-events: none;
+}
+
+ul li + li.set::after {
+  transform: translate3d(0, 0px, 0);
+  opacity:1;
+}
+
+ul li + li::after {
+  content: "SET";
+  position:absolute;
+  bottom:100%;
+  left:-2px;
+  padding:0 5px;
+  z-index: -1;
+  background-color: #000;
+  border: 2px solid #000000;
+  box-sizing:content-box;
+  color:#fff;
+  height:20px;
+  width:calc(100% - 10px);
+  letter-spacing: 2px;
+  text-align: center;
+  font-weight: 700;
+  font-size:0.85em;
+  transform: translate3d(0, 5px, 0);
+  transition: transform 1s, opacity 0.5s 0.2s;
+  opacity: 0;
+  pointer-events: none;
+}
+
+ul li + li.set::after {
+  transform: translate3d(0, 0px, 0);
+  opacity:1;
+}
+
 .queue-container:has(.page-selector:not(.disabled)) .queue-item:first-child {
-  border-top: 2px solid #000000;
+  border-bottom: 2px solid #000000;
 }
 
 .queue-item.set:first-child {
@@ -4077,6 +4158,16 @@ input::-moz-focus-outer {
 
 .queue-item.set:last-child {
   border-bottom: 0px solid #000000;
+}
+
+@keyframes justSet {
+  from { background-color: #ffffff44; color: #000000bb; }
+  12% { background-color: #ffffff88; color: #000000bb; }
+  25% { background-color: #000000dd; color: #ffffffbb; }
+  45% { background-color: #000000bb; color: #000000bb; }
+  65% { background-color: #000000ee; color: #ffffffbb; }
+  80% { background-color: #000000cc; color: #000000bb; }
+  to { background-color: #000000; color: #ffffff; }
 }
 
 @keyframes fadeBackground {
@@ -4115,7 +4206,7 @@ input::-moz-focus-outer {
 }
 
 .queue-list {
-  flex-direction: column;
+  flex-direction: column-reverse;
   margin-bottom: 0;
   padding-left: 0;
   display: flex;
@@ -4214,13 +4305,13 @@ input::-moz-focus-outer {
 }
 
 li.queue-item.selected .queue-lock.locked {
-  opacity: 1;
+  opacity: 0.2;
   background-image:
   url("/icons/seeds-editor-icons_lock_white.svg");
 }
 
 li.queue-item.selected .queue-lock {
-  opacity: 0.2;
+  opacity: 0;
   background-color: #ffffff00;
   background-image:
   url("/icons/seeds-editor-icons_unlocked_white.svg");
@@ -4241,7 +4332,17 @@ li.queue-item.selected .queue-lock.locked:hover {
 }
 
 li.queue-item:hover .queue-lock {
+  opacity: 0;
+}
+
+li.queue-item:has(.queue-lock.locked):hover .queue-lock {
   opacity: 0.1;
+}
+li.queue-item:has(.queue-lock.locked):hover .queue-lock:hover {
+  opacity: 0.3;
+}
+li.queue-item.selected:has(.queue-lock.locked):hover .queue-lock:hover {
+  opacity: 1;
 }
 
 li.queue-item.selected:hover .queue-lock {
@@ -4653,10 +4754,6 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
     max-height: 80vh;
   }
 
-  .artwork-preview {
-    margin-right: 4vw;
-  }
-
   .body {
     font-size: 19px;
   }
@@ -4996,11 +5093,14 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   }
 
   .artwork-preview {
-    width: 73vw;
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: auto;
     max-height: 75vh;
     min-width: 20vw;
-    flex-direction: row;
-    margin-left: auto;
+    flex-direction: column;
   }
 
   .artwork-preview.successful {
@@ -5386,11 +5486,6 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
     right: 0;
   }
 
-  .artwork-preview {
-    flex-direction: row;
-    flex: 0 auto;
-  }
-
   .artwork-preview.successful {
     width: 41vw;
     max-height: 53vh;
@@ -5470,7 +5565,7 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   }
 
   .artwork-preview {
-    width: 100%;
+    width: auto;
     flex-direction: column;
     flex: 1;
     order: 1;
@@ -5884,6 +5979,7 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   }
 
   .seed-indicator {
+    display: flex;
     padding-bottom: 16px;
     padding-right: 70px;
     position: relative;

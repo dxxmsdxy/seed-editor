@@ -1,22 +1,37 @@
-import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
-import { setQueueItems, updateQueueOrder } from './queueSlice';  // Add updateQueueOrder here
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { initializeQueue, updateQueueOrder } from './queueSlice';
 
+// Define the structure of the wallet state
 interface WalletState {
   connected: boolean;
   loading: boolean;
   error: string | null;
 }
 
+// Set up the initial state
 const initialState: WalletState = {
   connected: false,
   loading: false,
   error: null,
 };
 
+// Utility function to transform wallet data
+const transformWalletData = (data: any[]) => {
+  return data.map((item: any) => ({
+    id: item.id,
+    seed: item.seed,
+    modNumber: item.modNumber,
+    attunementNumber: item.attunementNumber,
+    locked: item.locked
+  }));
+};
+
+// Async thunk to connect wallet and load data
 export const connectWalletAndLoadData = createAsyncThunk(
   'wallet/connectAndLoadData',
   async (_, { dispatch }) => {
     try {
+      // Fetch simulated wallet data
       const response = await fetch('/simulatedWalletData.json');
       if (!response.ok) {
         throw new Error('Failed to fetch simulated wallet data');
@@ -24,19 +39,10 @@ export const connectWalletAndLoadData = createAsyncThunk(
       const data = await response.json();
       console.log('Fetched data:', data);
       
-      // Dispatch setQueueItems action
-      await dispatch(setQueueItems(data));
-      
-      // Dispatch updateQueueOrder action after setting queue items
       await dispatch(updateQueueOrder());
       
-      return data.map((item: any) => ({
-        id: item.id,
-        seed: item.seed,
-        modNumber: item.modNumber,
-        attunementNumber: item.attunementNumber,
-        locked: item.locked
-      }));
+      // Transform and return the data
+      return transformWalletData(data);
     } catch (error) {
       console.error('Error in connectWalletAndLoadData:', error);
       throw error;
@@ -44,12 +50,15 @@ export const connectWalletAndLoadData = createAsyncThunk(
   }
 );
 
+// Create the wallet slice
 const walletSlice = createSlice({
   name: 'wallet',
   initialState,
   reducers: {
-    setWalletConnected: (state, action: PayloadAction<boolean>) => {
-      state.connected = action.payload;
+    disconnectWallet: (state) => {
+      state.connected = false;
+      state.loading = false;
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -58,7 +67,7 @@ const walletSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(connectWalletAndLoadData.fulfilled, (state, action) => {
+      .addCase(connectWalletAndLoadData.fulfilled, (state) => {
         state.connected = true;
         state.loading = false;
         state.error = null;
@@ -70,5 +79,14 @@ const walletSlice = createSlice({
   },
 });
 
-export const { setWalletConnected } = walletSlice.actions;
+export const { disconnectWallet } = walletSlice.actions;
 export default walletSlice.reducer;
+
+// Async thunk to disconnect wallet and clear queue
+export const disconnectWalletAndClearQueue = createAsyncThunk(
+  'wallet/disconnectAndClear',
+  async (_, { dispatch }) => {
+    dispatch(disconnectWallet());
+    dispatch(initializeQueue([]));
+  }
+);

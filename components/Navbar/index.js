@@ -2,18 +2,12 @@
 import { useState, useEffect } from "react";
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
-import { connectWalletAndLoadData, setWalletConnected } from '@/store/slices/walletSlice';
-import { selectedIndex, setQueueItems } from '@/store/slices/queueSlice';
-
+import { connectWalletAndLoadData, disconnectWallet } from '@/store/slices/walletSlice';
+import { initializeQueue, setSelectedIndex } from '@/store/slices/queueSlice';
 import { MenuDesktop } from "./MenuDesktop";
 import { MenuMobileContent, MenuMobileTrigger } from "./MenuMobile";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/UI/dropdownMenu";
+import { DropdownMenu } from "@/components/UI/dropdownMenu";
 
 export const Navbar = () => {
   const dispatch = useDispatch();
@@ -39,10 +33,10 @@ export const Navbar = () => {
   const handleConnect = async () => {
     try {
       const resultAction = await dispatch(connectWalletAndLoadData());
-      console.log('Result action:', resultAction); // Add this line
+      console.log('Result action:', resultAction);
       if (connectWalletAndLoadData.fulfilled.match(resultAction)) {
-        console.log('Payload:', resultAction.payload); // Add this line
-        dispatch(setQueueItems(resultAction.payload));
+        console.log('Payload:', resultAction.payload);
+        dispatch(initializeQueue(resultAction.payload));
       } else if (connectWalletAndLoadData.rejected.match(resultAction)) {
         console.error('Failed to connect wallet and load data:', resultAction.error);
       }
@@ -52,9 +46,9 @@ export const Navbar = () => {
   };
 
   const handleDisconnect = () => {
-    dispatch(setWalletConnected(false));
-    dispatch(setQueueItems([])); // Clear the queue when disconnecting
-    dispatch(selectedIndex(null)); // Reset the selected index
+    dispatch(disconnectWallet());
+    dispatch(initializeQueue([])); // Clear the queue when disconnecting
+    dispatch(setSelectedIndex(null)); // Reset the selected index
   };
 
   return (

@@ -1,152 +1,112 @@
 "use client";
+import { useRef, useCallback, useEffect } from "react";
+import { useAppSelector, useAppDispatch } from '@/app/hooks';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 
-// React imports
-import { useState, useRef, useCallback, useEffect } from "react";
+// IMPORTED LOGIC & COMPONENTS ----------------------------
 
-// Third-party imports
-import { useDispatch, useSelector } from 'react-redux';
-
-// Local component imports
 import { BitsArray } from "@/components/Editor/LayersUI";
 import DisplaySettings from '@/components/Editor/DisplaySettingsUI';
 import Artwork from "@/components/Artwork";
 import InscribeModal from "@/components/Editor/InscribeModal";
-
-// Redux imports
-import { useAppSelector, useAppDispatch } from '@/app/hooks';
-import { RootState } from '@/store';
-import {
-  setNewSeed, setNewMod, setNewAttunement, setEditorState,
-  setEditorSeed, setEditorMod, setEditorAttunement,
-  resetEditorChangedStatus, resetEditorState, resetEditorSeed,
-  toggleBit, randomizeBits, prepareToChangeSeed,
-  resetUnsavedChanges, updateDisplaySetting, updateSliderValue,
-  calculateModNumber,
-} from '@/store/slices/editorSlice';
 import { setShowInscribeModal } from '@/store/slices/modalSlice';
 import {
-  selectedIndex, updateQueueItem, resetQueueItem, updateQueueOrder,
-  selectNextUnsetItem, toggleQueueItemLock, setCurrentPage,
-  selectSetQueueItems
+  getQueueItemsForRendering,
+  getSetQueueItems,
+  setCurrentPage,
+  setSelectedIndex,
+  updateQueueItem,
+  toggleQueueItemLock,
+  selectAndUpdateQueueItemThunk,
+  resetQueueItemThunk,
 } from '@/store/slices/queueSlice';
-import { connectWalletAndLoadData } from '@/store/slices/walletSlice';
+import {
+  setEditorState,
+  setEditorSeed,
+  setEditorMod,
+  setEditorAttunement,
+  updateHasEditorChanges,
+  resetEditorState,
+  resetEditorSeed,
+  toggleBit,
+  randomizeBits,
+  undo,
+  redo,
+  selectLayersUIToggled,
+  selectDisplaySettingsToggled,
+  toggleLayersUI,
+  toggleDisplaySettings
+} from '@/store/slices/editorSlice';
+import { selectElementContents, clearSelection } from '@/lib/utils';
 
-// Type definitions
-interface QueueItem {
-  seed: bigint;
-  modNumber: string | null;
-  attunementNumber: number | null;
-  locked: boolean;
-}
-
-// Helper functions
-function selectElementContents(el: HTMLElement) {
-  const range = document.createRange();
-  range.selectNodeContents(el);
-  const sel = window.getSelection();
-  if (sel) {
-    sel.removeAllRanges();
-    sel.addRange(range);
-  }
-}
-
-function clearSelection() {
-  if (window.getSelection) {
-    window.getSelection()?.removeAllRanges();
-  }
-  const activeEl = document.activeElement;
-  if (activeEl instanceof HTMLInputElement || activeEl instanceof HTMLTextAreaElement) {
-    activeEl.selectionStart = activeEl.selectionEnd;
-  }
-}
+// PAGE LOGIC ---------------------------------------------
 
 export default function Home() {
   const dispatch = useAppDispatch();
 
-  // Redux state
+  // REDUX STATE ------------------------------------------
+
   const {
     seed, bitsArray, modNumber, attunementNumber,
     editorSeed, editorMod, editorAttunement, hasEditorChanges
   } = useAppSelector((state: RootState) => state.seed);
   const { items: queueItems, selectedIndex: selectedQueueIndex, currentPage, itemsPerPage } = useAppSelector((state: RootState) => state.queue);
   const showInscribeModal = useAppSelector((state) => state.modal.showInscribeModal);
-  const setQueueItems = useAppSelector(selectSetQueueItems);
+  const setQueueItems = useAppSelector(getSetQueueItems);
   const isQueueModified = useAppSelector(state => state.queue.items.some(item => item.isSet));
   const walletConnected = useSelector((state: RootState) => state.wallet.connected);
+  const layersUIToggled = useSelector(selectLayersUIToggled);
+  const displaySettingsToggled = useSelector(selectDisplaySettingsToggled);
 
-  // Local state
-  const [layersUIToggled, setLayersUIToggled] = useState(false);
-  const [displaySettingsToggled, setDisplaySettingsToggled] = useState(false);
-  const [isSelecting, setIsSelecting] = useState(false);
+  // REFS -------------------------------------------------
 
-  // Refs
   const inputRef = useRef<HTMLDivElement>(null);
-  const initialAttunementRef = useRef(0);
-  const prevSeedRef = useRef(seed);
-  const prevModNumberRef = useRef(modNumber);
-  const prevAttunementNumberRef = useRef(attunementNumber);
-  const updateQueueItemTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Derived state
+  // DERIVED STATE ----------------------------------------
+
   const totalPages = Math.ceil(queueItems.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentPageItems = queueItems.slice(startIndex, endIndex);
+  const queueItemsForRendering = useAppSelector(getQueueItemsForRendering);
 
-  // Callbacks
-  const endSelection = useCallback(() => {
-    if (isSelecting) {
-      setIsSelecting(false);
-    }
-  }, [isSelecting]);
+  // CALLBACKS --------------------------------------------
 
-  const selectNextUnsetQueueItem = useCallback(() => {
-    const nextUnsetIndex = queueItems.findIndex(item => item.seed === BigInt(0));
-    if (nextUnsetIndex !== -1) {
-      dispatch(selectedIndex(nextUnsetIndex));
-      const newPage = Math.floor(nextUnsetIndex / itemsPerPage) + 1;
-      dispatch(setCurrentPage(newPage));
-    }
-  }, [queueItems, itemsPerPage, dispatch]);
-
-  const handleEditorInteraction = useCallback(() => {
-    if (selectedQueueIndex === null && seed !== BigInt(0)) {
-      selectNextUnsetQueueItem();
-    }
-  }, [selectedQueueIndex, seed, selectNextUnsetQueueItem]);
-
+  // Enable the Editor's seed reset button
   const enableSeedResetButton = useCallback(() => {
     if (selectedQueueIndex === null) {
       return editorSeed !== '0';
     }
-    
-    if (selectedQueueIndex >= queueItems.length) {
-      return false;
-    }
-    
+
+    if (selectedQueueIndex >= queueItems.length) {return false;}
+
     const selectedItem = queueItems[selectedQueueIndex];
-    const currentSeed = selectedItem.newSeed || selectedItem.seed;
     
-    return editorSeed !== currentSeed;
+    return editorSeed !== selectedItem.seed;
   }, [selectedQueueIndex, queueItems, editorSeed]);
 
+  // Check if selected queue item is locked
   const isSelectedItemLocked = useCallback(() => {
     if (selectedQueueIndex === null || selectedQueueIndex >= queueItems.length) return false;
     return queueItems[selectedQueueIndex].locked;
   }, [selectedQueueIndex, queueItems]);
 
+  // Reset the Editor's seed number
   const handleResetEditorSeed = useCallback(() => {
     if (isSelectedItemLocked()) return;
   
+    let seedToReset: string;
     if (selectedQueueIndex === null) {
-      dispatch(resetEditorSeed('0'));
+      seedToReset = '0';
     } else {
       const selectedItem = queueItems[selectedQueueIndex];
-      const seedToReset = selectedItem.newSeed || selectedItem.seed;
-      dispatch(resetEditorSeed(seedToReset));
+      seedToReset = selectedItem.seed;
     }
+  
+    dispatch(resetEditorSeed(seedToReset));
   }, [dispatch, selectedQueueIndex, queueItems, isSelectedItemLocked]);
 
+  // Set the selected queue item with the Editor's state
   const handleSetQueueItem = useCallback(() => {
     if (selectedQueueIndex !== null && hasEditorChanges) {
       dispatch(updateQueueItem({
@@ -158,159 +118,81 @@ export default function Home() {
         },
         isExplicitSet: true,
       }));
-      dispatch(resetEditorChangedStatus());
-      selectNextUnsetQueueItem();
+      dispatch(setEditorState({
+        seed: editorSeed,
+        mod: editorMod,
+        attunement: editorAttunement
+      }));
+      dispatch(toggleLayersUI(false));
+      dispatch(toggleDisplaySettings(false));
     }
   }, [selectedQueueIndex, hasEditorChanges, editorSeed, editorMod, editorAttunement, dispatch]);
 
-  const isSetQueueItemEnabled = useCallback(() => {
-    return selectedQueueIndex !== null && hasEditorChanges;
-  }, [selectedQueueIndex, hasEditorChanges]);
-
-  const resetEditorToDefaults = useCallback(() => {
-    dispatch(setEditorSeed('0'));
-    dispatch(setEditorMod("000000000000000"));
-    dispatch(setEditorAttunement("0"));
-  }, [dispatch]);
-
-  const handleSeedChange = useCallback(() => {
-    if (selectedQueueIndex === null) {
-      dispatch(selectNextUnsetItem());
+  // Trigger selection of the next unset queue item
+  const handleEditorInteraction = useCallback(() => {
+    if (selectedQueueIndex === null && seed !== BigInt(0)) {
+      // dispatch(selectNextUnsetQueueItemThunk());
     }
-  }, [selectedQueueIndex, dispatch]);
+  }, [selectedQueueIndex, seed]);
 
-  const debouncedUpdateQueueItem = useCallback(() => {
-    if (updateQueueItemTimeoutRef.current) {
-      clearTimeout(updateQueueItemTimeoutRef.current);
-    }
-    updateQueueItemTimeoutRef.current = setTimeout(() => {
-      if (selectedQueueIndex !== null && selectedQueueIndex < queueItems.length) {
-        const currentItem = queueItems[selectedQueueIndex];
-        if (seed.toString() !== prevSeedRef.current ||
-            modNumber !== prevModNumberRef.current ||
-            attunementNumber !== prevAttunementNumberRef.current) {
-          dispatch(updateQueueItem({
-            index: selectedQueueIndex,
-            item: {
-              newSeed: seed.toString(),
-              modNumber,
-              attunementNumber
-            }
-          }));
-          prevSeedRef.current = seed.toString();
-          prevModNumberRef.current = modNumber;
-          prevAttunementNumberRef.current = attunementNumber;
-        }
-      }
-    }, 300); // Debounce for 300ms
-  }, [seed, modNumber, attunementNumber, selectedQueueIndex, queueItems, dispatch]);
+  // EVENT HANDLERS ---------------------------------------
 
-  const updateQueueItemWithSeed = useCallback((seed: string) => {
-    if (selectedQueueIndex !== null && selectedQueueIndex < queueItems.length) {
-      const currentItem = queueItems[selectedQueueIndex];
-      if (currentItem.newSeed !== seed) {
-        dispatch(updateQueueItem({
-          index: selectedQueueIndex,
-          item: { newSeed: seed }
-        }));
-      }
-    }
-  }, [selectedQueueIndex, queueItems, dispatch]);
-
-  // Event handlers
-  const handleQueueItemSelect = (index: number) => {
-    if (index >= 0 && index < queueItems.length) {
-      if (index === selectedQueueIndex) {
-        dispatch(selectedIndex(null));
-        dispatch(resetEditorState());
-      } else {
-        dispatch(selectedIndex(index));
-        const selectedItem = queueItems[index];
-        const isSet = selectedItem.isSet;
-        dispatch(setEditorState({
-          seed: isSet ? selectedItem.newSeed || selectedItem.seed : selectedItem.seed || '0',
-          mod: isSet ? selectedItem.newMod || selectedItem.modNumber : selectedItem.modNumber || "000000000000000",
-          attunement: isSet ? selectedItem.newAttunement ?? selectedItem.attunementNumber : selectedItem.attunementNumber ?? 0
-        }));
-      }
-  
-      dispatch(resetEditorChangedStatus());
-      const newPage = Math.floor(index / itemsPerPage) + 1;
-      dispatch(setCurrentPage(newPage));
-    } else {
-      dispatch(selectedIndex(null));
-      dispatch(resetEditorState());
-    }
-  };
-
-  const handleQueueItemReset = (event: React.MouseEvent, index: number) => {
-    event.stopPropagation();
-    dispatch(resetQueueItem(index));
-    dispatch(updateQueueOrder());
-    dispatch(selectNextUnsetItem());
-
-    if (index === selectedQueueIndex) {
-      dispatch(setEditorSeed({ seed: queueItems[index].seed, updateChanges: false }));
-      dispatch(setEditorMod({ modNumber: queueItems[index].modNumber || "000000000000000", updateChanges: false }));
-      dispatch(setEditorAttunement({ attunementNumber: queueItems[index].attunementNumber || 0, updateChanges: false }));
-      dispatch(resetEditorChangedStatus());
-    }
-  };
-
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      dispatch(setCurrentPage(newPage));
-    }
-  };
-
-  const goToFirstPage = (e: React.MouseEvent) => {
-    if (!(e.target as HTMLElement).classList.contains('page-value')) {
-      handlePageChange(1);
-    }
-  };
-
-  const handleSeedInputChange = (updatedSeed: string) => {
+  // Update the Editor's seed number via the seed input
+  const handleSeedInputChange = useCallback((updatedSeed: string) => {
     if (!isSelectedItemLocked()) {
       dispatch(setEditorSeed({ seed: updatedSeed, updateChanges: true }));
     }
-  };
+  }, [dispatch, isSelectedItemLocked]);
 
-  const handleResetEditorState = () => {
-    if (!isSelectedItemLocked()) {
-      dispatch(resetEditorState());
-    }
-  };
-
-  const handleInscribeClick = () => {
-    if (isQueueModified) {
-      dispatch(setShowInscribeModal(true));
-    }
-  };
-
+  // Randomize the Editor's seed number
   const handleRandomizeBits = () => {
     if (!isSelectedItemLocked()) {
       dispatch(randomizeBits());
     }
   };
 
+  // Toggle individual bits in the seed number
   const handleToggleBit = (index: number) => {
     if (!isSelectedItemLocked()) {
-      handleSeedChange();
       dispatch(toggleBit(index));
     }
   };
 
-  const handleConnect = async () => {
-    await dispatch(connectWalletAndLoadData());
-    dispatch(setCurrentPage(1));
+  // Select a specified queue item by index
+  const handleQueueItemSelect = useCallback((index: number) => {
+    dispatch(selectAndUpdateQueueItemThunk(index));
+  }, [dispatch]);
+
+  // Reset a specified queue item by index
+  const handleQueueItemReset = useCallback((e: React.MouseEvent, index: number) => {
+    e.stopPropagation();
+    dispatch(resetQueueItemThunk(index));
+  }, [dispatch]);
+
+  // Update the queue page with by page number
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      dispatch(setCurrentPage(newPage));
+    }
   };
 
-  const handleDisconnect = () => {
-    dispatch(setQueueItems([]));
-    dispatch(selectedIndex(null));
+  // Go to the queue's first page
+  const goToFirstPage = (e: React.MouseEvent) => {
+    if (!(e.target as HTMLElement).classList.contains('page-value')) {
+      handlePageChange(1);
+    }
   };
 
-  // Effects
+  // Begin the inscription flow
+  const handleInscribeClick = () => {
+    if (isQueueModified) {
+      dispatch(setShowInscribeModal(true));
+    }
+  };
+  
+  // EFFECTS ----------------------------------------------
+
+  // Add event listeners editor elements
   useEffect(() => {
     const editorElements = document.querySelectorAll('.editor .app-pane *');
     editorElements.forEach(element => {
@@ -324,123 +206,72 @@ export default function Home() {
     };
   }, [handleEditorInteraction]);
 
-  useEffect(() => {
-    const handleGlobalMouseUp = () => {
-      endSelection();
-    };
-
-    document.addEventListener('mouseup', handleGlobalMouseUp);
-    return () => {
-      document.removeEventListener('mouseup', handleGlobalMouseUp);
-    };
-  }, [endSelection]);
-
-  useEffect(() => {
-    handleEditorInteraction();
-  }, [handleEditorInteraction]);
-
+  // Double-click listener
   useEffect(() => {
     const handleDoubleClickOutside = (event: MouseEvent) => {
       const editorWrapper = document.querySelector('.editor-inner');
-      if (editorWrapper) {
-        if (!editorWrapper.contains(event.target as Node) || event.target === editorWrapper) {
-          dispatch(selectedIndex(null));
-          dispatch(resetEditorState());
-        }
+      if (editorWrapper && (!editorWrapper.contains(event.target as Node) || event.target === editorWrapper)) {
+        dispatch(setSelectedIndex(null));
+        dispatch(resetEditorState());
       }
     };
 
     document.addEventListener('dblclick', handleDoubleClickOutside);
+    return () => document.removeEventListener('dblclick', handleDoubleClickOutside);
+  }, [dispatch]);
 
-    return () => {
-      document.removeEventListener('dblclick', handleDoubleClickOutside);
-    };
-  }, [dispatch, resetEditorToDefaults]);
-
+  // Hide Display Settings when the seed is "0"
   useEffect(() => {
-    if (editorSeed === BigInt(0)) {
-      dispatch(prepareToChangeSeed());
+    if (editorSeed === '0' || seed === '0' || queueItems[selectedQueueIndex].newSeed === '0') {
+      dispatch(toggleDisplaySettings(false));
     }
-  }, [editorSeed, dispatch]);
+  }, [queueItems, selectedQueueIndex, seed, modNumber, editorSeed, editorMod]);
 
-  useEffect(() => {
-    if (seed === '0' && displaySettingsToggled) {
-      setDisplaySettingsToggled(false);
-    }
-  }, [seed, displaySettingsToggled]);
-
+  // Update selected Queue Item preview
   useEffect(() => {
     if (selectedQueueIndex !== null && selectedQueueIndex < queueItems.length) {
       const selectedItem = queueItems[selectedQueueIndex];
-      dispatch(setEditorState({
-        seed: selectedItem.newSeed || selectedItem.seed,
-        mod: selectedItem.newMod || selectedItem.modNumber || "000000000000000",
-        attunement: selectedItem.newAttunement ?? selectedItem.attunementNumber ?? 0
-      }));
-      if (selectedItem.newSeed == editorSeed) {
-        dispatch(resetEditorChangedStatus());
+      if (!hasEditorChanges) {
+        dispatch(setEditorState({
+          seed: selectedItem.newSeed || selectedItem.seed,
+          mod: selectedItem.newMod || selectedItem.modNumber || "000000000000000",
+          attunement: selectedItem.newAttunement ?? selectedItem.attunementNumber ?? 0
+        }));
       }
     }
-  }, [selectedQueueIndex, queueItems, dispatch]);
+  }, [selectedQueueIndex, queueItems, dispatch, editorSeed]);
 
-  useEffect(() => {
-    debouncedUpdateQueueItem();
-    return () => {
-      if (updateQueueItemTimeoutRef.current) {
-        clearTimeout(updateQueueItemTimeoutRef.current);
-      }
-    };
-  }, [debouncedUpdateQueueItem]);
-
-  useEffect(() => {
-    updateQueueItemWithSeed(seed.toString());
-  }, [seed, updateQueueItemWithSeed]);
-
+  // Reset editor state when wallet is disconnected
   useEffect(() => {
     if (!walletConnected) {
-      dispatch(selectedIndex(null));
+      dispatch(setSelectedIndex(null));
       dispatch(resetEditorState());
+      dispatch(toggleLayersUI(false));
+      dispatch(toggleDisplaySettings(false));
     }
   }, [walletConnected, dispatch]);
 
-  // Render functions
-  const renderQueueItem = (item: QueueItem, index: number) => {
-    const displaySeed = item.isSet ? (item.newSeed || item.seed) : item.seed || '0';
-    const isSet = item.isSet;
-    const isSeedZero = displaySeed === '0';
+  // Keyboard shortcuts for Undo/Redo
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === 'z' && !event.shiftKey) {
+        event.preventDefault();
+        dispatch(undo());
+      } else if (event.ctrlKey && event.key === 'Z' && event.shiftKey) {
+        event.preventDefault();
+        dispatch(redo());
+      }
+    };
+  
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [dispatch]);
 
-    return (
-      <li
-        className={`
-          queue-item
-          ${index === selectedQueueIndex ? "selected" : ""}
-          ${isSet ? 'set' : ''}
-        `}
-        key={index}
-        onClick={() => handleQueueItemSelect(index)}
-      >
-        <div className={`queued-seed-number`}>
-          <span 
-            className={`queue-lock ${item.locked ? 'locked' : ''} ${isSeedZero ? 'disabled' : ''}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!isSeedZero) {
-                dispatch(toggleQueueItemLock(index));
-              }
-            }}
-          ></span>
-          <strong>{displaySeed}</strong>
-          <span 
-            className="queue-reset"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleQueueItemReset(e, index);
-            }}
-          ></span>
-        </div>
-      </li>
-    );
-  };
+
+
+
+
+  // STRUCTURE --------------------------------------------
 
   return (
     <>
@@ -468,8 +299,7 @@ export default function Home() {
                     e.currentTarget.blur();
                   }
                 }}
-                dangerouslySetInnerHTML={{ __html: editorSeed }}
-              />
+              >{editorSeed}</span>
               {enableSeedResetButton() && !isSelectedItemLocked() && (
                 <div className="reset-seed-button reset show" onClick={handleResetEditorSeed}>
                   Reset
@@ -483,9 +313,7 @@ export default function Home() {
                 <a
                   className={`ui-button randomize z-button ${isSelectedItemLocked() ? 'disabled' : ''}`}
                   onClick={handleRandomizeBits}
-                >
-                  Random
-                </a>
+                >Random</a>
                 <a
                   id="layers-ui-button"
                   className={`ui-button advanced shrink z-button ${
@@ -493,13 +321,11 @@ export default function Home() {
                   } ${isSelectedItemLocked() ? 'disabled' : ''}`}
                   onClick={() => {
                     if (!isSelectedItemLocked()) {
-                      setLayersUIToggled(!layersUIToggled)
-                      setDisplaySettingsToggled(false)
+                      dispatch(toggleLayersUI());
+                      dispatch(toggleDisplaySettings(false));
                     }
                   }}
-                >
-                  Lr
-                </a>
+                >Lr</a>
                 <a
                   id="display-settings-button"
                   className={`ui-button advanced mod-button shrink z-button ${
@@ -507,33 +333,27 @@ export default function Home() {
                   } ${editorSeed === '0' ? "disabled" : ""} ${isSelectedItemLocked() ? 'disabled' : ''}`}
                   onClick={() => {
                     if (editorSeed !== '0' && !isSelectedItemLocked()) {
-                      setLayersUIToggled(false);
-                      setDisplaySettingsToggled(!displaySettingsToggled);
+                      dispatch(toggleLayersUI(false));
+                      dispatch(toggleDisplaySettings());
                     }
                   }}
-                >
-                  +
-                </a>
+                >+</a>
               </div>
               <div className={`layer-grid-wrap ${layersUIToggled ? "show" : ""}`}>
                 <BitsArray bitsArray={bitsArray} toggleBit={handleToggleBit} />
                 <a
                   href="#"
                   className="ui-button reset-button reset z-button show"
-                  onClick={() => dispatch(resetEditorState())}
-                >
-                  Reset
-                </a>
+                  onClick={() => dispatch(resetEditorModOnly())}
+                >Reset</a>
               </div>
               <div className={`display-settings-wrap ${displaySettingsToggled ? "show" : ""}`}>
-                {selectedQueueIndex !== null && selectedQueueIndex < queueItems.length && (
-                  <DisplaySettings
-                    isLocked={queueItems[selectedQueueIndex].locked}
-                    selectedQueueIndex={selectedQueueIndex}
-                    queueItems={queueItems}
-                    updateQueueItem={updateQueueItem}
-                  />
-                )}
+                <DisplaySettings
+                  queueItems={queueItems}
+                  selectedQueueIndex={selectedQueueIndex}
+                  isLocked={selectedQueueIndex !== null ? queueItems[selectedQueueIndex].locked : false}
+                  updateQueueItem={updateQueueItem}
+                />
               </div>
             </div>
             <div className="artwork-preview">
@@ -557,9 +377,7 @@ export default function Home() {
                   }`}
                   onClick={handleSetQueueItem}
                   disabled={!hasEditorChanges || selectedQueueIndex === null}
-                >
-                  Set Queue Item
-                </a>
+                >Set Queue Item</a>
                 <div className="select-icon z-embed">
                   <svg
                     version="1.1"
@@ -570,11 +388,7 @@ export default function Home() {
                     viewBox="0 0 442.7 312.6"
                     xmlSpace="preserve"
                   >
-                    <style
-                      dangerouslySetInnerHTML={{
-                        __html: "#checkmark path{fill:none;stroke:#000;stroke-width:31;stroke-miterlimit:10} ",
-                      }}
-                    />
+                    <style dangerouslySetInnerHTML={{__html: "#checkmark path{fill:none;stroke:#000;stroke-width:31;stroke-miterlimit:10} "}}/>
                     <path d="m17.5 123.8 162.2 156.6L426.6 16.1" />
                   </svg>
                 </div>
@@ -586,9 +400,7 @@ export default function Home() {
                   <div 
                     className={`page-nav prev ${currentPage === 1 ? 'disabled' : ''}`}
                     onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                  >
-                    &lt;
-                  </div>
+                  >&lt;</div>
                   <div className="page-label-container" onClick={goToFirstPage}>
                     <div className="page-label">
                       <span 
@@ -618,26 +430,48 @@ export default function Home() {
                   <div 
                     className={`page-nav next ${currentPage === totalPages ? 'disabled' : ''}`}
                     onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                  >
-                    &gt;
-                  </div>
+                  >&gt;</div>
                 </div>
                 <ul role="list" className="queue-list">
-                  {currentPageItems.map((item, index) => renderQueueItem(item, startIndex + index))}
+                  {queueItemsForRendering.slice(startIndex, endIndex).map((item) => (
+                    <li
+                      className={`
+                        queue-item
+                        ${item.isSelected ? "selected" : ""}
+                        ${item.isSet ? 'set' : ''}
+                      `}
+                      key={item.index}
+                      onClick={() => handleQueueItemSelect(item.index)}
+                    >
+                      <div className={`queued-seed-number`}>
+                        <span 
+                          className={`queue-lock ${item.locked ? 'locked' : ''} ${item.isSeedZero ? 'disabled' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!item.isSeedZero) {
+                              dispatch(toggleQueueItemLock(item.index));
+                            }
+                          }}
+                        ></span>
+                        <strong>{item.displaySeed}</strong>
+                        <span 
+                          className="queue-reset"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleQueueItemReset(e, item.index);
+                          }}
+                        ></span>
+                      </div>
+                    </li>
+                  ))}
                 </ul>
                 <a
-                  className={`ui-button inscribe z-button ${
-                    isQueueModified ? "" : "disabled"
-                  }`}
+                  className={`ui-button inscribe z-button ${isQueueModified ? "" : "disabled"}`}
                   onClick={handleInscribeClick}
-                >
-                  Inscribe
-                  {isQueueModified && (
-                    <span className="queue-count">
-                      <span>(</span>
+                >Inscribe{isQueueModified && (
+                    <span className="queue-count"><span>(</span>
                       {queueItems.filter(item => item.isSet).length}
-                      <span>)</span>
-                    </span>
+                    <span>)</span></span>
                   )}
                 </a>
               </div>
@@ -647,8 +481,8 @@ export default function Home() {
         <div 
           className={`reset-editor ${layersUIToggled || displaySettingsToggled ? '' : 'hidden'}`}
           onClick={() => {
-              setLayersUIToggled(false);
-              setDisplaySettingsToggled(false);
+            dispatch(toggleLayersUI(false));
+            dispatch(toggleDisplaySettings(false));
           }}
         ></div>
       </div>
