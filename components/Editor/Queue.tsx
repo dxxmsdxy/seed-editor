@@ -15,31 +15,40 @@ const Queue: React.FC = () => {
   const { items: queueItems, selectedIndex: selectedQueueIndex, currentPage, itemsPerPage } = useAppSelector((state) => state.queue);
   const isQueueModified = useAppSelector(state => state.queue.items.some(item => item.isSet));
 
+  // DERIVED STATE ----------------------------------------
+
   const totalPages = Math.ceil(queueItems.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
 
+  // EVENT HANDLERS ---------------------------------------
+
+  // Update the queue page with by page number
   const handlePageChange = useCallback((newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
       dispatch(setCurrentPage(newPage));
     }
   }, [dispatch, totalPages]);
 
+  // Go to the queue's first page
   const goToFirstPage = useCallback((e: React.MouseEvent) => {
     if (!(e.target as HTMLElement).classList.contains('page-value')) {
       handlePageChange(1);
     }
   }, [handlePageChange]);
 
+  // Select a specified queue item by index
   const handleQueueItemSelect = useCallback((index: number) => {
     dispatch(selectAndUpdateQueueItemThunk(index));
   }, [dispatch]);
 
+  // Reset a specified queue item by index
   const handleQueueItemReset = useCallback((e: React.MouseEvent, index: number) => {
     e.stopPropagation();
     dispatch(resetQueueItemThunk(index));
   }, [dispatch]);
 
+  // Begin the inscription flow
   const handleInscribeClick = useCallback(() => {
     if (isQueueModified) {
       dispatch(setShowInscribeModal(true));
