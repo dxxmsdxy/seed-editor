@@ -4349,6 +4349,10 @@ li.queue-item.selected:hover .queue-lock {
   opacity: 0.2;
 }
 
+li.queue-item.selected:hover .queue-lock.disabled {
+  opacity: 0;
+}
+
 li.queue-item.selected:hover .queue-lock.locked {
   opacity: 1;
 }

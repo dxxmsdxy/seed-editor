@@ -1,6 +1,8 @@
 "use client";
 import { useRef, useCallback, useEffect } from "react";
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
+import useLoading from '@/hooks/useLoading';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 
@@ -45,6 +47,7 @@ import { selectElementContents, clearSelection } from '@/lib/utils';
 
 export default function Home() {
   const dispatch = useAppDispatch();
+  const { isLoading, withLoading } = useLoading();
 
   // REDUX STATE ------------------------------------------
 
@@ -224,7 +227,8 @@ export default function Home() {
 
   // Hide Display Settings when the seed is "0"
   useEffect(() => {
-    if (editorSeed === '0' || seed === '0' || queueItems[selectedQueueIndex].newSeed === '0') {
+    const selectedItem = queueItems[selectedQueueIndex];
+    if (editorSeed === '0' || selectedQueueIndex !== null && selectedItem.newSeed === '0') {
       dispatch(toggleDisplaySettings(false));
     }
   }, [queueItems, selectedQueueIndex, seed, modNumber, editorSeed, editorMod]);

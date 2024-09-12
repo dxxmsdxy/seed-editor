@@ -279,7 +279,6 @@ const editorSlice = createSlice({
       };
       pushToHistory(state, newState);
       Object.assign(state, newState);
-      state.displaySettingsToggled = true;
     },
 
     // Track click + hold while selecting bit buttons
