@@ -1,5 +1,6 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
+import { debounce } from 'lodash';
 import { 
   setEditorMod, 
   setEditorAttunement,
@@ -15,7 +16,7 @@ import IconCMYK from "@/public/icons/seeds-editor-icons_cmyk.svg";
 import IconRed from "@/public/icons/seeds-editor-icons_red.svg";
 import IconBlue from "@/public/icons/seeds-editor-icons_blue.svg";
 import IconGreen from "@/public/icons/seeds-editor-icons_green.svg";
-import { selectElementContents } from '@/lib/utils';
+import { clearSelection } from '@/lib/utils';
 
 // INTERFACES -------------------------------------
 
@@ -28,7 +29,6 @@ interface DisplaySettingsProps {
 
 const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, selectedQueueIndex }) => {
   const dispatch = useAppDispatch();
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const {
     editorSeed,
     editorMod,
@@ -38,14 +38,14 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
   const queueItems = useAppSelector((state) => state.queue.items);
 
   // Parse display settings and slider values from editorMod
-  const displaySettings = parseInt(editorMod.slice(0, 3), 10);
-  const sliderValues = {
+  const displaySettings = useMemo(() => parseInt(editorMod.slice(0, 3), 10), [editorMod]);
+  const sliderValues = useMemo(() => ({
     color: parseInt(editorMod.slice(3, 6), 10),
     depth: parseInt(editorMod.slice(6, 9), 10),
     spin: parseInt(editorMod.slice(9, 12), 10),
     tint: parseInt(editorMod.slice(12, 13), 10),
     "tint%": editorMod.slice(13) === "99" ? 100 : parseInt(editorMod.slice(13), 10),
-  };
+  }), [editorMod]);
 
   // Render display setting icons
   const icons = [IconEye, IconRemove, IconInvert, IconFlip, IconBolt, IconCMYK, IconRed, IconBlue, IconGreen];
@@ -60,8 +60,16 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
     </a>
   ));
 
+  // Handle mod number change via text input
+  const handleModNumberChange = useCallback(
+    debounce((newMod: string) => {
+      dispatch(setEditorMod({ modNumber: newMod, updateChanges: true }));
+    }, 200),
+    [dispatch]
+  );
+
   // Toggle Display Settings buttons
-  const handleDisplaySettingToggle = React.useCallback((index: number) => {
+  const handleDisplaySettingToggle = useCallback((index: number) => {
     if (!isLocked) {
       let newDisplaySettingsValue = displaySettings;
       
@@ -86,45 +94,31 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
   const handleSliderChange = useCallback((name: string, value: number, isSliding: boolean) => {
     if (!isLocked) {
       dispatch(updateSliderValue({ name, value }));
-
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-
       if (!isSliding) {
-        debounceTimerRef.current = setTimeout(() => {
-          let newMod = editorMod;
-          switch (name) {
-            case 'color':
-              newMod = newMod.slice(0, 3) + value.toString().padStart(3, '0') + newMod.slice(6);
-              break;
-            case 'depth':
-              newMod = newMod.slice(0, 6) + value.toString().padStart(3, '0') + newMod.slice(9);
-              break;
-            case 'spin':
-              newMod = newMod.slice(0, 9) + value.toString().padStart(3, '0') + newMod.slice(12);
-              break;
-            case 'tint':
-              newMod = newMod.slice(0, 12) + value.toString() + (value === 0 ? "00" : newMod.slice(13));
-              break;
-            case 'tint%':
-              if (sliderValues.tint !== 0) {
-                newMod = newMod.slice(0, 13) + (value === 100 ? "99" : value.toString().padStart(2, '0'));
-              }
-              break;
-          }
-          dispatch(setEditorMod({ modNumber: newMod, updateChanges: true }));
-        }, 200); // Debounce 300ms
+        let newMod = editorMod;
+        switch (name) {
+          case 'color':
+            newMod = newMod.slice(0, 3) + value.toString().padStart(3, '0') + newMod.slice(6);
+            break;
+          case 'depth':
+            newMod = newMod.slice(0, 6) + value.toString().padStart(3, '0') + newMod.slice(9);
+            break;
+          case 'spin':
+            newMod = newMod.slice(0, 9) + value.toString().padStart(3, '0') + newMod.slice(12);
+            break;
+          case 'tint':
+            newMod = newMod.slice(0, 12) + value.toString() + (value === 0 ? "00" : newMod.slice(13));
+            break;
+          case 'tint%':
+            if (sliderValues.tint !== 0) {
+              newMod = newMod.slice(0, 13) + (value === 100 ? "99" : value.toString().padStart(2, '0'));
+            }
+            break;
+        }
+        handleModNumberChange(newMod);
       }
     }
-  }, [isLocked, editorMod, dispatch, sliderValues.tint]);
-
-  // Handle mod number change via text input
-  const handleModNumberChange = React.useCallback((newMod: string) => {
-    if (!isLocked) {
-      dispatch(setEditorMod({ modNumber: newMod, updateChanges: true }));
-    }
-  }, [isLocked, dispatch]);
+  }, [isLocked, editorMod, dispatch, sliderValues.tint, handleModNumberChange]);
 
   // Handle attunement change via text input
   const handleAttunementChange = React.useCallback((value: string) => {
@@ -178,6 +172,7 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
                 e.preventDefault();
                 handleAttunementChange(e.currentTarget.textContent || "");
                 e.currentTarget.textContent = editorAttunement.toString();
+                clearSelection();
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -228,6 +223,7 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
               if (!isLocked) {
                 const newMod = e.currentTarget.textContent || "";
                 handleModNumberChange(newMod);
+                clearSelection();
               }
             }}
             onKeyDown={(e) => {
@@ -246,4 +242,4 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
   );
 });
 
-export default DisplaySettings;
+export default React.memo(DisplaySettings);

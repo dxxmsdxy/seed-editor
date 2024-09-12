@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { seedToBits } from '@/lib/utils';
 
+// Initial bit state
 export type Bit = {
   bit: boolean;
   index: number;
@@ -14,13 +15,9 @@ export type Bit = {
   endSelection: () => void;
 };
 
+// The individual bit buttons in the layer grid
 export const Bit = ({
-  bit,
-  index,
-  toggleBit,
-  activeSelection,
-  startSelection,
-  endSelection,
+  bit, index, toggleBit, activeSelection, startSelection, endSelection
 }: Bit) => {
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -29,15 +26,11 @@ export const Bit = ({
   };
 
   const handleMouseEnter = () => {
-    if (activeSelection) {
-      toggleBit(index);
-    }
+    if (activeSelection) {toggleBit(index)}
   };
 
   const handleMouseUp = () => {
-    if (activeSelection) {
-      endSelection();
-    }
+    if (activeSelection) {endSelection()}
   };
 
   return (
@@ -52,28 +45,15 @@ export const Bit = ({
   );
 };
 
-export const BitsArray = ({
-  toggleBit,
-}: {
-  toggleBit: (index: number) => void;
-}) => {
+// Generate a bit array with a seed
+export const BitsArray = ({ toggleBit }: { toggleBit: (index: number) => void }) => {
   const editorSeed = useSelector((state: RootState) => state.seed.editorSeed);
-  const bitsArray = seedToBits(BigInt(editorSeed));
+  const bitsArray = useMemo(() => seedToBits(BigInt(editorSeed)), [editorSeed]);
   const [activeSelection, setActiveSelection] = useState(false);
 
-  const startSelection = () => {
-    setActiveSelection(true);
-  };
-
-  const updateSelection = () => {
-    if (!activeSelection) {
-      setActiveSelection(true);
-    }
-  };
-
-  const endSelection = () => {
-    setActiveSelection(false);
-  };
+  const startSelection = () => setActiveSelection(true);
+  const updateSelection = () => !activeSelection && setActiveSelection(true);
+  const endSelection = () => setActiveSelection(false);
 
   return (
     <div className="z-layout-grid grid">
@@ -81,8 +61,8 @@ export const BitsArray = ({
         <Bit
           key={index}
           bit={bit}
-          index={bitsArray.length - 1 - index}  // Reverse the index
-          toggleBit={(reversedIndex) => toggleBit(bitsArray.length - 1 - reversedIndex)}  // Reverse the toggle index
+          index={index}
+          toggleBit={toggleBit}
           activeSelection={activeSelection}
           startSelection={startSelection}
           updateSelection={updateSelection}

@@ -13,7 +13,7 @@ interface RangeSliderProps {
   checkDefault?: boolean;
 }
 
-const RangeSlider: React.FC<RangeSliderProps> = ({ 
+const RangeSlider: React.FC<RangeSliderProps> = React.memo(({
   name, 
   value, 
   onChange, 
@@ -70,6 +70,6 @@ const RangeSlider: React.FC<RangeSliderProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default RangeSlider;

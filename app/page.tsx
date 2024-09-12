@@ -8,6 +8,7 @@ import { RootState } from '@/store';
 
 // IMPORTED LOGIC & COMPONENTS ----------------------------
 
+import Queue from '@/components/Editor/Queue';
 import { BitsArray } from "@/components/Editor/LayersUI";
 import DisplaySettings from '@/components/Editor/DisplaySettingsUI';
 import Artwork from "@/components/Artwork";
@@ -67,13 +68,6 @@ export default function Home() {
 
   const inputRef = useRef<HTMLDivElement>(null);
 
-  // DERIVED STATE ----------------------------------------
-
-  const totalPages = Math.ceil(queueItems.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const queueItemsForRendering = useAppSelector(getQueueItemsForRendering);
-
   // CALLBACKS --------------------------------------------
 
   // Enable the Editor's seed reset button
@@ -105,14 +99,15 @@ export default function Home() {
     } else {
       const selectedItem = queueItems[selectedQueueIndex];
       seedToReset = selectedItem.seed;
-
-      // Check if editor matches selected item
-      if (dispatch(checkEditorMatchesSelectedItem(selectedItem))) {
-        dispatch(updateHasEditorChanges(false));
-      }
     }
   
     dispatch(resetEditorSeed(seedToReset));
+  
+    // Check if editor matches selected queue item
+    if (selectedQueueIndex !== null) {
+      const selectedItem = queueItems[selectedQueueIndex];
+      dispatch(checkEditorMatchesSelectedItem(selectedItem));
+    }
   }, [dispatch, selectedQueueIndex, queueItems, isSelectedItemLocked]);
 
   // Set the selected queue item with the Editor's state
@@ -144,10 +139,10 @@ export default function Home() {
 
   // Update the Editor's seed number via the seed input
   const handleSeedInputChange = useCallback((updatedSeed: string) => {
-    if (!isSelectedItemLocked()) {
-      dispatch(setEditorSeed({ seed: updatedSeed, updateChanges: true }));
-    }
-  }, [dispatch, isSelectedItemLocked]);
+  if (!isSelectedItemLocked()) {
+    dispatch(setEditorSeed({ seed: updatedSeed, updateChanges: true }));
+  }
+}, [dispatch, isSelectedItemLocked]);
 
   // Randomize the Editor's seed number
   const handleRandomizeBits = () => {
@@ -160,38 +155,6 @@ export default function Home() {
   const handleToggleBit = (index: number) => {
     if (!isSelectedItemLocked()) {
       dispatch(toggleBit(index));
-    }
-  };
-
-  // Select a specified queue item by index
-  const handleQueueItemSelect = useCallback((index: number) => {
-    dispatch(selectAndUpdateQueueItemThunk(index));
-  }, [dispatch]);
-
-  // Reset a specified queue item by index
-  const handleQueueItemReset = useCallback((e: React.MouseEvent, index: number) => {
-    e.stopPropagation();
-    dispatch(resetQueueItemThunk(index));
-  }, [dispatch]);
-
-  // Update the queue page with by page number
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      dispatch(setCurrentPage(newPage));
-    }
-  };
-
-  // Go to the queue's first page
-  const goToFirstPage = (e: React.MouseEvent) => {
-    if (!(e.target as HTMLElement).classList.contains('page-value')) {
-      handlePageChange(1);
-    }
-  };
-
-  // Begin the inscription flow
-  const handleInscribeClick = () => {
-    if (isQueueModified) {
-      dispatch(setShowInscribeModal(true));
     }
   };
   
@@ -295,8 +258,10 @@ export default function Home() {
                 onBlur={(e) => {
                   e.preventDefault();
                   if (!isSelectedItemLocked()) {
-                    const updatedSeed = e.currentTarget.textContent?.trim() || '0';
+                    const updatedSeed = e.currentTarget.textContent || '';
                     handleSeedInputChange(updatedSeed);
+                    e.currentTarget.textContent = updatedSeed.trim() || '0';
+                    clearSelection();
                   }
                 }}
                 onKeyDown={(e) => {
@@ -401,86 +366,7 @@ export default function Home() {
               </div>
             </div>
             <div className={`app-pane right ${(layersUIToggled || displaySettingsToggled) ? 'deactivated' : ''}`}>
-              <div className="queue-container">
-                <div className={`page-selector ${totalPages > 1 ? '' : 'disabled'}`}>
-                  <div 
-                    className={`page-nav prev ${currentPage === 1 ? 'disabled' : ''}`}
-                    onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                  >&lt;</div>
-                  <div className="page-label-container" onClick={goToFirstPage}>
-                    <div className="page-label">
-                      <span 
-                        className="page-value"
-                        contentEditable="true"
-                        inputMode="numeric"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          selectElementContents(e.currentTarget);
-                        }}
-                        onBlur={(e) => {
-                          e.preventDefault();
-                          const newPage = parseInt(e.currentTarget.textContent || "1", 10);
-                          handlePageChange(newPage);
-                          e.currentTarget.textContent = currentPage.toString();
-                          clearSelection();
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            e.currentTarget.blur();
-                          }
-                        }}
-                      >{currentPage}</span> / {totalPages}
-                    </div>
-                  </div>
-                  <div 
-                    className={`page-nav next ${currentPage === totalPages ? 'disabled' : ''}`}
-                    onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                  >&gt;</div>
-                </div>
-                <ul role="list" className="queue-list">
-                  {queueItemsForRendering.slice(startIndex, endIndex).map((item) => (
-                    <li
-                      className={`
-                        queue-item
-                        ${item.isSelected ? "selected" : ""}
-                        ${item.isSet ? 'set' : ''}
-                      `}
-                      key={item.index}
-                      onClick={() => handleQueueItemSelect(item.index)}
-                    >
-                      <div className={`queued-seed-number`}>
-                        <span 
-                          className={`queue-lock ${item.locked ? 'locked' : ''} ${item.isSeedZero ? 'disabled' : ''}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!item.isSeedZero) {
-                              dispatch(toggleQueueItemLock(item.index));
-                            }
-                          }}
-                        ></span>
-                        <strong>{item.displaySeed}</strong>
-                        <span 
-                          className="queue-reset"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleQueueItemReset(e, item.index);
-                          }}
-                        ></span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-                <a
-                  className={`ui-button inscribe z-button ${isQueueModified ? "" : "disabled"}`}
-                  onClick={handleInscribeClick}
-                >Inscribe{isQueueModified && (
-                    <span className="queue-count"><span>(</span>
-                      {queueItems.filter(item => item.isSet).length}
-                    <span>)</span></span>
-                  )}
-                </a>
-              </div>
+              <Queue />
             </div>
           </>
         </div>

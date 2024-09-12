@@ -9,6 +9,13 @@ interface EditorState {
   bitsArray: boolean[];
   modNumber: string;
   attunementNumber: number;
+  newSeed: string;
+  newMod: string;
+  newAttunement: number;
+  editorSeed: string;
+  editorMod: string;
+  editorAttunement: number;
+  hasEditorChanges: boolean;
   displaySettings: number[];  // Array of display settings
   colorValue: number;  // Color value
   depthValue: number;  // Depth value
@@ -19,15 +26,7 @@ interface EditorState {
   layersUIToggled: boolean;
   displaySettingsToggled: boolean;
   activeSelection: boolean;
-  tempSelectedButtons: number[];
   isActive: { [key: string]: boolean };
-  newSeed: string;
-  newMod: string;
-  newAttunement: number;
-  editorSeed: string;
-  editorMod: string;
-  editorAttunement: number;
-  hasEditorChanges: boolean;
   editorHistory: {
     past: Array<{
       editorSeed: string;
@@ -51,6 +50,13 @@ const initialState: EditorState = {
   bitsArray: Array(100).fill(false),
   modNumber: "000000000000000",
   attunementNumber: 0,
+  newSeed: '',
+  newMod: "000000000000000",
+  newAttunement: 0,
+  editorSeed: '0',
+  editorMod: "000000000000000",
+  editorAttunement: 0,
+  hasEditorChanges: false,
   displaySettings: [],
   colorValue: 0,
   depthValue: 0,
@@ -61,15 +67,7 @@ const initialState: EditorState = {
   layersUIToggled: false,
   displaySettingsToggled: false,
   activeSelection: false,
-  tempSelectedButtons: [],
   isActive: {},
-  newSeed: '',
-  newMod: "000000000000000",
-  newAttunement: 0,
-  editorSeed: '0',
-  editorMod: "000000000000000",
-  editorAttunement: 0,
-  hasEditorChanges: false,
   editorHistory: {
     past: [],
     future: [],
@@ -82,40 +80,6 @@ const editorSlice = createSlice({
   name: 'seed',
   initialState,
   reducers: {
-
-    // Revert to previous Editor state
-    undo: (state) => {
-      if (state.editorHistory.past.length > 0) {
-        const previous = state.editorHistory.past.pop()!;
-        state.editorHistory.future.push({
-          editorSeed: state.editorSeed,
-          editorMod: state.editorMod,
-          editorAttunement: state.editorAttunement,
-          bitsArray: state.bitsArray,
-        });
-        state.editorSeed = previous.editorSeed;
-        state.editorMod = previous.editorMod;
-        state.editorAttunement = previous.editorAttunement;
-        state.bitsArray = previous.bitsArray;
-      }
-    },
-
-    // Revert to previous Editor state
-    redo: (state) => {
-      if (state.editorHistory.future.length > 0) {
-        const next = state.editorHistory.future.pop()!;
-        state.editorHistory.past.push({
-          editorSeed: state.editorSeed,
-          editorMod: state.editorMod,
-          editorAttunement: state.editorAttunement,
-          bitsArray: state.bitsArray,
-        });
-        state.editorSeed = next.editorSeed;
-        state.editorMod = next.editorMod;
-        state.editorAttunement = next.editorAttunement;
-        state.bitsArray = next.bitsArray;
-      }
-    },
 
     // Set Editor state with specified values
     setEditorState: (state, action: PayloadAction<{ seed: string; mod: string; attunement: number }>) => {
@@ -132,10 +96,11 @@ const editorSlice = createSlice({
 
     // Set Editor seed number
     setEditorSeed: (state, action: PayloadAction<{ seed: string; updateChanges?: boolean }>) => {
+      const sanitizedSeed = action.payload.seed.trim() || '0';
       const newState = {
-        editorSeed: action.payload.seed,
-        bitsArray: seedToBits(BigInt(action.payload.seed || '0')),
-        hasEditorChanges: action.payload.updateChanges
+        editorSeed: sanitizedSeed,
+        bitsArray: seedToBits(BigInt(sanitizedSeed)),
+        hasEditorChanges: action.payload.updateChanges ?? state.hasEditorChanges,
       };
       pushToHistory(state, newState);
       Object.assign(state, newState);
@@ -162,18 +127,11 @@ const editorSlice = createSlice({
 
     // Increment the attunement number
     incrementNewAttunementNumber: (state) => {
-      if (state.hasEditorChanges = true) {
-        state.newAttunement = (state.newAttunement + 1) % 10;
-        state.hasEditorChanges = true;
-      } else {
-        state.newAttunement = (state.attunementNumber + 1) % 10;
-        state.hasEditorChanges = true;
-      }
+        state.editorAttunement = (state.newAttunement + 1) % 10;
     },
 
     // Decrement the attunement number
     decrementNewAttunementNumber: (state) => {
-      pushToHistory(state, { newAttunement: (state.attunementNumber - 1) % 10 });
       state.newAttunement = (state.attunementNumber - 1) % 10;
     },
 
@@ -184,21 +142,20 @@ const editorSlice = createSlice({
 
     // Reset the editor to initial state
     resetEditorState: (state, action: PayloadAction<{ selectedItem?: QueueItem | null } | undefined>) => {
-      pushToHistory(state, {
-        editorSeed: state.editorSeed,
-        editorMod: state.editorMod,
-        editorAttunement: state.editorAttunement,
-        bitsArray: state.bitsArray,
-      }, true);
-    
       const selectedItem = action.payload?.selectedItem;
       const newState = {
         editorSeed: selectedItem ? selectedItem.seed : '0',
         editorMod: selectedItem ? selectedItem.modNumber || "000000000000000" : "000000000000000",
         editorAttunement: selectedItem ? selectedItem.attunementNumber || 0 : 0,
         hasEditorChanges: false,
-        actualTintPercentValue: 100, // Reset tint% to 100
+        actualTintPercentValue: 100,
       };
+      
+      // Only push to history if the current state is not '0'
+      if (state.editorSeed !== '0') {
+        pushToHistory(state, newState, true);
+      }
+      
       Object.assign(state, newState);
       
       if (selectedItem) {
@@ -337,30 +294,90 @@ const editorSlice = createSlice({
       }
     },
 
-    checkEditorMatchesSelectedItem: (state, action: PayloadAction<QueueItem | null>) => {
+    checkEditorMatchesSelectedItem: (state, action: PayloadAction<QueueItem>) => {
       const selectedItem = action.payload;
       if (!selectedItem) {
         state.hasEditorChanges = false;
         return;
       }
-
-      const editorMatchesItem =
-        state.editorSeed === selectedItem.seed &&
-        state.editorMod === (selectedItem.modNumber || "000000000000000") &&
-        state.editorAttunement === (selectedItem.attunementNumber || 0);
-
+    
+      let editorMatchesItem: boolean;
+    
+      if (selectedItem.isSet) {
+        editorMatchesItem =
+          state.editorSeed === (selectedItem.newSeed || selectedItem.seed) &&
+          state.editorMod === (selectedItem.newMod || selectedItem.modNumber || "000000000000000") &&
+          state.editorAttunement === (selectedItem.newAttunement ?? selectedItem.attunementNumber ?? 0);
+      } else {
+        editorMatchesItem =
+          state.editorSeed === selectedItem.seed &&
+          state.editorMod === (selectedItem.modNumber || "000000000000000") &&
+          state.editorAttunement === (selectedItem.attunementNumber || 0);
+      }
+    
       state.hasEditorChanges = !editorMatchesItem;
+    },
+
+    // Revert to previous Editor state
+    undo: (state) => {
+      if (state.editorHistory.past.length > 0) {
+        const previous = state.editorHistory.past.pop()!;
+        state.editorHistory.future.push({
+          editorSeed: state.editorSeed,
+          editorMod: state.editorMod,
+          editorAttunement: state.editorAttunement,
+          bitsArray: state.bitsArray,
+        });
+        state.editorSeed = previous.editorSeed;
+        state.editorMod = previous.editorMod;
+        state.editorAttunement = previous.editorAttunement;
+        state.bitsArray = previous.bitsArray;
+        state.hasEditorChanges = true;
+      }
+    },
+
+    // Revert to previous Editor state
+    redo: (state) => {
+      if (state.editorHistory.future.length > 0) {
+        const next = state.editorHistory.future.pop()!;
+        state.editorHistory.past.push({
+          editorSeed: state.editorSeed,
+          editorMod: state.editorMod,
+          editorAttunement: state.editorAttunement,
+          bitsArray: state.bitsArray,
+        });
+        state.editorSeed = next.editorSeed;
+        state.editorMod = next.editorMod;
+        state.editorAttunement = next.editorAttunement;
+        state.bitsArray = next.bitsArray;
+        state.hasEditorChanges = true;
+      }
     },
   },
 });
 
-// SELECTORS -----------------------------------------
-
-export const selectLayersUIToggled = (state: RootState) => state.seed.layersUIToggled;
-
-export const selectDisplaySettingsToggled = (state: RootState) => state.seed.displaySettingsToggled;
-
 // UTILITY FUNCTIONS ---------------------------------
+
+// Update Editor history
+const MAX_HISTORY_LENGTH = 25;
+const pushToHistory = (state: EditorState, newState: Partial<EditorState>, force: boolean = false) => {
+  if (force || (state.editorSeed !== '0' && (
+    state.editorSeed !== newState.editorSeed ||
+    state.editorMod !== newState.editorMod ||
+    state.editorAttunement !== newState.editorAttunement
+  ))) {
+    state.editorHistory.past.push({
+      editorSeed: state.editorSeed,
+      editorMod: state.editorMod,
+      editorAttunement: state.editorAttunement,
+      bitsArray: state.bitsArray,
+    });
+    if (state.editorHistory.past.length > MAX_HISTORY_LENGTH) {
+      state.editorHistory.past.shift();
+    }
+    state.editorHistory.future = [];
+  }
+};
 
 // Shuffle an array of bits
 const shuffleArray = (array: number[]) => {
@@ -377,23 +394,6 @@ const getRandomNumber = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-// Update Editor history
-const MAX_HISTORY_LENGTH = 50;
-const pushToHistory = (state: EditorState, newState: Partial<EditorState>, force: boolean = false) => {
-  if (force || newState.editorSeed !== '0') {
-    state.editorHistory.past.push({
-      editorSeed: state.editorSeed,
-      editorMod: state.editorMod,
-      editorAttunement: state.editorAttunement,
-      bitsArray: state.bitsArray,
-    });
-    if (state.editorHistory.past.length > MAX_HISTORY_LENGTH) {
-      state.editorHistory.past.shift();
-    }
-    state.editorHistory.future = [];
-  }
-};
-
 // Calculate a Mod number
 export const calculateModNumber = (state: EditorState): string => {
   const displaySettingsValue = state.displaySettings.reduce((sum, value) => sum + value, 0).toString().padStart(3, '0');
@@ -406,6 +406,12 @@ export const calculateModNumber = (state: EditorState): string => {
 
   return `${displaySettingsValue}${colorValue}${depthValue}${spinValue}${tintValue}${tintPercentValue}`;
 };
+
+// SELECTORS -----------------------------------------
+
+export const selectLayersUIToggled = (state: RootState) => state.seed.layersUIToggled;
+
+export const selectDisplaySettingsToggled = (state: RootState) => state.seed.displaySettingsToggled;
 
 // EXPORTS ---------------------------------------------
 

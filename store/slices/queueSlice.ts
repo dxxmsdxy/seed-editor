@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
-import { setEditorState, resetEditorState, checkEditorMatchesSelectedItem } from './editorSlice';
+import { setEditorState, resetEditorState } from './editorSlice';
 import { RootState } from '@/store';
 
 // INTERFACES -------------------------------------
@@ -64,26 +64,14 @@ const queueSlice = createSlice({
         ? state.items[state.selectedIndex].id
         : null;
       
-      const itemsWithIndices = state.items.map((item, index) => ({ item, originalIndex: index }));
-      
-      itemsWithIndices.sort((a, b) => {
-        const priorityA = getPriority(a.item);
-        const priorityB = getPriority(b.item);
-
-        if (priorityA !== priorityB) {
-          return priorityA - priorityB;
-        }
-
-        return a.originalIndex - b.originalIndex;
+      state.items.sort((a, b) => {
+        const priorityA = getPriority(a);
+        const priorityB = getPriority(b);
+        return priorityA - priorityB || state.items.indexOf(a) - state.items.indexOf(b);
       });
-
-      state.items = itemsWithIndices.map(({ item }) => item);
-
+    
       if (selectedItemId !== null) {
-        const newIndex = state.items.findIndex(item => item.id === selectedItemId);
-        state.selectedIndex = newIndex !== -1 ? newIndex : null;
-      } else {
-        state.selectedIndex = null;
+        state.selectedIndex = state.items.findIndex(item => item.id === selectedItemId);
       }
     },
     
@@ -100,12 +88,13 @@ const queueSlice = createSlice({
         
         if (isReset) {
           // Reset logic
-          currentItem.newSeed = null;
-          currentItem.newMod = null;
-          currentItem.newAttunement = null;
-          currentItem.isSet = false;
-          currentItem.locked = currentItem.initialLocked;
-          queueSlice.caseReducers.updateQueueOrder(state);
+          Object.assign(currentItem, {
+            newSeed: null,
+            newMod: null,
+            newAttunement: null,
+            isSet: false,
+            locked: currentItem.initialLocked
+          });
         } else {
           // Update logic
           const hasChanged = updateItemValues(currentItem, item, isExplicitSet);
@@ -251,13 +240,14 @@ export const getQueueItemsForRendering = createSelector(
 );
 
 // Get all set queue items
-export const getSetQueueItems = (state: RootState) => 
-  state.queue.items.filter(
-    item => 
+export const getSetQueueItems = createSelector(
+  [(state: RootState) => state.queue.items],
+  (items) => items.filter(item => 
     (item.newSeed !== null && item.newSeed !== '0') || 
     (item.newMod !== null) || 
     (item.newAttunement !== null) || 
     item.isSet
+  )
 );
 
 // UTILITY FUNCTIONS --------------------------------

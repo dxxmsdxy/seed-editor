@@ -4148,6 +4148,29 @@ ul li + li.set::after {
   opacity:1;
 }
 
+.set-queue-items-label {
+  display:block;
+  position:absolute;
+  bottom:100%;
+  left:-2px;
+  padding:0 5px;
+  z-index: -1;
+  background-color: #000;
+  border: 2px solid #000000;
+  box-sizing:content-box;
+  color:#fff;
+  height:20px;
+  width:calc(100% - 10px);
+  letter-spacing: 2px;
+  text-align: center;
+  font-weight: 700;
+  font-size:0.85em;
+  transform: translate3d(0, 5px, 0);
+  transition: transform 1s, opacity 0.5s 0.2s;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .queue-container:has(.page-selector:not(.disabled)) .queue-item:first-child {
   border-bottom: 2px solid #000000;
 }

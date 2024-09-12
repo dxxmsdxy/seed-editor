@@ -16,13 +16,13 @@ export const bitsToSeed = (bitsArray: number[]) => {
 };
 
 // Helper functions
-export function selectElementContents(el: HTMLElement) {
+export function selectElementContents(element: HTMLElement) {
   const range = document.createRange();
-  range.selectNodeContents(el);
-  const sel = window.getSelection();
-  if (sel) {
-    sel.removeAllRanges();
-    sel.addRange(range);
+  range.selectNodeContents(element);
+  const selection = window.getSelection();
+  if (selection) {
+    selection.removeAllRanges();
+    selection.addRange(range);
   }
 }
 
