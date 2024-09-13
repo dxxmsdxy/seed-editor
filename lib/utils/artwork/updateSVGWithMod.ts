@@ -1,17 +1,16 @@
 /**
  * SEEDS Artwork Mod Utility Functions
+ * =================================================
  * 
- * This module provides utility functions for working with mod values in the SEEDS artwork system.
- * The mod system is based on a 10-minute (600 seconds) animation cycle and uses a 3-digit state
- * (000-999) to encode animation states.
- * 
- * Key Concepts:
- * - Total Animation Duration: 600.6 seconds (10 minutes)
+ * This module provides utility functions for working with mod values in the GENESIS SEEDS system.
+ * The genesis seed source file's animations synchronize on a 10-minute (600 seconds) animation cycle.
+ *  These functions interpret the mod as a 3-digit sequence encoding animation initial states for looping animations.
+ * * 
+ * - Total Animation Duration: 600 seconds (10 minutes)
  * - Mod Value Range: 000 to 999
  * - Animation Delay Range: -0s to -600s
  * 
- * The mod system allows for precise control over the animation state of elements within the
- * artwork. By using a 3-digit mod value (000-999), we can represent any point within the
+ * Using a 3-digit mod value (000-999), we can represent any point within the
  * 10-minute animation cycle. This mod value can be converted to a negative animation delay
  * (-0s to -600s) to control the playback position of individual elements.
  * 
@@ -19,11 +18,10 @@
  * - Delay (in milliseconds) = -(Mod Value / 999) * 600000
  * - Mod Value = -(Delay / 600000) * 999
  * 
- * These utility functions help manage and apply mod values to artwork elements, ensuring
- * consistent behavior across different initial states and animation durations.
- */
+ * =================================================
+ */ 
 
-const TOTAL_ANIMATION_DURATION = 600; // seconds
+const TOTAL_ANIMATION_DURATION = 100; // seconds
 const MAX_MOD_VALUE = 999;
 
 /**
@@ -90,12 +88,17 @@ export function getElementModValue(element: Element): number {
  * @example
  * applyModValueToElement(document.querySelector('.animated-element'), 500);
  */
+
+function modValueToDelay(modValue: number): number {
+    return -(modValue / MAX_MOD_VALUE) * TOTAL_ANIMATION_DURATION;
+}
+
 export function applyModValueToElement(element: Element, modValue: number): void {
-  const computedStyle = window.getComputedStyle(element);
-  const initialDelay = parseFloat(computedStyle.animationDelay) || 0;
-  const newDelay = modValueToDelay(modValue);
-  const adjustedDelay = newDelay - initialDelay;
-  (element as HTMLElement).style.animationDelay = `${adjustedDelay.toFixed(1)}s`;
+    const computedStyle = window.getComputedStyle(element);
+    const initialDelay = parseFloat(computedStyle.animationDelay) || 0;
+    const newDelay = modValueToDelay(modValue);
+    const adjustedDelay = newDelay - initialDelay;
+    (element as HTMLElement).style.animationDelay = `${adjustedDelay.toFixed(1)}s`;
 }
 
 /**
@@ -124,5 +127,13 @@ export function normalizeModValues(elements: NodeListOf<Element> | HTMLCollectio
  * applyModValueToElements(elements, 500);
  */
 export function applyModValueToElements(elements: NodeListOf<Element> | HTMLCollectionOf<Element> | Element[], modValue: number): void {
-  elements.forEach(element => applyModValueToElement(element, modValue));
+    const normalizedPosition = modValue / MAX_MOD_VALUE;
+    const delay = -(normalizedPosition * TOTAL_ANIMATION_DURATION);
+  
+    Array.from(elements).forEach(element => {
+      const computedStyle = window.getComputedStyle(element);
+      const initialDelay = parseFloat(computedStyle.animationDelay) || 0;
+      const adjustedDelay = delay - initialDelay;
+      (element as HTMLElement).style.animationDelay = `${adjustedDelay.toFixed(10)}s`;
+    });
 }

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef, useEffect } from 'react';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { debounce } from 'lodash';
 import { 
@@ -16,9 +16,13 @@ import IconCMYK from "@/public/icons/seeds-editor-icons_cmyk.svg";
 import IconRed from "@/public/icons/seeds-editor-icons_red.svg";
 import IconBlue from "@/public/icons/seeds-editor-icons_blue.svg";
 import IconGreen from "@/public/icons/seeds-editor-icons_green.svg";
-import { clearSelection } from '@/lib/utils';
+import { applyModValueToElements } from '@/lib/utils/artwork/updateSVGWithMod';
+import { selectElementContents, clearSelection } from '@/lib/utils';
 
-// INTERFACES -------------------------------------
+
+
+
+//=================================================//
 
 interface DisplaySettingsProps {
   isLocked: boolean;
@@ -35,6 +39,7 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
     editorAttunement,
     actualTintPercentValue,
   } = useAppSelector((state) => state.seed);
+
   const queueItems = useAppSelector((state) => state.queue.items);
 
   // Parse display settings and slider values from editorMod
@@ -46,6 +51,21 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
     tint: parseInt(editorMod.slice(12, 13), 10),
     "tint%": editorMod.slice(13) === "99" ? 100 : parseInt(editorMod.slice(13), 10),
   }), [editorMod]);
+
+  const colorValueRef = useRef(sliderValues.color);
+  const depthValueRef = useRef(sliderValues.depth);
+  const spinValueRef = useRef(sliderValues.spin);
+
+  useEffect(() => {
+    colorValueRef.current = sliderValues.color;
+    depthValueRef.current = sliderValues.depth;
+    spinValueRef.current = sliderValues.spin;
+  }, [sliderValues.spin]);
+
+  const adjustAnimationState = useCallback(() => {
+    const layers = document.querySelectorAll('.seedartwork:has(g.on),.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline');
+    applyModValueToElements(layers, spinValueRef.current);
+  }, []);
 
   // Render display setting icons
   const icons = [IconEye, IconRemove, IconInvert, IconFlip, IconBolt, IconCMYK, IconRed, IconBlue, IconGreen];
@@ -105,6 +125,8 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
             break;
           case 'spin':
             newMod = newMod.slice(0, 9) + value.toString().padStart(3, '0') + newMod.slice(12);
+            handleModNumberChange(newMod);
+            adjustAnimationState();
             break;
           case 'tint':
             newMod = newMod.slice(0, 12) + value.toString() + (value === 0 ? "00" : newMod.slice(13));
@@ -118,7 +140,7 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
         handleModNumberChange(newMod);
       }
     }
-  }, [isLocked, editorMod, dispatch, sliderValues.tint, handleModNumberChange]);
+  }, [isLocked, editorMod, dispatch, sliderValues.tint, handleModNumberChange, adjustAnimationState]);
 
   // Handle attunement change via text input
   const handleAttunementChange = React.useCallback((value: string) => {

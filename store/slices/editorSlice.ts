@@ -2,6 +2,9 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { seedToBits } from "@/lib/utils";
 import { RootState } from '@/store';
 
+
+
+
 // EDITOR STATE DEFINITION -----------------------------
 
 interface EditorState {
@@ -83,11 +86,14 @@ const editorSlice = createSlice({
 
     // Set Editor state with specified values
     setEditorState: (state, action: PayloadAction<{ seed: string; mod: string; attunement: number }>) => {
+      const sanitizedSeed = sanitizeSeed(action.payload.seed);
+      const sanitizedMod = sanitizeMod(action.payload.mod);
+      const sanitizedAttunement = sanitizeAttunement(action.payload.attunement);
       const newState = {
-        editorSeed: action.payload.seed || '0',
-        editorMod: action.payload.mod,
-        editorAttunement: action.payload.attunement,
-        bitsArray: seedToBits(BigInt(action.payload.seed)),
+        editorSeed: sanitizedSeed,
+        editorMod: sanitizedMod,
+        editorAttunement: sanitizedAttunement,
+        bitsArray: seedToBits(BigInt(sanitizedSeed)),
         hasEditorChanges: false,
       };
       pushToHistory(state, newState);
@@ -96,7 +102,7 @@ const editorSlice = createSlice({
 
     // Set Editor seed number
     setEditorSeed: (state, action: PayloadAction<{ seed: string; updateChanges?: boolean }>) => {
-      const sanitizedSeed = action.payload.seed.trim() || '0';
+      const sanitizedSeed = sanitizeSeed(action.payload.seed);
       const newState = {
         editorSeed: sanitizedSeed,
         bitsArray: seedToBits(BigInt(sanitizedSeed)),
@@ -108,18 +114,22 @@ const editorSlice = createSlice({
 
     // Set editor mod number
     setEditorMod: (state, action: PayloadAction<{ modNumber: string; updateChanges: boolean }>) => {
+      const sanitizedMod = sanitizeMod(action.payload.modNumber);
       const newState = {
-        editorMod: action.payload.modNumber,
+        editorMod: sanitizedMod,
+        hasEditorChanges: action.payload.updateChanges,
       };
       pushToHistory(state, newState);
       Object.assign(state, newState);
-      state.actualTintPercentValue = state.tintValue === 0 ? 100 : state.tintPercentValue; // Reset tint% to 100 if tint is 0
+      state.actualTintPercentValue = state.tintValue === 0 ? 100 : state.tintPercentValue;
     },
 
     // Set editor attunement number
     setEditorAttunement: (state, action: PayloadAction<{ attunementNumber: number; updateChanges?: boolean }>) => {
+      const sanitizedAttunement = sanitizeAttunement(action.payload.attunementNumber);
       const newState = {
-        editorAttunement: action.payload.attunementNumber,
+        editorAttunement: sanitizedAttunement,
+        hasEditorChanges: action.payload.updateChanges ?? state.hasEditorChanges,
       };
       pushToHistory(state, newState);
       Object.assign(state, newState);
@@ -294,6 +304,7 @@ const editorSlice = createSlice({
       }
     },
 
+    // Check if selected queue item has edits
     checkEditorMatchesSelectedItem: (state, action: PayloadAction<QueueItem>) => {
       const selectedItem = action.payload;
       if (!selectedItem) {
@@ -318,7 +329,7 @@ const editorSlice = createSlice({
       state.hasEditorChanges = !editorMatchesItem;
     },
 
-    // Revert to previous Editor state
+    // Undo Editor state change
     undo: (state) => {
       if (state.editorHistory.past.length > 0) {
         const previous = state.editorHistory.past.pop()!;
@@ -336,7 +347,7 @@ const editorSlice = createSlice({
       }
     },
 
-    // Revert to previous Editor state
+    // Redo Editor state change
     redo: (state) => {
       if (state.editorHistory.future.length > 0) {
         const next = state.editorHistory.future.pop()!;
@@ -378,6 +389,22 @@ const pushToHistory = (state: EditorState, newState: Partial<EditorState>, force
     state.editorHistory.future = [];
   }
 };
+
+// Sanitize seed number
+function sanitizeSeed(seed: string): string {
+  return seed.replace(/\D/g, '').replace(/^0+/, '') || '0';
+}
+
+// Sanitize mod number
+function sanitizeMod(mod: string): string {
+  const sanitized = mod.replace(/\D/g, '').slice(0, 15);
+  return sanitized.padStart(15, '0');
+}
+
+// Sanitize attunement number
+function sanitizeAttunement(attunement: number): number {
+  return Math.max(0, Math.min(9, Math.floor(attunement)));
+}
 
 // Shuffle an array of bits
 const shuffleArray = (array: number[]) => {

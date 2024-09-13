@@ -2791,6 +2791,10 @@ a {
   display: none;
 }
 
+.navbar-connect .ui-button {
+  min-width: 110px;
+}
+
 .dropdown-toggle {
   padding: 20px 30px 20px 10px;
 }
@@ -3911,6 +3915,7 @@ input::-moz-focus-outer {
   justify-content: space-between;
   align-items: stretch;
   position: relative;
+  z-index: 9999;
 }
 
 .svg-container {
@@ -3921,6 +3926,16 @@ input::-moz-focus-outer {
   top: 0;
   overflow: hidden;
   box-shadow: 0 2px 5px 1px rgba(54, 54, 54, 0.12);
+  z-index: 9999;
+  transition:transform 1s 0.25s, box-shadow 1s 0.25s;
+}
+
+.svg-container:hover {
+  transform: scale3d(1.005, 1.005, 1);
+}
+
+body.lightbox .svg-container {
+  transform: scale3d(1.2, 1.2, 1);
 }
 
 .svg-aspect-ratio {
@@ -3946,6 +3961,7 @@ input::-moz-focus-outer {
   justify-content: space-between;
   display: flex;
   position: relative;
+  z-index:-1;
 }
 
 .seed-indicator {
@@ -4329,7 +4345,7 @@ ul li + li.set::after {
 }
 
 li.queue-item.selected .queue-lock.locked {
-  opacity: 0.2;
+  opacity: 1;
   background-image:
   url("/icons/seeds-editor-icons_lock_white.svg");
 }

@@ -1,44 +1,15 @@
 "use client";
-import { useEffect } from "react";
-import { useArtwork, useSeed } from "@/context";
+import React, { useEffect, useRef } from 'react';
 import { useArtworkHotkeys } from "@/hooks";
 
 interface ArtworkProps {
-  seed: BigInt;
+  seed: string;
+  mod: string;
+  attunement: number;
 }
 
 const Artwork = ({ seed }: ArtworkProps) => {
   useArtworkHotkeys(seed);
-
-  const { generateTempUrl } = useArtwork();
-  const { savedSeeds, setSavedSeeds } = useSeed();
-
-  useEffect(() => {
-    //
-    const fetchData = async () => {
-      let seedsWithUrls = await Promise.all(
-        savedSeeds.map(async (seed) => {
-          if (!seed.url) {
-            const url = await generateTempUrl({
-              width: 143,
-              height: 190.66,
-              seed: seed.seed,
-            });
-            return { seed: seed.seed, url };
-          } else {
-            return seed;
-          }
-        })
-      );
-
-      setSavedSeeds(seedsWithUrls);
-    };
-
-    if (savedSeeds.some((i) => !i.url)) {
-      fetchData();
-    }
-  }, [savedSeeds, generateTempUrl, setSavedSeeds]);
-
   const currentDate = new Date();
 
   return (

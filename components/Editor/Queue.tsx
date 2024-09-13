@@ -1,5 +1,4 @@
 import { useMemo, useCallback } from 'react';
-import { FixedSizeList as List } from 'react-window';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import {
   getQueueItemsForRendering,
@@ -10,6 +9,11 @@ import {
 } from '@/store/slices/queueSlice';
 import { setShowInscribeModal } from '@/store/slices/modalSlice';
 import { selectElementContents, clearSelection } from '@/lib/utils';
+
+
+
+
+//======================================================//
 
 const Queue: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -58,6 +62,8 @@ const Queue: React.FC = () => {
       dispatch(setShowInscribeModal(true));
     }
   }, [dispatch, isQueueModified]);
+
+  // STRUCTURE -----------------------------------------
 
   return (
     <div className="queue-container">

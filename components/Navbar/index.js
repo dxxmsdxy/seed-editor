@@ -9,6 +9,11 @@ import { MenuMobileContent, MenuMobileTrigger } from "./MenuMobile";
 
 import { DropdownMenu } from "@/components/UI/dropdownMenu";
 
+
+
+
+//======================================================//
+
 export const Navbar = () => {
   const dispatch = useDispatch();
   const { connected, loading, error } = useSelector((state) => state.wallet);

@@ -1,5 +1,13 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { initializeQueue, updateQueueOrder } from './queueSlice';
+import { initializeQueue, updateQueueOrder, selectNextUnsetQueueItemThunk } from './queueSlice';
+import {
+  toggleLayersUI, toggleDisplaySettings,
+} from '@/store/slices/editorSlice';
+
+
+
+
+//======================================================//
 
 // Define the structure of the wallet state
 interface WalletState {
@@ -41,6 +49,9 @@ export const connectWalletAndLoadData = createAsyncThunk(
       const transformedData = transformWalletData(data);
       await dispatch(initializeQueue(transformedData));
       await dispatch(updateQueueOrder());
+      await dispatch(toggleLayersUI(false));
+      await dispatch(toggleDisplaySettings(false));
+      await dispatch(selectNextUnsetQueueItemThunk());
       
       return transformedData;
     } catch (error) {

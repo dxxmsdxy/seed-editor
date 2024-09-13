@@ -1,50 +1,28 @@
 "use client";
 import { useRef, useCallback, useEffect } from "react";
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
-import useLoading from '@/hooks/useLoading';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 
-// IMPORTED LOGIC & COMPONENTS ----------------------------
-
+import Artwork from "@/components/Artwork";
 import Queue from '@/components/Editor/Queue';
 import { BitsArray } from "@/components/Editor/LayersUI";
 import DisplaySettings from '@/components/Editor/DisplaySettingsUI';
-import Artwork from "@/components/Artwork";
 import InscribeModal from "@/components/Editor/InscribeModal";
+
+import { setEditorState, setEditorSeed, updateHasEditorChanges, resetEditorState, resetEditorSeed, toggleBit, randomizeBits, undo, redo, selectLayersUIToggled, selectDisplaySettingsToggled, toggleLayersUI, toggleDisplaySettings, checkEditorMatchesSelectedItem } from '@/store/slices/editorSlice';
+import { initializeQueue, getSetQueueItems, setSelectedIndex, updateQueueItem } from '@/store/slices/queueSlice';
 import { setShowInscribeModal } from '@/store/slices/modalSlice';
-import {
-  initializeQueue,
-  getSetQueueItems,
-  setSelectedIndex,
-  updateQueueItem,
-} from '@/store/slices/queueSlice';
-import {
-  setEditorState,
-  setEditorSeed,
-  updateHasEditorChanges,
-  resetEditorState,
-  resetEditorSeed,
-  toggleBit,
-  randomizeBits,
-  undo,
-  redo,
-  selectLayersUIToggled,
-  selectDisplaySettingsToggled,
-  toggleLayersUI,
-  toggleDisplaySettings,
-  checkEditorMatchesSelectedItem,
-} from '@/store/slices/editorSlice';
 import { selectElementContents, clearSelection } from '@/lib/utils';
 
-// PAGE LOGIC ---------------------------------------------
+
+
+//=================================================//
 
 export default function Home() {
   const dispatch = useAppDispatch();
-  const { isLoading, withLoading } = useLoading();
 
-  // REDUX STATE ------------------------------------------
+  // REDUX STATE -------------------------------------
 
   const {
     seed, bitsArray, modNumber, attunementNumber,
@@ -57,11 +35,11 @@ export default function Home() {
   const layersUIToggled = useSelector(selectLayersUIToggled);
   const displaySettingsToggled = useSelector(selectDisplaySettingsToggled);
 
-  // REFS -------------------------------------------------
+  // REFS --------------------------------------------
 
   const inputRef = useRef<HTMLDivElement>(null);
 
-  // CALLBACKS --------------------------------------------
+  // CALLBACKS ---------------------------------------
 
   // Enable the Editor's seed reset button
   const enableSeedResetButton = useCallback(() => {
@@ -89,16 +67,12 @@ export default function Home() {
     let seedToReset: string;
     if (selectedQueueIndex === null) {
       seedToReset = '0';
+      dispatch(resetEditorSeed(seedToReset));
     } else {
       const selectedItem = queueItems[selectedQueueIndex];
       seedToReset = selectedItem.seed;
-    }
-  
-    dispatch(resetEditorSeed(seedToReset));
-  
-    // Check if editor matches selected queue item
-    if (selectedQueueIndex !== null) {
-      const selectedItem = queueItems[selectedQueueIndex];
+      // Check if editor matches selected queue item
+      dispatch(resetEditorSeed(seedToReset));
       dispatch(checkEditorMatchesSelectedItem(selectedItem));
     }
   }, [dispatch, selectedQueueIndex, queueItems, isSelectedItemLocked]);
@@ -128,14 +102,14 @@ export default function Home() {
     }
   }, [selectedQueueIndex, seed]);
 
-  // EVENT HANDLERS ---------------------------------------
+  // EVENT HANDLERS ----------------------------------
 
   // Update the Editor's seed number via the seed input
   const handleSeedInputChange = useCallback((updatedSeed: string) => {
-  if (!isSelectedItemLocked()) {
-    dispatch(setEditorSeed({ seed: updatedSeed, updateChanges: true }));
-  }
-}, [dispatch, isSelectedItemLocked]);
+    if (!isSelectedItemLocked()) {
+      dispatch(setEditorSeed({ seed: updatedSeed, updateChanges: true }));
+    }
+  }, [dispatch, isSelectedItemLocked]);
 
   // Randomize the Editor's seed number
   const handleRandomizeBits = () => {
@@ -151,7 +125,7 @@ export default function Home() {
     }
   };
   
-  // EFFECTS ----------------------------------------------
+  // EFFECTS -----------------------------------------
 
   // Add event listeners editor elements
   useEffect(() => {
@@ -236,7 +210,7 @@ export default function Home() {
 
 
 
-  // STRUCTURE --------------------------------------------
+  // STRUCTURE ---------------------------------------
 
   return (
     <>
@@ -263,6 +237,12 @@ export default function Home() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
+                    if (!isSelectedItemLocked()) {
+                      const updatedSeed = e.currentTarget.textContent || '';
+                      handleSeedInputChange(updatedSeed);
+                      e.currentTarget.textContent = updatedSeed.trim() || '0';
+                      clearSelection();
+                    }
                     e.currentTarget.blur();
                   }
                 }}

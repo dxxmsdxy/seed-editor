@@ -4,6 +4,11 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { seedToBits } from '@/lib/utils';
 
+
+
+
+//======================================================//
+
 // Initial bit state
 export type Bit = {
   bit: boolean;
@@ -55,6 +60,7 @@ export const BitsArray = ({ toggleBit }: { toggleBit: (index: number) => void })
   const updateSelection = () => !activeSelection && setActiveSelection(true);
   const endSelection = () => setActiveSelection(false);
 
+  // Return structure for the LayersUI grid
   return (
     <div className="z-layout-grid grid">
       {bitsArray.map((bit, index) => (

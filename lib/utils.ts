@@ -1,10 +1,16 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+
+
+
+//===================================================//
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Convert bit array to a seed number
 export const bitsToSeed = (bitsArray: number[]) => {
   let seed = BigInt(0);
   for (let i = 0; i < bitsArray.length; i++) {
@@ -15,7 +21,10 @@ export const bitsToSeed = (bitsArray: number[]) => {
   return seed;
 };
 
-// Helper functions
+// Convert a string to a BigInt
+const stringToBigInt = (str) => BigInt(str.replace(/[^0-9]/g, '') || 0);
+
+// Select all input contents
 export function selectElementContents(element: HTMLElement) {
   const range = document.createRange();
   range.selectNodeContents(element);
@@ -26,6 +35,7 @@ export function selectElementContents(element: HTMLElement) {
   }
 }
 
+// Clear input selection
 export function clearSelection() {
   if (window.getSelection) {
     window.getSelection()?.removeAllRanges();

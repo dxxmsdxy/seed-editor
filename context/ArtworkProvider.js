@@ -1,11 +1,15 @@
 "use client";
 import React, { createContext, useContext } from "react";
-
-import { PREVIEW_RES_WIDTH, PREVIEW_RES_HEIGHT } from "@/constants";
-
 import { updateSVGWithSeed } from "@/lib/utils/artwork/updateSVGWithSeed";
 import { svgString } from "@/lib/utils/artwork/svgString";
 import { styleString } from "@/lib/utils/artwork/styleString";
+
+import { PREVIEW_RES_WIDTH, PREVIEW_RES_HEIGHT } from "@/constants";
+
+
+
+//===================================================//
+
 const ArtworkContext = createContext();
 
 export const ArtworkProvider = ({ children }) => {
