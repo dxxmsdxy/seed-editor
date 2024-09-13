@@ -7,6 +7,10 @@ import { Navbar } from "@/components/Navbar";
 import { Inconsolata } from "next/font/google";
 import "./globals.css";
 
+
+
+//====================================================//
+
 const inconsolata = Inconsolata({
   weight: ["400", "600", "700"],
   subsets: ["latin"],
@@ -14,7 +18,7 @@ const inconsolata = Inconsolata({
 
 export const metadata: Metadata = {
   title: "SEEDS",
-  description: "Generative Art",
+  description: "9,999 code-based artworks inscribed forever on the Bitcoin blockchain.",
 };
 
 export default function RootLayout({

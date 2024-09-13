@@ -6,7 +6,6 @@ import { connectWalletAndLoadData, disconnectWalletAndClearQueue } from '@/store
 import { initializeQueue } from '@/store/slices/queueSlice';
 import { MenuDesktop } from "./MenuDesktop";
 import { MenuMobileContent, MenuMobileTrigger } from "./MenuMobile";
-
 import { DropdownMenu } from "@/components/UI/dropdownMenu";
 
 

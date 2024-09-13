@@ -5,7 +5,7 @@ import { RootState } from '@/store';
 
 
 
-// EDITOR STATE DEFINITION -----------------------------
+// EDITOR STATE DEFINITION ----------------------------
 
 interface EditorState {
   seed: string;
