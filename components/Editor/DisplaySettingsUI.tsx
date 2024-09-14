@@ -162,7 +162,7 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
   // STRUCTURE -------------------------------------
 
   return (
-    <div className="display-settings-wrap show">
+    <div>
       {/* Attunement selector */}
       <div className={`attunement-selector ${editorAttunement === 0 ? 'default' : ''}`}>
         <div className="attune-nav prev" onClick={() => !isLocked && dispatch(setEditorAttunement({ attunementNumber: (editorAttunement - 1 + 10) % 10, updateChanges: true }))}>

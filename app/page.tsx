@@ -211,16 +211,31 @@ export default function Home() {
   useEffect(() => {
     const handleDoubleClickOutside = (event: MouseEvent) => {
       const editorWrapper = document.querySelector('.editor-inner');
+      const seedOverlay = document.querySelector('.seed-overlay');
       if (editorWrapper && (!editorWrapper.contains(event.target as Node) || event.target === editorWrapper)) {
         dispatch(setSelectedIndex(null));
         dispatch(resetEditorState());
+
+        setShowSvgOverlay(false);
       }
     };
 
     document.addEventListener('dblclick', handleDoubleClickOutside);
     return () => document.removeEventListener('dblclick', handleDoubleClickOutside);
-  }, [dispatch]);
+  }, [setShowSvgOverlay, dispatch]);
 
+  // Toggle changes flag on Editor element
+  useEffect(() => {
+    const editorElement = document.querySelector('.editor');
+    if (editorElement) {
+      if (hasEditorChanges) {
+        editorElement.classList.add('unsaved-changes');
+      } else {
+        editorElement.classList.remove('unsaved-changes');
+      }
+    }
+  }, [hasEditorChanges]);
+  
   // Hide Display Settings when the seed is "0"
   useEffect(() => {
     const selectedItem = queueItems[selectedQueueIndex];
@@ -405,10 +420,10 @@ export default function Home() {
                       <div className="seed-overlay-inner">
                         <div class="seed-overlay-header-wrap">
                           <div className="seed-overlay-header">
-                            SEEDS
+                            SEED<span>(Draft)</span>
                           </div>
                           <div className="overlay-description">
-                            Art is the future.
+                            #0
                           </div>
                         </div>  
                         <div className="seed-overlay-metadata">

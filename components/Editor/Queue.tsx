@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import {
   getQueueItemsForRendering,
@@ -21,7 +21,7 @@ const Queue: React.FC = () => {
   const { items: queueItems, selectedIndex: selectedQueueIndex, currentPage, itemsPerPage } = useAppSelector((state) => state.queue);
   const isQueueModified = useAppSelector(state => state.queue.items.some(item => item.isSet));
 
-  
+
   // DERIVED STATE ---------------------------------
 
   const totalPages = Math.ceil(queueItemsForRendering.length / itemsPerPage);
@@ -29,6 +29,14 @@ const Queue: React.FC = () => {
   const endIndex = Math.min(startIndex + itemsPerPage, queueItemsForRendering.length);
 
   const memoizedQueueItems = useMemo(() => queueItemsForRendering.slice(startIndex, endIndex), [queueItemsForRendering, startIndex, endIndex]);
+
+  const getDividerIndex = useCallback((items: typeof memoizedQueueItems) => {
+    const lastSetItemIndex = items.findLastIndex(item => item.isSet);
+    return lastSetItemIndex + 1;
+  }, []);
+
+  const dividerIndex = useMemo(() => getDividerIndex(memoizedQueueItems), [memoizedQueueItems, getDividerIndex]);
+
 
 
   // EVENT HANDLERS --------------------------------
@@ -114,12 +122,13 @@ const Queue: React.FC = () => {
         </div>
       </div>
       <ul role="list" className="queue-list">
-        {queueItemsForRendering.slice(startIndex, endIndex).map((item) => (
-          <li
-            className={`queue-item ${item.isSelected ? "selected" : ""} ${item.isSet ? 'set' : ''}`}
-            key={item.index}
-            onClick={() => handleQueueItemSelect(item.index)}
-          >
+      {memoizedQueueItems.map((item, index) => (
+          <React.Fragment key={item.index}>
+            {index === dividerIndex && <span className="queue-divider"></span>}
+            <li
+              className={`queue-item ${item.isSelected ? "selected" : ""} ${item.isSet ? 'set' : ''}`}
+              onClick={() => handleQueueItemSelect(item.index)}
+            >
             <div className={`queued-seed-number`}>
               <span 
                 className={`queue-lock ${item.locked ? 'locked' : ''} ${item.isSeedZero ? 'disabled' : ''}`}
@@ -136,7 +145,8 @@ const Queue: React.FC = () => {
                 onClick={(e) => handleQueueItemReset(e, item.index)}
               ></span>
             </div>
-          </li>
+            </li>
+          </React.Fragment>
         ))}
       </ul>
       <a

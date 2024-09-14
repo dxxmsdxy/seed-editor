@@ -2337,8 +2337,8 @@ a {
 .ui-button.select.disabled {
   opacity: 0.1;
   cursor: default;
-  transition: opacity 0.5s ease-in-out, color 0.2s ease-in-out,
-    background-color 0.2s ease-in-out;
+  transition: opacity 0.5s ease-in-out, color 0.4s ease-in-out,
+    background-color 0.4s ease-in-out, border-color 0.4s;
 }
 
 .ui-button.reset-button {
@@ -2440,6 +2440,7 @@ a {
   box-sizing: border-box;
   transition: opacity 0.5s, background-color 0.5s;
   pointer-events:none;
+  z-index: -1;
 }
 
 body:has(.theme-bkg) {
@@ -2804,7 +2805,7 @@ body:has(.theme-bkg) {
 }
 
 .navbar-connect .ui-button {
-  min-width: 110px;
+  min-width: 120px;
 }
 
 .dropdown-toggle {
@@ -2956,6 +2957,7 @@ body:has(.theme-bkg) {
 
 .attune-nav,
 .page-nav {
+  color: #000;
   background-color: #0000000d;
   justify-content: center;
   align-self: center;
@@ -3029,6 +3031,7 @@ body:has(.theme-bkg) {
 .mod-label, .mod-reset {
   position: absolute;
   font-size:15px;
+  color: #000;
 }
 
 .mod-label {
@@ -3057,6 +3060,7 @@ body:has(.theme-bkg) {
   outline: none;
   padding: 5px 7px;
   text-overflow: ellipsis;
+  color: #000;
   background-color: #e6e6e600;
   text-align: center;
   letter-spacing: 2px;
@@ -4169,27 +4173,34 @@ ul li + li.set::after {
   opacity:1;
 }
 
-.set-queue-items-label {
-  display:block;
-  position:absolute;
+.queue-divider {
+  display: none;
+  justify-content: center;
+  align-content: center;
+  justify-items: center;
+  align-items: center;
   bottom:100%;
-  left:-2px;
-  padding:0 5px;
-  z-index: -1;
   background-color: #000;
-  border: 2px solid #000000;
   box-sizing:content-box;
   color:#fff;
-  height:20px;
-  width:calc(100% - 10px);
+  width:100%;
+  padding: 4px 0;
+  margin-top:12px;
   letter-spacing: 2px;
   text-align: center;
   font-weight: 700;
-  font-size:0.85em;
-  transform: translate3d(0, 5px, 0);
+  font-size:0.8em;
+  line-height:0.8em;
   transition: transform 1s, opacity 0.5s 0.2s;
-  opacity: 0;
   pointer-events: none;
+}
+.queue-divider::before {
+  content:"Queued";
+  display: inline-block;
+}
+
+.queue-container:has(.queue-item.set) .queue-divider {
+  display: flex;
 }
 
 .queue-container:has(.page-selector:not(.disabled)) .queue-item:last-child {
@@ -4742,6 +4753,15 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   left: 0;
   right: 0;
   bottom: 0;
+  box-sizing: border-box;
+  transform: scale3d(1.01, 1.01, 1.01);
+  overflow: hidden;
+  border-radius: 7px;
+}
+
+.editor .artwork-preview #seedsArtwork {
+  overflow: hidden;
+  border-radius: 6px;
 }
 
 .seed-overlay {
@@ -4773,7 +4793,7 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
 }
 
 .seed-overlay-wrapper:hover .seed-overlay {
-  transition: opacity 0.5s 0.3s, transform 0.5s 0.3s;
+  transition: opacity 0.5s 0.3s ease-in-out, transform 0.5s 0.3s ease-in-out;
 }
 
 .seed-overlay.focused {
@@ -4783,7 +4803,6 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
 .seed-overlay.show {
   opacity: 1;
   transform: translate(0, 0px);
-  pointer-events: auto;
 }
 
 .toggle-overlay-wrapper {
@@ -4812,7 +4831,7 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   text-align: center;
   letter-spacing: 2px;
   text-transform: none;
-  transition: background-color 0.3s, border-color 0.3s, color 0.3s, opacity 0.3s;
+  transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
   cursor: pointer;
   opacity: 0;
 }
@@ -4873,11 +4892,35 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
 }
 
 .seed-overlay-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+  justify-items: start;
+  align-content: start;
+  align-items: start;
   width: 100%;
   font-size: 24px;
   line-height: 24px;
   letter-spacing: 4px;
   margin-bottom:7px;
+}
+
+.seed-overlay-header span {
+  align-self: center;
+  font-size: 0.5em;
+  line-height: 0.5em;
+  letter-spacing: 2px;
+  margin-left: 6px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+body:has(.editor.unsaved-changes) .seed-overlay-header span {
+  opacity:0.5;
+}
+
+.overlay-description {
+  opacity: 0.4;
 }
 
 .overlay-actions-container,
@@ -4890,7 +4933,7 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   width: 100%;
   margin-bottom:15px;
   padding: 0;
-  transition: border-color .2s, opacity .3s ease-in-out;
+  transition: border-color .2s ease-in-out, opacity .3s ease-in-out;
 }
 
 .metadata-list-container {
@@ -4969,15 +5012,15 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
 }
 
 .svg-container:hover {
-  box-shadow: 0 0 0 6px rgba(150, 150, 150, 0.15), 0 3px 18px 2px rgba(24, 24, 24, 0.234)
+  box-shadow: 0 0 0 6px rgba(20, 20, 20, 0.05), 0 3px 18px 2px rgba(14, 14, 14, 0.234)
 }
 
 .svg-container:active {
-  box-shadow: 0 0 0 0px rgba(150, 150, 150, 0), 0 3px 18px 2px rgba(24, 24, 24, 0.234)
+  box-shadow: 0 0 0 0px rgba(20, 20, 20, 0), 0 3px 18px 2px rgba(14, 14, 14, 0.234)
 }
 
 body:has(.seed-overlay.focused) .svg-container:hover {
-  box-shadow: 0 0 0 6px rgba(150, 150, 150, 0), 0 3px 18px 2px rgba(24, 24, 24, 0.234)
+  box-shadow: 0 0 0 6px rgba(20, 20, 20, 0), 0 3px 18px 2px rgba(14, 14, 14, 0.234)
 }
 
 .seed-overlay,
@@ -4985,14 +5028,17 @@ body:has(.seed-overlay.focused) .svg-container:hover {
   pointer-events:none;
 }
 
+.set-queue-item-container,
 body:has(.seed-overlay.focused) .ui-button,
 body:has(.seed-overlay.focused) .seed-input,
 body:has(.seed-overlay.focused) .seed-label,
 body:has(.seed-overlay.focused) .reset-seed-button {
-  transition: border-color 0.4s 0.4s, color 0.4s 0.4s, background-color 0.4s 0.4s;
+  transition: border-color 0.4s 0.4s ease-in-out, color 0.4s 0.4s ease-in-out, background-color 0.4s 0.4s ease-in-out;
 }
 
-body:has(.seed-overlay.focused) .seed-input::selection {
+body:has(.seed-overlay.focused) .seed-input::selection,
+body:has(.seed-overlay.focused) .mod-input::selection,
+body:has(.seed-overlay.focused) .attunement-input::selection {
   color:#000;
   background-color: #fff;
 }
@@ -5000,12 +5046,15 @@ body:has(.seed-overlay.focused) .seed-input::selection {
 .app-pane.left {
   transition: transform 0.5s 0.3s;
 }
+
 body:has(.seed-overlay.focused) .app-pane.left {
-  transform: translate(-4vw,0);
+  transform: translate(-1vw,0);
 }
 
-body:has(.seed-overlay.focused) .ui-button.advanced {
-  display:none;
+
+body:has(.seed-overlay.focused):has(.layer-grid-wrap.show) .app-pane.left,
+body:has(.seed-overlay.focused):has(.display-settings-wrap.show) .app-pane.left {
+  transform: translate(-4vw,0);
 }
 
 body:has(.seed-overlay.focused) .btn-layer:hover {
@@ -5013,12 +5062,16 @@ body:has(.seed-overlay.focused) .btn-layer:hover {
   color: #000;
 }
 
-body:has(.seed-overlay.focused) .btn-layer:active{
+body:has(.seed-overlay.focused) .btn-layer:active {
   background-color: #000;
   color: #fff;
 }
 
-.navbar {
+body:has(.seed-overlay.focused):has(.layer-grid-wrap.show) .btn-layer,
+body:has(.seed-overlay.focused):has(.layer-grid-wrap.show) .grid {
+}
+
+.navbar, .nav-menu *, .select-icon {
   transition: opacity 1s
 }
 
@@ -5027,8 +5080,11 @@ body:has(.seed-overlay.focused) .btn-layer:active{
   pointer-events:auto
 }
 
-body:has(.seed-overlay.focused) .navbar {
+body:has(.seed-overlay.focused) .nav-menu *,
+body:has(.seed-overlay.focused) .ui-button,
+body:has(.seed-overlay.focused) .select-icon {
   opacity: 0;
+  pointer-events: none;
 }
 
 body:has(.seed-overlay.focused) .svg-container {
@@ -5050,32 +5106,44 @@ body:has(.seed-overlay.focused) .reset-seed-button {
   color: #fff;
   opacity: 1;
 }
+.queue-container,
+.app-pane.right {
+  transition: transform 0.5s .3s, opacity 0.5s 0.3s
+}
 
 .editor-inner {pointer-events: none}
-body:has(.seed-overlay.focused) .app-pane.right,
-body:has(.seed-overlay.focused) .queue-container {
+body:has(.display-settings-wrap.show) .queue-container,
+body:has(.display-settings-wrap.show) .app-pane.right,
+body:has(.layer-grid-wrap.show) .app-pane.right,
+body:has(.layer-grid-wrap.show) .queue-container {
   pointer-events: none;
   opacity: 0;
+  transition: transform 0s, opacity 0s
 }
-body:has(.seed-overlay.focused) .basic-actions a {
+body:has(.seed-overlay.focused) .basic-actions .mod-button {
   opacity: 0;
   pointer-events: none;
+  display: none;
 }
 
-body:has(.seed-overlay.focused) .basic-actions .randomize{
+body:has(.seed-overlay.focused) .ui-button.advanced {
+  
+}
+
+body:has(.seed-overlay.focused) .basic-actions .ui-button {
   pointer-events: auto;
   opacity: 1;
 }
-body:has(.seed-overlay.focused) .basic-actions .randomize {
+body:has(.seed-overlay.focused) .basic-actions .ui-button {
   transition: border-color 0.4s, color 0.4s, background-color 0.4s;
 }
 
-body:has(.seed-overlay.focused) .basic-actions .randomize:hover {
+body:has(.seed-overlay.focused) .basic-actions .ui-button:hover {
   color: #fff;
   border-color: #fff;
 }
 
-body:has(.seed-overlay.focused) .basic-actions .randomize:active {
+body:has(.seed-overlay.focused) .basic-actions .ui-button:active {
   background-color: #fff;
   color: #000;
   border-color: #000;

@@ -186,6 +186,22 @@ export default function Info() {
           </div>
         </div>
       </section>
+      <section className="pane">
+        <div className="pane-wrapper">
+          <div className="content">
+            <h1 id="build">Planting SEEDS</h1>
+            <img src="/dxxm-seeds-branching.png" loading="lazy" className="content-image" style={{ borderRadius:'0px'}}/>
+            <p>Owners of SEEDS inscriptions can influence external systems by changing their seed number because builders make code that reacts to the collection's ever-changing on-chain seed numbers.</p>
+            <p>Anyone can incorporate code that checks a SEEDS inscription's latest seed number. After fetching that number, you can use it to do whatever you like.</p>
+            <p>Replace the placeholders in this script with your OrdinalsBot API key and inscription ID, and build something that reacts to your seed inscription's on-chain seed number.</p>
+            <div className="docs-button-wrapper">
+              <div className="cta-button-wrapper">
+                <a href="https://docs.seed.gallery/resources/builder-guide" target="_blank" className="ui-button main">📔 Learn more</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
       <section className="pane footer">
         <div className="pane-wrapper">
           <div className="content">
