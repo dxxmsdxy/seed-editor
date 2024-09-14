@@ -1,33 +1,23 @@
 import React, { useCallback, useMemo, useRef, useEffect } from 'react';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { debounce } from 'lodash';
-import { 
-  setEditorMod, 
-  setEditorAttunement,
-  updateSliderValue,
-} from '@/store/slices/editorSlice';
+import { setEditorMod, setEditorAttunement, updateSliderValue } from '@/store/slices/editorSlice';
 import RangeSlider from './RangeSlider';
-import IconEye from "@/public/icons/seeds-editor-icons_eye.svg";
-import IconRemove from "@/public/icons/seeds-editor-icons_remove.svg";
-import IconInvert from "@/public/icons/seeds-editor-icons_invert.svg";
-import IconFlip from "@/public/icons/seeds-editor-icons_flip.svg";
-import IconBolt from "@/public/icons/seeds-editor-icons_bolt.svg";
-import IconCMYK from "@/public/icons/seeds-editor-icons_cmyk.svg";
-import IconRed from "@/public/icons/seeds-editor-icons_red.svg";
-import IconBlue from "@/public/icons/seeds-editor-icons_blue.svg";
-import IconGreen from "@/public/icons/seeds-editor-icons_green.svg";
+const iconContext = require.context('@/public/icons/settings', false, /seeds-editor-icons_.*\.svg$/);
+const icons = iconContext.keys().map(iconContext);
 import { applyModValueToElements } from '@/lib/utils/artwork/updateSVGWithMod';
 import { selectElementContents, clearSelection } from '@/lib/utils';
 
 
 
 
-//=================================================//
+//================================================//
 
 interface DisplaySettingsProps {
   isLocked: boolean;
   selectedQueueIndex: number | null;
 }
+
 
 // COMPONENT LOGIC ---------------------------------
 
@@ -68,7 +58,6 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
   }, []);
 
   // Render display setting icons
-  const icons = [IconEye, IconRemove, IconInvert, IconFlip, IconBolt, IconCMYK, IconRed, IconBlue, IconGreen];
   const renderDisplaySettingIcons = () => icons.map((Icon, index) => (
     <a
       key={index}
@@ -76,7 +65,7 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
       className={`btn-display-setting ${displaySettings & (1 << (8 - index)) ? 'selected' : ''}`}
       onClick={() => handleDisplaySettingToggle(index)}
     >
-      <Icon />
+      <Icon.default /> {/* Note the .default here */}
     </a>
   ));
 
@@ -170,7 +159,7 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
 
 
 
-  // STRUCTURE -------------------------------------------
+  // STRUCTURE -------------------------------------
 
   return (
     <div className="display-settings-wrap show">

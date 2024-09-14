@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useCallback, useEffect } from "react";
+import { useRef, useCallback, useEffect, useState } from "react";
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
@@ -17,12 +17,14 @@ import { selectElementContents, clearSelection } from '@/lib/utils';
 
 
 
+
 //=================================================//
 
 export default function Home() {
   const dispatch = useAppDispatch();
 
-  // REDUX STATE -------------------------------------
+
+  // REDUX STATE ------------------------------------
 
   const {
     seed, bitsArray, modNumber, attunementNumber,
@@ -35,11 +37,19 @@ export default function Home() {
   const layersUIToggled = useSelector(selectLayersUIToggled);
   const displaySettingsToggled = useSelector(selectDisplaySettingsToggled);
 
-  // REFS --------------------------------------------
+
+  // REFS -------------------------------------------
 
   const inputRef = useRef<HTMLDivElement>(null);
 
-  // CALLBACKS ---------------------------------------
+  const [isSvgOverlayFocused, setIsSvgOverlayFocused] = useState(false);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const svgOverlayRef = useRef<HTMLDivElement>(null);
+  const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [showSvgOverlay, setShowSvgOverlay] = useState(false);
+
+
+  // CALLBACKS --------------------------------------
 
   // Enable the Editor's seed reset button
   const enableSeedResetButton = useCallback(() => {
@@ -95,21 +105,71 @@ export default function Home() {
     }
   }, [selectedQueueIndex, hasEditorChanges, editorSeed, editorMod, editorAttunement, dispatch]);
 
-  // Trigger selection of the next unset queue item
+  // React to user interaction with the Editor UI
   const handleEditorInteraction = useCallback(() => {
     if (selectedQueueIndex === null && seed !== BigInt(0)) {
       // dispatch(selectNextUnsetQueueItemThunk());
     }
   }, [selectedQueueIndex, seed]);
 
-  // EVENT HANDLERS ----------------------------------
+  // Handle SVG overlay interactions
+  const handleSvgOverlayInteraction = useCallback(() => {
+    const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+      // Only toggle if the click is directly on the seed-overlay, not its children
+      if (event.target === event.currentTarget) {
+        setIsSvgOverlayFocused(prevState => !prevState);
+      }
+    };
+
+    const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+      // Only start the timer if the mousedown is directly on the seed-overlay
+      if (event.target === event.currentTarget) {
+        clickTimerRef.current = setTimeout(() => {
+          clickTimerRef.current = null;
+        }, 500);
+      }
+    };
+
+    const handleMouseUp = (event: React.MouseEvent<HTMLDivElement>) => {
+      // Only process if the mouseup is directly on the seed-overlay
+      if (event.target === event.currentTarget) {
+        if (clickTimerRef.current) {
+          clearTimeout(clickTimerRef.current);
+          handleClick(event);
+        }
+      }
+      event.stopPropagation();
+    };
+
+    return {
+      onMouseDown: handleMouseDown,
+      onMouseUp: handleMouseUp,
+      onClick: (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation(),
+      onDoubleClick: (event: React.MouseEvent<HTMLDivElement>) => {
+        // Only toggle if the double-click is directly on the seed-overlay
+        if (event.target === event.currentTarget) {
+          handleClick(event);
+        }
+      },
+    };
+  }, []);
+
+
+  // EVENT HANDLERS ---------------------------------
 
   // Update the Editor's seed number via the seed input
   const handleSeedInputChange = useCallback((updatedSeed: string) => {
-    if (!isSelectedItemLocked()) {
-      dispatch(setEditorSeed({ seed: updatedSeed, updateChanges: true }));
+    if (selectedQueueIndex !== null) {
+      const selectedItem = queueItems[selectedQueueIndex];
+      if (updatedSeed === (selectedItem.newSeed || selectedItem.seed)) {
+        dispatch(setEditorSeed({ seed: updatedSeed, updateChanges: false }));
+      } else if (!isSelectedItemLocked()) {
+        dispatch(setEditorSeed({ seed: updatedSeed, updateChanges: true }));
+      }
+    } else {
+      dispatch(setEditorSeed({ seed: updatedSeed, updateChanges: false }));
     }
-  }, [dispatch, isSelectedItemLocked]);
+  }, [dispatch, isSelectedItemLocked, queueItems, selectedQueueIndex]);
 
   // Randomize the Editor's seed number
   const handleRandomizeBits = () => {
@@ -124,8 +184,14 @@ export default function Home() {
       dispatch(toggleBit(index));
     }
   };
+
+  // Toggle the SVG Overlay element
+  const toggleSvgOverlay = useCallback(() => {
+    setShowSvgOverlay(prev => !prev);
+  }, []);
+
   
-  // EFFECTS -----------------------------------------
+  // EFFECTS ----------------------------------------
 
   // Add event listeners editor elements
   useEffect(() => {
@@ -205,17 +271,35 @@ export default function Home() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [dispatch]);
+  
+  // Handle clicks anywhere in the document
+  useEffect(() => {
+    const handleDocumentClick = (event: MouseEvent) => {
+      const editorElement = editorRef.current;
+      const svgOverlay = svgOverlayRef.current;
+
+      if (!editorElement || !svgOverlay) {return}
+
+      if (!editorElement.contains(event.target as Node)) {
+        setIsSvgOverlayFocused(false);
+        dispatch(toggleLayersUI(false));
+        dispatch(toggleDisplaySettings(false));
+      }
+    };
+
+    document.addEventListener('mousedown', handleDocumentClick);
+    return () => document.removeEventListener('mousedown', handleDocumentClick);
+  }, [dispatch]);
 
 
 
 
-
-  // STRUCTURE ---------------------------------------
+  // STRUCTURE --------------------------------------
 
   return (
     <>
       <div className="editor">
-        <div className="editor-inner">
+        <div className="editor-inner" ref={editorRef}>
           <div className="seed-indicator">
             <div className="seed-touchable">
               <div className="label seed-label">SEED:</div>
@@ -255,7 +339,7 @@ export default function Home() {
             </div>
           </div>
           <>
-            <div className="app-pane">
+            <div className="app-pane left">
               <div style={{ opacity: 1 }} className="basic-actions">
                 <a
                   className={`ui-button randomize z-button ${isSelectedItemLocked() ? 'disabled' : ''}`}
@@ -314,6 +398,83 @@ export default function Home() {
               >
                 <div className="svg-container">
                   <Artwork seed={editorSeed} mod={editorMod} attunement={editorAttunement} />
+                  <div ref={svgOverlayRef} className="seed-overlay-wrapper" {...handleSvgOverlayInteraction()}>
+                    <div
+                      className={`seed-overlay ${isSvgOverlayFocused ? 'focused' : ''} ${showSvgOverlay ? 'show' : ''}`}
+                    >
+                      <div className="seed-overlay-inner">
+                        <div class="seed-overlay-header-wrap">
+                          <div className="seed-overlay-header">
+                            SEEDS
+                          </div>
+                          <div className="overlay-description">
+                            Art is the future.
+                          </div>
+                        </div>  
+                        <div className="seed-overlay-metadata">
+                          <div className="metadata-list-container">
+                            <div className="metadata-title">
+                              Attributes
+                            </div>
+                            <ul className="metadata-list">
+                              <li className="metadata-item">
+                                <span className="metadata-label">
+                                  Kind:
+                                </span>
+                                <span className="metadata-value">
+                                  Genesis
+                                </span>
+                              </li>
+                              <li className="metadata-item">
+                                <span className="metadata-label">
+                                  Attunement:
+                                </span>
+                                <span className="metadata-value">
+                                  Creation
+                                </span>
+                              </li>
+                              <li className="metadata-item">
+                                <span className="metadata-label">
+                                  Bits:
+                                </span>
+                                <span className="metadata-value">
+                                  0
+                                </span>
+                              </li>
+                              <li className="metadata-item">
+                                <span className="metadata-label">
+                                  Cardinal No.:
+                                </span>
+                                <span className="metadata-value">
+                                  0
+                                </span>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                        <div className="overlay-actions">
+                          <div className="overlay-actions-container">
+                            <div className="overlay-actions-title">
+                              D/L
+                            </div>
+                            <ul className="overlay-actions-list">
+                              <li>PNG</li>
+                              <li>SVG</li>
+                              <li>Embed</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="toggle-overlay-wrapper">
+                      <div
+                        className="toggle-details-button"
+                        onClick={toggleSvgOverlay}
+                      >
+                        i
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="set-queue-item-container">

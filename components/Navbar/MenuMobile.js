@@ -67,7 +67,7 @@ export const MenuMobileContent = ({ dropdownOpen }) => {
               <DropdownMenuItem
                 onSelect={(e) => {
                   router.push("/");
-                  document.body.style.background = "#f5f5f5";
+                  document.querySelector('.theme-bkg').style.background = "#f5f5f5";
                 }}
                 className={`dropdown-link z-dropdown-link ${
                   pathname === "/" ? "z--current" : ""
@@ -78,7 +78,7 @@ export const MenuMobileContent = ({ dropdownOpen }) => {
               <DropdownMenuItem
                 onSelect={(e) => {
                   router.push("/collection");
-                  document.body.style.background = "#f5f5f5";
+                  document.querySelector('.theme-bkg').style.background = "#f5f5f5";
                 }}
                 className={`dropdown-link z-dropdown-link ${
                   pathname === "/collection" ? "z--current" : ""
@@ -89,7 +89,7 @@ export const MenuMobileContent = ({ dropdownOpen }) => {
               <DropdownMenuItem
                 onSelect={(e) => {
                   router.push("/info");
-                  document.body.style.background = "#f5f5f5";
+                  document.querySelector('.theme-bkg').style.background = "#f5f5f5";
                 }}
                 className={`dropdown-link z-dropdown-link ${
                   pathname === "/info" ? "z--current" : ""
@@ -100,7 +100,7 @@ export const MenuMobileContent = ({ dropdownOpen }) => {
               <DropdownMenuItem
                 onSelect={(e) => {
                   router.push("/garden");
-                  document.body.style.background = "#f5f5f5";
+                  document.querySelector('.theme-bkg').style.background = "#f5f5f5";
                 }}
                 className={`dropdown-link z-dropdown-link ${
                   pathname === "/garden" ? "z--current" : ""

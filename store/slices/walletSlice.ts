@@ -7,7 +7,7 @@ import {
 
 
 
-//==================================================//
+//=================================================//
 
 // Define the structure of the wallet state
 interface WalletState {

@@ -1,13 +1,10 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
-import { useArtwork, useSeed } from "@/context";
-import { useArtworkHotkeys } from "@/hooks";
+import { useState, useEffect, useRef } from "react";import { calculateMostFrequentNumeral, attunementNames } from "@/lib/utils/artwork/helpers";
 
-import { updateSVGWithSeed } from "@/lib/utils/artwork/updateSVGWithSeed";
-import {
-  calculateMostFrequentNumeral,
-  attunementNames,
-} from "@/lib/utils/artwork/helpers";
+
+
+
+//==================================================//
 
 const ArtworkPreview = ({ seed, imgRef, index }) => {
   const [isFocused, setIsFocused] = useState(index === 0);

@@ -24,8 +24,8 @@ const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems }) => {
     const generateLocalUrls = async () => {
       const updatedItems = await Promise.all(
         queueItems.map(async (item) => {
-          if (item.seed !== '0') {
-            const url = await getArtworkUrls(item.seed);
+          if (item.newSeed !== '0') {
+            const url = await getArtworkUrls(item.newSeed);
             return { ...item, url };
           }
           return item;
@@ -53,15 +53,15 @@ const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems }) => {
       setLoadingIndex((ind) => ind + 1);
 
       const { commit_txid, reveal_txid, inscription_id } = await inscribe(
-        item.seed,
+        item.newSeed,
         wal
       );
 
-      const pngUrl = await getArtworkUrls(item.seed);
+      const pngUrl = await getArtworkUrls(item.newSeed);
       const walletAddress = wal.info[0].address;
 
       const seedObj = {
-        seedNumber: item.seed,
+        seedNumber: item.newSeed,
         pngUrl,
         wallet: walletAddress,
         inscriptionId: inscription_id,
@@ -113,7 +113,7 @@ const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems }) => {
       <div className="modal-inner">
         <h3 className="mint-preview-item-name">
           {queueItems.length === 1
-            ? `Seed: ${queueItems[0].seed}`
+            ? `Seed: ${queueItems[0].newSeed}`
             : `${queueItems.length} seeds`}
         </h3>
         <div
@@ -128,7 +128,7 @@ const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems }) => {
             {itemsWithUrls.map((item, index) => (
               <div
                 className="mint-preview"
-                key={item.seed}
+                key={item.newSeed}
                 style={{
                   width: "143px",
                   opacity: 1,
@@ -156,7 +156,7 @@ const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems }) => {
                         width={143}
                         height={190}
                         src={item.url}
-                        alt={`seed-${item.seed}`}
+                        alt={`seed-${item.newSeed}`}
                       />
                     )}
                   </div>
@@ -194,7 +194,7 @@ const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems }) => {
           <div className="text-block">
             {loading
               ? loadingIndex > 0
-                ? `Inscribing seed ${queueItems[loadingIndex - 1].seed} (${loadingIndex}/${queueItems.length})...`
+                ? `Inscribing seed ${queueItems[loadingIndex - 1].newSeed} (${loadingIndex}/${queueItems.length})...`
                 : "Loading..."
               : "Purchase"}
           </div>

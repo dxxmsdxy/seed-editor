@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
+
+
+
+//================================================//
+
 interface RangeSliderProps {
   name: string;
   value: number;
@@ -12,6 +17,9 @@ interface RangeSliderProps {
   defaultValue?: number;
   checkDefault?: boolean;
 }
+
+
+// COMPONENT LOGIC ---------------------------------
 
 const RangeSlider: React.FC<RangeSliderProps> = React.memo(({
   name, 
@@ -43,6 +51,9 @@ const RangeSlider: React.FC<RangeSliderProps> = React.memo(({
     setIsActive(false);
     onChange(name, localValue, false);
   };
+
+  
+  // STRUCTURE -------------------------------------
 
   return (
     <div className={`setting-slider ${disabled ? 'disabled' : ''} ${isDefault && !isActive ? 'default' : ''}`}>

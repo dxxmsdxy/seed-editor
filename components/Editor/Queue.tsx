@@ -13,7 +13,7 @@ import { selectElementContents, clearSelection } from '@/lib/utils';
 
 
 
-//======================================================//
+//=================================================//
 
 const Queue: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -21,7 +21,8 @@ const Queue: React.FC = () => {
   const { items: queueItems, selectedIndex: selectedQueueIndex, currentPage, itemsPerPage } = useAppSelector((state) => state.queue);
   const isQueueModified = useAppSelector(state => state.queue.items.some(item => item.isSet));
 
-  // DERIVED STATE ----------------------------------------
+  
+  // DERIVED STATE ---------------------------------
 
   const totalPages = Math.ceil(queueItemsForRendering.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -29,7 +30,8 @@ const Queue: React.FC = () => {
 
   const memoizedQueueItems = useMemo(() => queueItemsForRendering.slice(startIndex, endIndex), [queueItemsForRendering, startIndex, endIndex]);
 
-  // EVENT HANDLERS ---------------------------------------
+
+  // EVENT HANDLERS --------------------------------
 
   // Update the queue page with by page number
   const handlePageChange = useCallback((newPage: number) => {
@@ -63,7 +65,8 @@ const Queue: React.FC = () => {
     }
   }, [dispatch, isQueueModified]);
 
-  // STRUCTURE -----------------------------------------
+
+  // STRUCTURE -------------------------------------
 
   return (
     <div className="queue-container">

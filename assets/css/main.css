@@ -2438,6 +2438,12 @@ a {
   position: fixed;
   overflow: hidden;
   box-sizing: border-box;
+  transition: opacity 0.5s, background-color 0.5s;
+  pointer-events:none;
+}
+
+body:has(.theme-bkg) {
+  transition: background-color 1s;
 }
 
 .nav-main {
@@ -2710,10 +2716,15 @@ a {
   padding: 5px 7px;
   font-size: 22px;
   font-weight: 700;
-  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
-  display: block;
+  display: flex;
   overflow: hidden;
   outline: none;
+}
+
+.seed-input,
+.seed-label,
+.reset-seed-button {
+  transition: border-color 0.1s, color 0.2s, background-color 0.2s;
 }
 
 .seed:hover {
@@ -2736,6 +2747,7 @@ a {
   padding-bottom: 5px;
   display: flex;
   position: relative;
+  transition: border-color 1s;
 }
 
 .seed-indicator.mobile {
@@ -3930,14 +3942,6 @@ input::-moz-focus-outer {
   transition:transform 1s 0.25s, box-shadow 1s 0.25s;
 }
 
-.svg-container:hover {
-  transform: scale3d(1.005, 1.005, 1);
-}
-
-body.lightbox .svg-container {
-  transform: scale3d(1.2, 1.2, 1);
-}
-
 .svg-aspect-ratio {
   width: 100%;
   min-height: 70vh;
@@ -4503,19 +4507,19 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
 
 .twitter-tweet {
   display: flex;
-  max-width: 550px;
+  justify-content: center;
   width: 100%;
   margin-top: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 
 #twitter-widget-0 {
   position: static;
   visibility: visible;
   width: 550px;
+  max-width: 100%;
   height: 754px;
   display: block;
-  flex-grow: 1;
 }
 
 .content-image {
@@ -4722,6 +4726,410 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   opacity:0;
 }
 .garden-composition{pointer-events:none}
+
+
+
+
+
+/* --------------- SVG OVERLAY --------------- */
+
+
+.seed-overlay-wrapper {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.seed-overlay {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  grid-column-gap: 10px;
+  justify-content:flex-end;
+  align-items: normal;
+  align-content: normal;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  padding: 40px 40px;
+  background-color: #101010cc;
+  box-shadow: inset 0 -25vh 100px 100px #101010ee, 0 0 100px #101010ee;
+  color: #ffffffee;
+  transition: opacity 0.5s, transform 0.5s;
+  z-index: 10000;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.seed-overlay-wrapper .seed-overlay.show {
+  opacity: 1
+}
+
+.seed-overlay-wrapper:hover .seed-overlay {
+  transition: opacity 0.5s 0.3s, transform 0.5s 0.3s;
+}
+
+.seed-overlay.focused {
+  transition: opacity 0.8s, transform 0.8s;
+}
+
+.seed-overlay.show {
+  opacity: 1;
+  transform: translate(0, 0px);
+  pointer-events: auto;
+}
+
+.toggle-overlay-wrapper {
+  display: flex;
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  z-index: 10001;
+}
+
+.toggle-details-button {
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  justify-items: center;
+  align-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 8px 10px;
+  color: #fff;
+  background-color: #000;
+  border: solid 2px #000000ff;
+  border-radius: 2px;
+  font-size:18px;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 2px;
+  text-transform: none;
+  transition: background-color 0.3s, border-color 0.3s, color 0.3s, opacity 0.3s;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.seed-overlay-wrapper:hover .toggle-details-button,
+.svg-container:has(.seed-overlay.show) .toggle-details-button {
+  opacity: 1;
+}
+
+
+.svg-container:has(.seed-overlay.show) .toggle-details-button {
+  color:#fff;
+  background-color: #ffffff00;
+  border-color: #fff;
+}
+
+
+.seed-overlay.show .toggle-details-button:active {
+  color:#000;
+  background-color: #fff;
+}
+
+.seed-overlay-inner {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  grid-column-gap: 4vh;
+  grid-row-gap: 4vh;
+  justify-content: flex-end;
+  align-items: normal;
+  align-content: normal;
+  height: 100%;
+  transition: opacity 1s 0.3s, transform 1s 0.2s;
+  transform: translate(0, 5px);
+}
+
+.seed-overlay.show .seed-overlay-inner {
+  transform: translate(0, 0);
+}
+.seed-overlay-inner > div:nth-child(1) {
+  flex-grow: 0;
+  flex-shrink: 1;
+  flex-basis: auto;
+  align-self: auto;
+  order: 0;
+}
+
+.seed-overlay-inner > div:nth-child(2) {
+  flex-grow: 1;
+  flex-shrink: 0;
+  flex-basis: auto;
+  align-self: auto;
+  order: 0;
+}
+
+.seed-overlay-header-wrap {
+  padding-right:50px;
+}
+
+.seed-overlay-header {
+  width: 100%;
+  font-size: 24px;
+  line-height: 24px;
+  letter-spacing: 4px;
+  margin-bottom:7px;
+}
+
+.overlay-actions-container,
+.metadata-list-container {
+  display: flex;
+  grid-column-gap: 10px;
+  grid-row-gap: 10px;
+  flex-flow: column;
+  align-self: center;
+  width: 100%;
+  margin-bottom:15px;
+  padding: 0;
+  transition: border-color .2s, opacity .3s ease-in-out;
+}
+
+.metadata-list-container {
+  height: 100%;
+  justify-content: flex-end;
+  pointer-events: none;
+  padding-bottom: 4vh;
+  border-bottom: 2px solid #ffffff1d;
+}
+
+.overlay-actions-container:last-child,
+.metadata-list-container:last-child {
+  margin-bottom: 0px;
+  height: 100%;
+}
+
+.overlay-actions-title,
+.metadata-title {
+  display:none;
+  margin-top: 0;
+  margin-bottom:15px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: 4px;
+  text-align: center;
+}
+
+.overlay-actions-list,
+.metadata-list {
+  display: flex;
+  flex-direction: column;
+  grid-column-gap: 10px;
+  grid-row-gap: 10px;
+  width: 100%;
+  padding: 0;
+  margin:0;
+  list-style: none;
+}
+
+.overlay-actions-list li {
+  flex-grow: 1;
+  flex-shrink: 0;
+  text-align: center;
+  border: solid 2px #fff;
+  border-radius: 2px;
+  padding: 7px 10px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 16px;
+  
+}
+
+.seed-overlay.show .overlay-actions-list li {
+  pointer-events: auto;
+}
+
+.overlay-actions-list li:active {
+  color: #000;
+  background-color: #fff;
+  border-color: #fff;
+}
+
+.metadata-item {
+  justify-content: space-between;
+  padding-bottom:2px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 13px;
+  display: flex;
+  border-bottom: 2px solid #fff;
+}
+
+.svg-container:hover {
+  /* transform: scale3d(1.005, 1.005, 1); */
+}
+
+.svg-container:hover {
+  box-shadow: 0 0 0 6px rgba(150, 150, 150, 0.15), 0 3px 18px 2px rgba(24, 24, 24, 0.234)
+}
+
+.svg-container:active {
+  box-shadow: 0 0 0 0px rgba(150, 150, 150, 0), 0 3px 18px 2px rgba(24, 24, 24, 0.234)
+}
+
+body:has(.seed-overlay.focused) .svg-container:hover {
+  box-shadow: 0 0 0 6px rgba(150, 150, 150, 0), 0 3px 18px 2px rgba(24, 24, 24, 0.234)
+}
+
+.seed-overlay,
+.seed-overlay-inner {
+  pointer-events:none;
+}
+
+body:has(.seed-overlay.focused) .ui-button,
+body:has(.seed-overlay.focused) .seed-input,
+body:has(.seed-overlay.focused) .seed-label,
+body:has(.seed-overlay.focused) .reset-seed-button {
+  transition: border-color 0.4s 0.4s, color 0.4s 0.4s, background-color 0.4s 0.4s;
+}
+
+body:has(.seed-overlay.focused) .seed-input::selection {
+  color:#000;
+  background-color: #fff;
+}
+
+.app-pane.left {
+  transition: transform 0.5s 0.3s;
+}
+body:has(.seed-overlay.focused) .app-pane.left {
+  transform: translate(-4vw,0);
+}
+
+body:has(.seed-overlay.focused) .ui-button.advanced {
+  display:none;
+}
+
+body:has(.seed-overlay.focused) .btn-layer:hover {
+  background-color: #fff;
+  color: #000;
+}
+
+body:has(.seed-overlay.focused) .btn-layer:active{
+  background-color: #000;
+  color: #fff;
+}
+
+.navbar {
+  transition: opacity 1s
+}
+
+.editor, .editor-inner {pointer-events: none}
+.editor-inner > div {
+  pointer-events:auto
+}
+
+body:has(.seed-overlay.focused) .navbar {
+  opacity: 0;
+}
+
+body:has(.seed-overlay.focused) .svg-container {
+  transform: scale3d(1.2, 1.2, 1)translate(0, 1.5vh);
+}
+
+body:has(.seed-overlay.focused) {
+  background-color: #0d0d0d;
+}
+
+body:has(.seed-overlay.focused) .theme-bkg {
+  opacity:0.05;
+}
+
+body:has(.seed-overlay.focused) .seed-indicator,
+body:has(.seed-overlay.focused) .seed-input,
+body:has(.seed-overlay.focused) .seed-label,
+body:has(.seed-overlay.focused) .reset-seed-button {
+  color: #fff;
+  opacity: 1;
+}
+
+.editor-inner {pointer-events: none}
+body:has(.seed-overlay.focused) .app-pane.right,
+body:has(.seed-overlay.focused) .queue-container {
+  pointer-events: none;
+  opacity: 0;
+}
+body:has(.seed-overlay.focused) .basic-actions a {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body:has(.seed-overlay.focused) .basic-actions .randomize{
+  pointer-events: auto;
+  opacity: 1;
+}
+body:has(.seed-overlay.focused) .basic-actions .randomize {
+  transition: border-color 0.4s, color 0.4s, background-color 0.4s;
+}
+
+body:has(.seed-overlay.focused) .basic-actions .randomize:hover {
+  color: #fff;
+  border-color: #fff;
+}
+
+body:has(.seed-overlay.focused) .basic-actions .randomize:active {
+  background-color: #fff;
+  color: #000;
+  border-color: #000;
+}
+
+/*body:has(.layer-grid-wrap.show) .editor-inner .basic-actions .ui-buttons,
+body:has(.seed-overlay.focused) .layer-grid-wrap.show .btn-layer,
+body:has(.seed-overlay.focused) .layer-grid-wrap.show .btn-layer.selected,
+body:has(.seed-overlay.focused) .layer-grid-wrap.show .grid,
+body:has(.seed-overlay.focused) .editor-inner:hover .basic-actions .ui-button,
+body:has(.seed-overlay.focused) .editor-inner:hover .seed-indicator,
+body:has(.seed-overlay.focused) .editor-inner:hover .seed-input,
+body:has(.seed-overlay.focused) .editor-inner:hover .seed-label,
+body:has(.seed-overlay.focused) .editor-inner:hover .reset-seed-button {
+  color: #fff;
+  border-color: #fff;
+}*/
+body:has(.seed-overlay.focused) .seed-indicator {
+  border-bottom: solid 2px #00000000;
+}
+
+body:has(.seed-overlay.focused) .queue-item {
+  color: #fff;
+}
+
+/* 
+body:has(.seed-overlay.focused) .reset-seed-button{
+  opacity:0.1;
+}
+body:has(.seed-overlay.focused) .reset-seed-button:hover{
+  opacity:1;
+}
+
+body:has(.seed-overlay.focused) .seed-indicator{
+  border-color:#00000000;
+  color: #fff;
+}
+*/
+
+@media screen and (max-width: 991px) {
+  .svg-container:hover,
+  .svg-container:active {
+    box-shadow: 0 2px 5px 1px rgba(54, 54, 54, 0.12);
+  }
+  .seed-overlay {
+    display:none;
+  }
+}
+
+
+
+
+
+
 @media screen and (max-width:767px){
   #label{}
   #instruction{bottom: 30%}
@@ -4786,9 +5194,6 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
     grid-row-gap: 4vw;
     padding-left: 0;
     padding-right: 0;
-  }
-  .svg-container {
-    pointer-events: none;
   }
   #seedsArtwork {
     pointer-events: auto;
@@ -5063,11 +5468,13 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
     padding-left: 0;
     padding-right: 0;
     padding-top: 15vh;
+    pointer-events: none;
+    padding-bottom: 0;
   }
 
   .app-pane {
     max-width: 560px;
-    max-height: 73vh;
+    max-height: 80vh;
   }
 
   .svg-aspect-ratio {

@@ -5,7 +5,8 @@ import { RootState } from '@/store';
 
 
 
-// EDITOR STATE DEFINITION ----------------------------
+
+//================================================//
 
 interface EditorState {
   seed: string;
@@ -46,7 +47,8 @@ interface EditorState {
   };
 }
 
-// INITIALIZE STATE ------------------------------------
+
+// INITIALIZE STATE ---------------------------------
 
 const initialState: EditorState = {
   seed: '0',
@@ -77,7 +79,8 @@ const initialState: EditorState = {
   },
 };
 
-// MODULE FUNCTIONS -----------------------------------
+
+// MODULE FUNCTIONS --------------------------------
 
 const editorSlice = createSlice({
   name: 'seed',
@@ -367,7 +370,8 @@ const editorSlice = createSlice({
   },
 });
 
-// UTILITY FUNCTIONS ---------------------------------
+
+// UTILITY FUNCTIONS -------------------------------
 
 // Update Editor history
 const MAX_HISTORY_LENGTH = 25;
@@ -434,13 +438,15 @@ export const calculateModNumber = (state: EditorState): string => {
   return `${displaySettingsValue}${colorValue}${depthValue}${spinValue}${tintValue}${tintPercentValue}`;
 };
 
-// SELECTORS -----------------------------------------
+
+// SELECTORS ---------------------------------------
 
 export const selectLayersUIToggled = (state: RootState) => state.seed.layersUIToggled;
 
 export const selectDisplaySettingsToggled = (state: RootState) => state.seed.displaySettingsToggled;
 
-// EXPORTS ---------------------------------------------
+
+// EXPORTS -----------------------------------------
 
 export const {
   setEditorState,

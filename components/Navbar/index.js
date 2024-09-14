@@ -11,7 +11,7 @@ import { DropdownMenu } from "@/components/UI/dropdownMenu";
 
 
 
-//======================================================//
+//===============================================//
 
 export const Navbar = () => {
   const dispatch = useDispatch();

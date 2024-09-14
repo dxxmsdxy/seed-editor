@@ -61,7 +61,7 @@ export const MenuDesktop = ({ dropdownOpen, setDropdownOpen }) => {
           <DropdownMenuItem
             onSelect={(e) => {
               router.push("/info");
-              document.body.style.background = "#f5f5f5";
+              document.querySelector('.theme-bkg').style.background = "#f5f5f5";
             }}
             className={`uppercase font-bold rounded-none ${
               pathname === "/info" ? "z--current" : ""
@@ -72,7 +72,7 @@ export const MenuDesktop = ({ dropdownOpen, setDropdownOpen }) => {
           <DropdownMenuItem
             onSelect={(e) => {
               router.push("/");
-              document.body.style.background = "#f5f5f5";
+              document.querySelector('.theme-bkg').style.background = "#f5f5f5";
             }}
             className={`uppercase font-bold ${
               pathname === "/" ? "z--current" : ""
@@ -83,7 +83,7 @@ export const MenuDesktop = ({ dropdownOpen, setDropdownOpen }) => {
           <DropdownMenuItem
             onSelect={(e) => {
               router.push("/collection");
-              document.body.style.background = "#f5f5f5";
+              document.querySelector('.theme-bkg').style.background = "#f5f5f5";
             }}
             className={`uppercase font-bold rounded-none ${
               pathname === "/collection" ? "z--current" : ""
@@ -94,7 +94,7 @@ export const MenuDesktop = ({ dropdownOpen, setDropdownOpen }) => {
           <DropdownMenuItem
             onSelect={(e) => {
               router.push("/garden");
-              document.body.style.background = "#f5f5f5";
+              document.querySelector('.theme-bkg').style.background = "#f5f5f5";
             }}
             className={`uppercase font-bold rounded-none ${
               pathname === "/garden" ? "z--current" : ""

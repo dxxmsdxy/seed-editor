@@ -5,7 +5,6 @@ import { RootState } from '@/store';
 
 
 
-
 //==================================================//
 
 export interface QueueItem {
@@ -183,7 +182,7 @@ const queueSlice = createSlice({
   },
 });
 
-// THUNKS ----------------------------------------------
+// THUNKS ------------------------------------------
 
 // Thunk for selecting and updating queue item
 export const selectAndUpdateQueueItemThunk = createAsyncThunk(
@@ -228,7 +227,7 @@ export const selectNextUnsetQueueItemThunk = createAsyncThunk(
   }
 );
 
-// SELECTORS -----------------------------------------
+// SELECTORS ---------------------------------------
 
 // Get queue items and their values
 export const getQueueItemsForRendering = createSelector(
@@ -254,7 +253,7 @@ export const getSetQueueItems = createSelector(
   )
 );
 
-// UTILITY FUNCTIONS --------------------------------
+// UTILITY FUNCTIONS -------------------------------
 
 const getPriority = (item: QueueItem) => {
   if (item.isSet) return 0;
@@ -285,7 +284,7 @@ const updateItemValues = (item: QueueItem, updates: Partial<QueueItem>, isExplic
   return hasChanged;
 };
 
-// EXPORTS ---------------------------------------------
+// EXPORTS -----------------------------------------
 
 export const {
   updateQueueItem,
