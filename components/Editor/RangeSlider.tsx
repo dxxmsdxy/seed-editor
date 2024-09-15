@@ -57,11 +57,11 @@ const RangeSlider: React.FC<RangeSliderProps> = React.memo(({
 
   return (
     <div className={`setting-slider ${disabled ? 'disabled' : ''} ${isDefault && !isActive ? 'default' : ''}`}>
-      <div className="setting-label">{name}:</div>
+      <div className="setting-label ui-element">{name}:</div>
       <div className="range-slider-container">
         <div className="range-slider">
           <input
-            className="range-slider__range"
+            className="range-slider__range slider-ui"
             type="range"
             value={localValue}
             min={min}

@@ -17,6 +17,7 @@ export interface QueueItem {
   newAttunement: number | null;
   locked: boolean;
   isSet: boolean;
+  justSet: boolean;
 }
 
 interface QueueState {
@@ -96,11 +97,16 @@ const queueSlice = createSlice({
             newMod: null,
             newAttunement: null,
             isSet: false,
-            locked: currentItem.initialLocked
+            locked: currentItem.initialLocked,
+            justSet: false
           });
         } else {
           // Update logic
           const hasChanged = updateItemValues(currentItem, item, isExplicitSet);
+
+          if (hasChanged && !currentItem.isSet) {
+            currentItem.justSet = true;
+          }
           
           if (hasChanged) {
             const selectedItemId = state.selectedIndex !== null ? state.items[state.selectedIndex].id : null;
@@ -110,6 +116,14 @@ const queueSlice = createSlice({
             }
           }
         }
+      }
+    },
+
+    // Remove the Just Set flag
+    removeJustSet: (state, action: PayloadAction<number>) => {
+      const index = action.payload;
+      if (index >= 0 && index < state.items.length) {
+        state.items[index].justSet = false;
       }
     },
     
@@ -200,6 +214,12 @@ export const selectAndUpdateQueueItemThunk = createAsyncThunk(
         mod: isSet ? selectedItem.newMod || selectedItem.modNumber : selectedItem.modNumber || "000000000000000",
         attunement: isSet ? selectedItem.newAttunement ?? selectedItem.attunementNumber : selectedItem.attunementNumber ?? 0
       }));
+
+      if (selectedItem.justSet) {
+        setTimeout(() => {
+          dispatch(removeJustSet(index));
+        }, 1600);
+      }
     } else {
       dispatch(resetEditorState());
     }
@@ -238,7 +258,8 @@ export const getQueueItemsForRendering = createSelector(
     isSet: item.isSet,
     isSeedZero: (item.isSet ? (item.newSeed || item.seed) : item.seed || '0') === '0',
     isSelected: index === selectedIndex,
-    locked: item.locked
+    locked: item.locked,
+    justSet: item.justSet
   }))
 );
 

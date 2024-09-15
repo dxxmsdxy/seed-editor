@@ -500,21 +500,28 @@ export default function Home() {
                   }`}
                   onClick={handleSetQueueItem}
                   disabled={!hasEditorChanges || selectedQueueIndex === null}
-                >Set Queue Item</a>
-                <div className="select-icon z-embed">
-                  <svg
-                    version="1.1"
-                    id="checkmark"
-                    xmlns="http://www.w3.org/2000/svg"
-                    x={0}
-                    y={0}
-                    viewBox="0 0 442.7 312.6"
-                    xmlSpace="preserve"
-                  >
-                    <style dangerouslySetInnerHTML={{__html: "#checkmark path{fill:none;stroke:#000;stroke-width:31;stroke-miterlimit:10} "}}/>
-                    <path d="m17.5 123.8 162.2 156.6L426.6 16.1" />
-                  </svg>
-                </div>
+                >
+                  Set Queue Item
+                  <span className="select-icon z-embed">
+                    <svg
+                      version="1.1"
+                      id="checkmark"
+                      xmlns="http://www.w3.org/2000/svg"
+                      x={0}
+                      y={0}
+                      viewBox="0 0 442.7 312.6"
+                      xmlSpace="preserve"
+                      style={{
+                        fill: "none",
+                        stroke: "#000",
+                        strokeWidth: 31,
+                        strokeMiterlimit: 10,
+                      }}
+                    >
+                      <path d="m17.5 123.8 162.2 156.6L426.6 16.1" />
+                    </svg>
+                  </span>
+                </a>
               </div>
             </div>
             <div className={`app-pane right ${(layersUIToggled || displaySettingsToggled) ? 'deactivated' : ''}`}>

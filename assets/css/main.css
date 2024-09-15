@@ -2299,7 +2299,7 @@ a {
   font-weight: 700;
   text-decoration: none;
   transition: opacity 0.5s, color 0.2s ease-in-out,
-    background-color 0.2s ease-in-out;
+    background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
   display: flex;
 }
 
@@ -3147,7 +3147,7 @@ body:has(.theme-bkg) {
 .range-slider__range {
   -webkit-appearance: none;
   width: calc(100% - (73px));
-  height: 3px;
+  height: 2px;
   border-radius: 5px;
   background: #000000;
   outline: none;
@@ -3155,6 +3155,7 @@ body:has(.theme-bkg) {
   margin: 0;
   transition: background 0.2s ease-in-out, opacity 0.2s ease-in-out;
 }
+
 .range-slider__range::-webkit-slider-thumb {
   -webkit-appearance: none;
           appearance: none;
@@ -3166,12 +3167,6 @@ body:has(.theme-bkg) {
   -webkit-transition: background 0.15s ease-in-out;
   transition: background 0.15s ease-in-out;
 }
-.range-slider__range::-webkit-slider-thumb:hover {
-  background: #1c1c1c;
-}
-.range-slider__range:active::-webkit-slider-thumb {
-  background: #1c1c1c;
-}
 .range-slider__range::-moz-range-thumb {
   width: 15px;
   height: 15px;
@@ -3182,15 +3177,23 @@ body:has(.theme-bkg) {
   -moz-transition: background 0.15s ease-in-out;
   transition: background 0.15s ease-in-out;
 }
+
+.range-slider__range::-webkit-slider-thumb:hover {
+  background: #1c1c1c;
+}
+.range-slider__range:active::-webkit-slider-thumb {
+  background: #1c1c1c;
+}
+.range-slider__range:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 2px #f5f5f5, 0 0 0 4px #000000;
+}
 .range-slider__range::-moz-range-thumb:hover {
   background: #1c1c1c;
 }
 .range-slider__range:active::-moz-range-thumb {
   background: #1c1c1c;
 }
-.range-slider__range:focus::-webkit-slider-thumb {
-  box-shadow: 0 0 0 2px #f5f5f5, 0 0 0 4px #000000;
-}
+
 
 .range-slider__value {
   display: inline-block;
@@ -3208,7 +3211,7 @@ body:has(.theme-bkg) {
 .range-slider__value:after {
   position: absolute;
   top: 8px;
-  left: -7px;
+  left: -5px;
   width: 0;
   height: 0;
   border-top: 7px solid transparent;
@@ -4100,8 +4103,19 @@ input::-moz-focus-outer {
   border: 2px solid #000000;
   border-bottom: 0px solid #00000000;
 }
-.queue-item.set.selected {
+
+.just-set {
   animation: justSet 1.6s ease-in-out forwards;
+}
+
+@keyframes justSet {
+  from { background-color: #ffffff44; color: #000000bb; }
+  12% { background-color: #ffffff88; color: #000000bb; }
+  25% { background-color: #000000dd; color: #ffffffbb; }
+  45% { background-color: #000000bb; color: #000000bb; }
+  65% { background-color: #000000ee; color: #ffffffbb; }
+  80% { background-color: #000000cc; color: #000000bb; }
+  to { background-color: #000000; color: #ffffff; }
 }
 
 ul li.set + li:not(.set) {
@@ -4195,7 +4209,7 @@ ul li + li.set::after {
   pointer-events: none;
 }
 .queue-divider::before {
-  content:"Queued";
+  content:"Set";
   display: inline-block;
 }
 
@@ -4213,16 +4227,6 @@ ul li + li.set::after {
 
 .queue-item.set:last-child {
   border-bottom: 0px solid #000000;
-}
-
-@keyframes justSet {
-  from { background-color: #ffffff44; color: #000000bb; }
-  12% { background-color: #ffffff88; color: #000000bb; }
-  25% { background-color: #000000dd; color: #ffffffbb; }
-  45% { background-color: #000000bb; color: #000000bb; }
-  65% { background-color: #000000ee; color: #ffffffbb; }
-  80% { background-color: #000000cc; color: #000000bb; }
-  to { background-color: #000000; color: #ffffff; }
 }
 
 @keyframes fadeBackground {
@@ -4808,8 +4812,8 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
 .toggle-overlay-wrapper {
   display: flex;
   position: absolute;
-  top: 30px;
-  right: 30px;
+  top: 4vh;
+  right: 4vh;
   z-index: 10001;
 }
 
@@ -4984,10 +4988,9 @@ body:has(.editor.unsaved-changes) .seed-overlay-header span {
   cursor: pointer;
   font-weight: 700;
   font-size: 16px;
-  
 }
 
-.seed-overlay.show .overlay-actions-list li {
+.seed-overlay.show .overlay-actions-list {
   pointer-events: auto;
 }
 
@@ -5032,8 +5035,18 @@ body:has(.seed-overlay.focused) .svg-container:hover {
 body:has(.seed-overlay.focused) .ui-button,
 body:has(.seed-overlay.focused) .seed-input,
 body:has(.seed-overlay.focused) .seed-label,
-body:has(.seed-overlay.focused) .reset-seed-button {
-  transition: border-color 0.4s 0.4s ease-in-out, color 0.4s 0.4s ease-in-out, background-color 0.4s 0.4s ease-in-out;
+body:has(.seed-overlay.focused) .reset-seed-button,
+body:has(.seed-overlay.focused) .btn-layer,
+body:has(.seed-overlay.focused) .grid,
+body:has(.seed-overlay.focused) .ui-element,
+body:has(.seed-overlay.focused) .slider-ui {
+  transition: border-color 0.4s, color 0.4s, background-color 0.4s, opacity 0.4s;
+}
+
+body:has(.seed-overlay.focused) .cls-0,
+body:has(.seed-overlay.focused) .cls-1,
+body:has(.seed-overlay.focused) .cls-2 {
+  transition: fill 0.4s, stroke 0.4s
 }
 
 body:has(.seed-overlay.focused) .seed-input::selection,
@@ -5041,6 +5054,51 @@ body:has(.seed-overlay.focused) .mod-input::selection,
 body:has(.seed-overlay.focused) .attunement-input::selection {
   color:#000;
   background-color: #fff;
+}
+
+body:has(.seed-overlay.focused) .svg-container {
+  overflow: visible;
+}
+
+body:has(.seed-overlay.focused) .svg-container svg {
+  transform: scale3d(1.2, 1.2, 1)translate(0, 1.5vh);
+}
+
+body:has(.seed-overlay.focused) .app-pane.right {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body:has(.seed-overlay.focused) .seed-overlay-wrapper {
+  right: auto;
+  left: calc(100% + 6vw);
+  width: 22.5vw;
+  max-width: 550px;
+  overflow: visible;
+}
+
+body:has(.seed-overlay.focused) .toggle-overlay-wrapper {
+  top: 0;
+  right: 0;
+}
+
+body:has(.seed-overlay.focused) .seed-overlay {
+  opacity: 0;
+}
+
+body:has(.seed-overlay.focused) .seed-overlay-wrapper:hover .seed-overlay {
+ opacity: 1;
+}
+
+body:has(.seed-overlay.focused) .seed-overlay-wrapper:not(:hover) .toggle-details-button,
+body:has(.seed-overlay.focused.show) .seed-overlay-wrapper:not(:hover) .seed-overlay {
+  opacity: 1;
+}
+
+.seed-overlay.focused {
+  background-color: transparent;
+  box-shadow: none;
+  padding:0;
 }
 
 .app-pane.left {
@@ -5054,7 +5112,7 @@ body:has(.seed-overlay.focused) .app-pane.left {
 
 body:has(.seed-overlay.focused):has(.layer-grid-wrap.show) .app-pane.left,
 body:has(.seed-overlay.focused):has(.display-settings-wrap.show) .app-pane.left {
-  transform: translate(-4vw,0);
+  transform: translate(-3vw,0);
 }
 
 body:has(.seed-overlay.focused) .btn-layer:hover {
@@ -5087,9 +5145,6 @@ body:has(.seed-overlay.focused) .select-icon {
   pointer-events: none;
 }
 
-body:has(.seed-overlay.focused) .svg-container {
-  transform: scale3d(1.2, 1.2, 1)translate(0, 1.5vh);
-}
 
 body:has(.seed-overlay.focused) {
   background-color: #0d0d0d;
@@ -5120,11 +5175,13 @@ body:has(.layer-grid-wrap.show) .queue-container {
   opacity: 0;
   transition: transform 0s, opacity 0s
 }
+/*
 body:has(.seed-overlay.focused) .basic-actions .mod-button {
   opacity: 0;
   pointer-events: none;
   display: none;
 }
+*/
 
 body:has(.seed-overlay.focused) .ui-button.advanced {
   
@@ -5134,9 +5191,7 @@ body:has(.seed-overlay.focused) .basic-actions .ui-button {
   pointer-events: auto;
   opacity: 1;
 }
-body:has(.seed-overlay.focused) .basic-actions .ui-button {
-  transition: border-color 0.4s, color 0.4s, background-color 0.4s;
-}
+
 
 body:has(.seed-overlay.focused) .basic-actions .ui-button:hover {
   color: #fff;
@@ -5149,18 +5204,39 @@ body:has(.seed-overlay.focused) .basic-actions .ui-button:active {
   border-color: #000;
 }
 
-/*body:has(.layer-grid-wrap.show) .editor-inner .basic-actions .ui-buttons,
-body:has(.seed-overlay.focused) .layer-grid-wrap.show .btn-layer,
-body:has(.seed-overlay.focused) .layer-grid-wrap.show .btn-layer.selected,
-body:has(.seed-overlay.focused) .layer-grid-wrap.show .grid,
+body:has(.seed-overlay.focused) .editor-inner:hover .ui-element,
+body:has(.seed-overlay.focused) .editor-inner:hover .layer-grid-wrap.show .btn-layer,
+body:has(.seed-overlay.focused) .editor-inner:hover .layer-grid-wrap.show .btn-layer.selected,
+body:has(.seed-overlay.focused) .editor-inner:hover .layer-grid-wrap.show .grid,
 body:has(.seed-overlay.focused) .editor-inner:hover .basic-actions .ui-button,
-body:has(.seed-overlay.focused) .editor-inner:hover .seed-indicator,
 body:has(.seed-overlay.focused) .editor-inner:hover .seed-input,
 body:has(.seed-overlay.focused) .editor-inner:hover .seed-label,
 body:has(.seed-overlay.focused) .editor-inner:hover .reset-seed-button {
   color: #fff;
   border-color: #fff;
-}*/
+}
+
+
+body:has(.seed-overlay.focused) .editor-inner:hover .btn-display-setting svg .cls-1,
+body:has(.seed-overlay.focused) .editor-inner:hover .btn-display-setting svg .cls-2 {
+  stroke: #fff;
+}
+body:has(.seed-overlay.focused) .editor-inner:hover .btn-display-setting svg .cls-0 {
+  fill: #fff;
+}
+
+body:has(.seed-overlay.focused) .editor-inner:hover .slider-ui {
+  background-color: #fff;
+}
+
+body:has(.seed-overlay.focused) .editor-inner:hover .range-slider__range::-webkit-slider-thumb {
+  background-color: #fff;
+}
+
+body:has(.seed-overlay.focused) .editor-inner:hover .range-slider__range::-moz-range-thumb {
+  background-color: #fff;
+}
+
 body:has(.seed-overlay.focused) .seed-indicator {
   border-bottom: solid 2px #00000000;
 }

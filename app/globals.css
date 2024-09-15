@@ -368,10 +368,6 @@ body:has(svg.pauseColor) .colorbkg {
   }
 }
 
-.set-queue-item-container:has(.disabled) #checkmark {
-  opacity: 15%;
-}
-
 .set-queue-item-container:has(.select:active) #checkmark path {
   stroke: #fff;
 }

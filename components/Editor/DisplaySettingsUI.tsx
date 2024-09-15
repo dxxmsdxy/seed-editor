@@ -62,7 +62,7 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
     <a
       key={index}
       href="#" 
-      className={`btn-display-setting ${displaySettings & (1 << (8 - index)) ? 'selected' : ''}`}
+      className={`btn-display-setting ${displaySettings & (1 << (8 - index)) ? 'selected' : ''} ui-element`}
       onClick={() => handleDisplaySettingToggle(index)}
     >
       <Icon.default /> {/* Note the .default here */}
@@ -164,15 +164,15 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
   return (
     <div>
       {/* Attunement selector */}
-      <div className={`attunement-selector ${editorAttunement === 0 ? 'default' : ''}`}>
-        <div className="attune-nav prev" onClick={() => !isLocked && dispatch(setEditorAttunement({ attunementNumber: (editorAttunement - 1 + 10) % 10, updateChanges: true }))}>
+      <div className={`attunement-selector ${editorAttunement === 0 ? 'default' : ''} ui-element`}>
+        <div className="attune-nav prev ui-element" onClick={() => !isLocked && dispatch(setEditorAttunement({ attunementNumber: (editorAttunement - 1 + 10) % 10, updateChanges: true }))}>
           &lt;
         </div>
-        <div className="attunement-label-container" onClick={resetAttunement}>
-          <div className="attunement-label">
+        <div className="attunement-label-container ui-element" onClick={resetAttunement}>
+          <div className="attunement-label ui-element">
             Attunement: 
             <span
-              className="attunement-input"
+              className="attunement-input ui-element"
               contentEditable={!isLocked}
               inputMode="numeric"
               onClick={(e) => {
@@ -196,13 +196,13 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
             </span>
           </div>
         </div>
-        <div className="attune-nav next" onClick={() => !isLocked && dispatch(setEditorAttunement({ attunementNumber: (editorAttunement + 1) % 10, updateChanges: true }))}>
+        <div className="attune-nav next ui-element" onClick={() => !isLocked && dispatch(setEditorAttunement({ attunementNumber: (editorAttunement + 1) % 10, updateChanges: true }))}>
           &gt;
         </div>
       </div>
 
       {/* Display setting icons */}
-      <div className="mod-controls">
+      <div className="mod-controls ui-element">
         {renderDisplaySettingIcons()}
       </div>
 
@@ -223,9 +223,9 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
       />
       <div className={`mod-number-container ${editorMod === "000000000000000" ? 'default' : ''}`}>
         <div className="mod-number">
-          <span className="mod-label">Mod:</span>
+          <span className="mod-label ui-element">Mod:</span>
           <span
-            className="mod-input"
+            className="mod-input ui-element"
             contentEditable={!isLocked}
             inputMode="numeric"
             onClick={(e) => !isLocked && selectElementContents(e.currentTarget)}

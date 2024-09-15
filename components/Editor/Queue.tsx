@@ -126,7 +126,7 @@ const Queue: React.FC = () => {
           <React.Fragment key={item.index}>
             {index === dividerIndex && <span className="queue-divider"></span>}
             <li
-              className={`queue-item ${item.isSelected ? "selected" : ""} ${item.isSet ? 'set' : ''}`}
+              className={`queue-item ${item.isSelected ? "selected" : ""} ${item.isSet ? 'set' : ''} ${item.justSet ? 'just-set' : ''}`}
               onClick={() => handleQueueItemSelect(item.index)}
             >
             <div className={`queued-seed-number`}>
