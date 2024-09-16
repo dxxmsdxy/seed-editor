@@ -1,24 +1,61 @@
 "use client";
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useArtworkHotkeys } from "@/hooks";
 
 interface ArtworkProps {
   seed: string;
   mod: string;
-  attunement: number;
+  attunement: string;
+  isPlaying: boolean;
 }
 
-const Artwork = ({ seed }: ArtworkProps) => {
+const Artwork = ({ seed, mod, attunement, isPlaying }: ArtworkProps) => {
   useArtworkHotkeys(seed);
   const currentDate = new Date();
 
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    if (svgRef.current) {
+      const svg = svgRef.current;
+      const spinValue = parseInt(mod.slice(9, 12), 10);
+      const depthValue = parseInt(mod.slice(6, 9), 10);
+
+
+      // Always ensure these classes are present
+      svg.classList.add('seedartwork', 'reveal');
+
+      // Handle spin classes
+      if (spinValue > 0) {
+        svg.classList.add('spin');
+        svg.classList.toggle('pauseSpin', !isPlaying);
+      } else {
+        svg.classList.remove('spin', 'pauseSpin');
+      }
+
+      // Handle depth classes
+      if (depthValue > 0) {
+        svg.classList.add('depth');
+        svg.classList.toggle('pauseDepth', !isPlaying);
+      } else {
+        svg.classList.remove('depth', 'pauseDepth');
+      }
+
+      // Handle pauseColor class
+      svg.classList.toggle('pauseColor', !isPlaying);
+
+      // Add 'playing' class when isPlaying is true
+      svg.classList.toggle('playing', isPlaying);
+    }
+  }, [mod, isPlaying]);
+
   return (
     <svg
+      ref={svgRef}
       xmlns="http://www.w3.org/2000/svg"
       xmlnsXlink="http://www.w3.org/1999/xlink"
       version="1.1"
       id="seedsArtwork"
-      className="seedartwork"
       x="0"
       y="0"
       width="100%"

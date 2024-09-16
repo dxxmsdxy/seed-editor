@@ -127,13 +127,33 @@ export function normalizeModValues(elements: NodeListOf<Element> | HTMLCollectio
  * applyModValueToElements(elements, 500);
  */
 export function applyModValueToElements(elements: NodeListOf<Element> | HTMLCollectionOf<Element> | Element[], modValue: number): void {
-    const normalizedPosition = modValue / MAX_MOD_VALUE;
-    const delay = -(normalizedPosition * TOTAL_ANIMATION_DURATION);
-  
-    Array.from(elements).forEach(element => {
-      const computedStyle = window.getComputedStyle(element);
-      const initialDelay = parseFloat(computedStyle.animationDelay) || 0;
-      const adjustedDelay = delay - initialDelay;
+  const elementsArray = Array.from(elements);
+  if (elementsArray.length === 0) {
+    console.warn('applyModValueToElements called with empty elements array');
+    return;
+  }
+
+  const normalizedPosition = modValue / MAX_MOD_VALUE;
+  const firstElement = elementsArray[0];
+  const computedStyle = window.getComputedStyle(firstElement);
+  const duration = parseFloat(computedStyle.animationDuration) * 2 || TOTAL_ANIMATION_DURATION;
+  const delay = -(normalizedPosition * duration);
+
+  elementsArray.forEach(element => {
+    let originalDelay: number;
+    if (element.hasAttribute('data-original-delay')) {
+      originalDelay = parseFloat(element.getAttribute('data-original-delay') || '0');
+    } else {
+      originalDelay = parseFloat(window.getComputedStyle(element).animationDelay) || 0;
+      element.setAttribute('data-original-delay', originalDelay.toString());
+    }
+
+    if (modValue === 0) {
+      // Reset to original delay when mod value is 0
+      (element as HTMLElement).style.animationDelay = `${originalDelay}s`;
+    } else {
+      const adjustedDelay = delay - originalDelay;
       (element as HTMLElement).style.animationDelay = `${adjustedDelay.toFixed(10)}s`;
-    });
+    }
+  });
 }

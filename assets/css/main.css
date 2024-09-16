@@ -3200,6 +3200,7 @@ body:has(.theme-bkg) {
   position: relative;
   width: 60px;
   color: #fff;
+  font-weight: 700;
   line-height: 20px;
   text-align: center;
   border-radius: 3px;
@@ -3269,6 +3270,10 @@ input::-moz-focus-outer {
   min-width: 50%;
   flex: 1;
   display: inline-block;
+}
+
+.dropdown-link.social:last-child {
+  border-left: none;
 }
 
 .svg-image-container {
@@ -3917,9 +3922,8 @@ input::-moz-focus-outer {
 
 .app-pane {
   width: 100%;
-  max-height: 70vh;
-  max-width: 520px;
   min-width: 180px;
+  max-width: 580px;
   flex-direction: column;
   flex: 0 auto;
   justify-content: flex-start;
@@ -4058,6 +4062,7 @@ input::-moz-focus-outer {
 
 .queue-container {
   height: 100%;
+  width: 100%;
   grid-column-gap: 0px;
   grid-row-gap: 0px;
   flex-direction: column;
@@ -4746,10 +4751,36 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
 
 
 
+
+
+
+.svg-container {
+  overflow: visible;
+}
+
+.svg-outer {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.seed-overlay-container {
+  pointer-events: none;
+}
+.svg-container:hover .toggle-details-button {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* --------------- SVG OVERLAY --------------- */
 
 
-.seed-overlay-wrapper {
+.seed-overlay-container {
+  display: flex;
+  justify-content: center;
+  justify-items: center;
+  align-content: center;
+  align-items: center;
   width: 100%;
   height: 100%;
   position: absolute;
@@ -4758,7 +4789,7 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   right: 0;
   bottom: 0;
   box-sizing: border-box;
-  transform: scale3d(1.01, 1.01, 1.01);
+  transform: scale3d(1.005, 1.005, 1);
   overflow: hidden;
   border-radius: 7px;
 }
@@ -4768,7 +4799,7 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   border-radius: 6px;
 }
 
-.seed-overlay {
+.seed-details {
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
@@ -4782,9 +4813,6 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   right: 0;
   bottom: 0;
   width: 100%;
-  padding: 40px 40px;
-  background-color: #101010cc;
-  box-shadow: inset 0 -25vh 100px 100px #101010ee, 0 0 100px #101010ee;
   color: #ffffffee;
   transition: opacity 0.5s, transform 0.5s;
   z-index: 10000;
@@ -4792,19 +4820,25 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   opacity: 0;
 }
 
-.seed-overlay-wrapper .seed-overlay.show {
+.seed-overlay-container .seed-details {
+  padding: 40px 40px;
+  background-color: #101010aa;
+  box-shadow: inset 0 -25vh 100px 100px #101010ee, 0 0 100px #101010ee;
+}
+
+.seed-overlay-container .seed-details.show {
   opacity: 1
 }
 
-.seed-overlay-wrapper:hover .seed-overlay {
+.seed-overlay-container:hover .seed-details {
   transition: opacity 0.5s 0.3s ease-in-out, transform 0.5s 0.3s ease-in-out;
 }
 
-.seed-overlay.focused {
+.seed-details.focused {
   transition: opacity 0.8s, transform 0.8s;
 }
 
-.seed-overlay.show {
+.seed-overlay-container .seed-details.show {
   opacity: 1;
   transform: translate(0, 0px);
 }
@@ -4812,12 +4846,13 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
 .toggle-overlay-wrapper {
   display: flex;
   position: absolute;
-  top: 4vh;
-  right: 4vh;
+  top: 30px;
+  right: 30px;
   z-index: 10001;
 }
 
-.toggle-details-button {
+.toggle-details-button,
+.play-button {
   display: flex;
   justify-content: center;
   align-content: center;
@@ -4840,25 +4875,77 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   opacity: 0;
 }
 
-.seed-overlay-wrapper:hover .toggle-details-button,
-.svg-container:has(.seed-overlay.show) .toggle-details-button {
+.play-controls-wrapper {
+  display: flex;
+  position: absolute;
+  z-index: 10001;
+  bottom: 5vh;
+  top: auto;
+  left: 5vh;
+  right: auto;
+  justify-self: center;
+  align-self: center;
+}
+
+.play-button {
+  font-size: 12px;
+  text-transform: uppercase;
+  width: 80px;
+  height: 80px;
+  pointer-events: auto;
+  border-radius: 50px;
+  transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.5s 0.3s ease-in-out, box-shadow 0.3s ease-in-out;;
+  box-shadow: 0 0 0px 0px rgba(0,0,0,0);
+}
+.play-button::before {
+  content: "Play";
+}
+
+.play-button:hover {
+  box-shadow: 0 0 0px 5px rgba(0,0,0,0.2);
+}
+
+.play-button:active {
+  box-shadow: 0 0 0px 0px rgba(0,0,0,0);
+}
+
+.svg-container.playing .play-button {
+  color:#000;
+  background-color: #ffffff;
+  border-color: #fff;
+}
+.svg-container.playing .play-button::before {
+  content: "Pause";
+}
+
+.svg-container:has(.seed-details.show) .play-button {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.svg-container:hover .play-button,
+.seed-overlay-container:hover .toggle-details-button,
+.seed-overlay-container:has(.seed-details.show) .toggle-details-button {
   opacity: 1;
 }
 
 
-.svg-container:has(.seed-overlay.show) .toggle-details-button {
+.svg-container:has(.seed-details.show) .toggle-details-button {
   color:#fff;
   background-color: #ffffff00;
   border-color: #fff;
 }
+.svg-container:has(.seed-details.focused) .toggle-details-button {
+  opacity: 0;
+}
 
 
-.seed-overlay.show .toggle-details-button:active {
+.seed-details.show .toggle-details-button:active {
   color:#000;
   background-color: #fff;
 }
 
-.seed-overlay-inner {
+.seed-details-inner {
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
@@ -4872,10 +4959,10 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   transform: translate(0, 5px);
 }
 
-.seed-overlay.show .seed-overlay-inner {
+.seed-details.show .seed-details-inner {
   transform: translate(0, 0);
 }
-.seed-overlay-inner > div:nth-child(1) {
+.seed-details-inner > div:nth-child(1) {
   flex-grow: 0;
   flex-shrink: 1;
   flex-basis: auto;
@@ -4883,7 +4970,7 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   order: 0;
 }
 
-.seed-overlay-inner > div:nth-child(2) {
+.seed-details-inner > div:nth-child(2) {
   flex-grow: 1;
   flex-shrink: 0;
   flex-basis: auto;
@@ -4891,11 +4978,11 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   order: 0;
 }
 
-.seed-overlay-header-wrap {
+.seed-details-header-wrap {
   padding-right:50px;
 }
 
-.seed-overlay-header {
+.seed-details-header {
   display: flex;
   flex-direction: row;
   justify-content: start;
@@ -4909,7 +4996,7 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   margin-bottom:7px;
 }
 
-.seed-overlay-header span {
+.seed-details-header span {
   align-self: center;
   font-size: 0.5em;
   line-height: 0.5em;
@@ -4919,7 +5006,7 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   transition: opacity 0.3s;
 }
 
-body:has(.editor.unsaved-changes) .seed-overlay-header span {
+body:has(.editor.unsaved-changes) .seed-details-header span {
   opacity:0.5;
 }
 
@@ -4927,7 +5014,7 @@ body:has(.editor.unsaved-changes) .seed-overlay-header span {
   opacity: 0.4;
 }
 
-.overlay-actions-container,
+.details-actions-container,
 .metadata-list-container {
   display: flex;
   grid-column-gap: 10px;
@@ -4948,13 +5035,17 @@ body:has(.editor.unsaved-changes) .seed-overlay-header span {
   border-bottom: 2px solid #ffffff1d;
 }
 
-.overlay-actions-container:last-child,
+body:has(.seed-details.focused) .app-pane.right .details-actions-container {
+  pointer-events: auto;
+}
+
+.details-actions-container:last-child,
 .metadata-list-container:last-child {
   margin-bottom: 0px;
   height: 100%;
 }
 
-.overlay-actions-title,
+.details-actions-title,
 .metadata-title {
   display:none;
   margin-top: 0;
@@ -4966,7 +5057,7 @@ body:has(.editor.unsaved-changes) .seed-overlay-header span {
   text-align: center;
 }
 
-.overlay-actions-list,
+.details-actions-list,
 .metadata-list {
   display: flex;
   flex-direction: column;
@@ -4978,7 +5069,7 @@ body:has(.editor.unsaved-changes) .seed-overlay-header span {
   list-style: none;
 }
 
-.overlay-actions-list li {
+.details-actions-list li {
   flex-grow: 1;
   flex-shrink: 0;
   text-align: center;
@@ -4990,11 +5081,11 @@ body:has(.editor.unsaved-changes) .seed-overlay-header span {
   font-size: 16px;
 }
 
-.seed-overlay.show .overlay-actions-list {
+.seed-overlay-container .seed-details.show .details-actions-list {
   pointer-events: auto;
 }
 
-.overlay-actions-list li:active {
+.details-actions-list li:active {
   color: #000;
   background-color: #fff;
   border-color: #fff;
@@ -5010,123 +5101,122 @@ body:has(.editor.unsaved-changes) .seed-overlay-header span {
   border-bottom: 2px solid #fff;
 }
 
-.svg-container:hover {
+.editor #seedsArtwork {
+  box-shadow: 0 2px 5px 1px rgba(54, 54, 54, 0.12);
+  transition: opacity 0.3s, box-shadow 0.3s;
+}
+
+.editor #seedsArtwork:hover {
   /* transform: scale3d(1.005, 1.005, 1); */
 }
 
-.svg-container:hover {
+.editor #seedsArtwork:hover {
   box-shadow: 0 0 0 6px rgba(20, 20, 20, 0.05), 0 3px 18px 2px rgba(14, 14, 14, 0.234)
 }
 
-.svg-container:active {
+.editor #seedsArtwork:active {
   box-shadow: 0 0 0 0px rgba(20, 20, 20, 0), 0 3px 18px 2px rgba(14, 14, 14, 0.234)
 }
 
-body:has(.seed-overlay.focused) .svg-container:hover {
-  box-shadow: 0 0 0 6px rgba(20, 20, 20, 0), 0 3px 18px 2px rgba(14, 14, 14, 0.234)
+body:has(.seed-details.focused) .editor  #seedsArtwork {
+  box-shadow: 0 0 0 6px rgba(0, 0, 0, 0), 0 3px 18px 2px rgba(14, 14, 14, 0.1)
 }
 
-.seed-overlay,
-.seed-overlay-inner {
+.seed-details,
+.seed-details-inner {
   pointer-events:none;
 }
 
 .set-queue-item-container,
-body:has(.seed-overlay.focused) .ui-button,
-body:has(.seed-overlay.focused) .seed-input,
-body:has(.seed-overlay.focused) .seed-label,
-body:has(.seed-overlay.focused) .reset-seed-button,
-body:has(.seed-overlay.focused) .btn-layer,
-body:has(.seed-overlay.focused) .grid,
-body:has(.seed-overlay.focused) .ui-element,
-body:has(.seed-overlay.focused) .slider-ui {
+body:has(.seed-details.focused) .ui-button,
+body:has(.seed-details.focused) .seed-input,
+body:has(.seed-details.focused) .seed-label,
+body:has(.seed-details.focused) .reset-seed-button,
+body:has(.seed-details.focused) .mod-reset,
+body:has(.seed-details.focused) .btn-layer,
+body:has(.seed-details.focused) .grid,
+body:has(.seed-details.focused) .ui-element,
+body:has(.seed-details.focused) .slider-ui {
   transition: border-color 0.4s, color 0.4s, background-color 0.4s, opacity 0.4s;
 }
 
-body:has(.seed-overlay.focused) .cls-0,
-body:has(.seed-overlay.focused) .cls-1,
-body:has(.seed-overlay.focused) .cls-2 {
+body:has(.seed-details.focused) .cls-0,
+body:has(.seed-details.focused) .cls-1,
+body:has(.seed-details.focused) .cls-2 {
   transition: fill 0.4s, stroke 0.4s
 }
 
-body:has(.seed-overlay.focused) .seed-input::selection,
-body:has(.seed-overlay.focused) .mod-input::selection,
-body:has(.seed-overlay.focused) .attunement-input::selection {
+body:has(.seed-details.focused) .seed-input::selection,
+body:has(.seed-details.focused) .mod-input::selection,
+body:has(.seed-details.focused) .attunement-input::selection {
   color:#000;
   background-color: #fff;
 }
 
-body:has(.seed-overlay.focused) .svg-container {
-  overflow: visible;
-}
-
-body:has(.seed-overlay.focused) .svg-container svg {
-  transform: scale3d(1.2, 1.2, 1)translate(0, 1.5vh);
-}
-
-body:has(.seed-overlay.focused) .app-pane.right {
-  opacity: 0;
+.app-pane {
   pointer-events: none;
 }
 
-body:has(.seed-overlay.focused) .seed-overlay-wrapper {
-  right: auto;
-  left: calc(100% + 6vw);
-  width: 22.5vw;
-  max-width: 550px;
-  overflow: visible;
+.app-pane > .queue-container {
+  pointer-events: auto;
 }
 
-body:has(.seed-overlay.focused) .toggle-overlay-wrapper {
-  top: 0;
-  right: 0;
+.app-pane,
+.queue-container {
+  transition: transform 0.8s, opacity 0.8s;
+}
+.app-pane.right {
+  height: 100%;
 }
 
-body:has(.seed-overlay.focused) .seed-overlay {
-  opacity: 0;
+body:has(.seed-details.focused) .app-pane {
+  width: 25vw;
 }
 
-body:has(.seed-overlay.focused) .seed-overlay-wrapper:hover .seed-overlay {
- opacity: 1;
+body:has(.seed-details.focused) .app-pane.left {
+  transform: translate(-1.5vw,0);
+}
+body:has(.seed-details.focused) .app-pane.right {
+  transform: translate(1.5vw,0);
+  display: flex;
+  justify-content: center;
+  justify-items: center;
+  align-content: center;
+  align-items: center;
 }
 
-body:has(.seed-overlay.focused) .seed-overlay-wrapper:not(:hover) .toggle-details-button,
-body:has(.seed-overlay.focused.show) .seed-overlay-wrapper:not(:hover) .seed-overlay {
-  opacity: 1;
-}
-
-.seed-overlay.focused {
-  background-color: transparent;
-  box-shadow: none;
-  padding:0;
-}
-
-.app-pane.left {
-  transition: transform 0.5s 0.3s;
-}
-
-body:has(.seed-overlay.focused) .app-pane.left {
-  transform: translate(-1vw,0);
+body:has(.seed-details.focused):has(.layer-grid-wrap.show) .app-pane.left,
+body:has(.seed-details.focused):has(.display-settings-wrap.show) .app-pane.left {
+  width: 580px
 }
 
 
-body:has(.seed-overlay.focused):has(.layer-grid-wrap.show) .app-pane.left,
-body:has(.seed-overlay.focused):has(.display-settings-wrap.show) .app-pane.left {
-  transform: translate(-3vw,0);
+.app-pane.right .seed-details .metadata-list {
+  grid-row-gap: 15px;
+}
+.app-pane.right .seed-details .metadata-item {
+  
 }
 
-body:has(.seed-overlay.focused) .btn-layer:hover {
+body:has(.seed-details.focused):has(.layer-grid-wrap.show) .app-pane.left,
+body:has(.seed-details.focused):has(.display-settings-wrap.show) .app-pane.left {
+  transform: translate(-2vw,0);
+}
+
+body:has(.seed-details.focused) .btn-layer:hover {
   background-color: #fff;
   color: #000;
 }
 
-body:has(.seed-overlay.focused) .btn-layer:active {
+body:has(.seed-details.focused) .btn-layer:active {
   background-color: #000;
   color: #fff;
 }
 
-body:has(.seed-overlay.focused):has(.layer-grid-wrap.show) .btn-layer,
-body:has(.seed-overlay.focused):has(.layer-grid-wrap.show) .grid {
+
+body:has(.seed-details.focused.show):has(.layer-grid-wrap.show) .seed-details,
+body:has(.seed-details.focused.show):has(.display-settings-wrap.show) .seed-details {
+  opacity: 1;
 }
 
 .navbar, .nav-menu *, .select-icon {
@@ -5138,32 +5228,44 @@ body:has(.seed-overlay.focused):has(.layer-grid-wrap.show) .grid {
   pointer-events:auto
 }
 
-body:has(.seed-overlay.focused) .nav-menu *,
-body:has(.seed-overlay.focused) .ui-button,
-body:has(.seed-overlay.focused) .select-icon {
+body:has(.seed-details.focused) .nav-menu *,
+body:has(.seed-details.focused) .ui-button,
+body:has(.seed-details.focused) .select-icon,
+body:has(.seed-details.focused) .queue-container,
+body:has(.seed-details.focused) .toggle-details-button,
+body:has(.seed-details.focused) .seed-details {
   opacity: 0;
   pointer-events: none;
 }
 
+body:has(.seed-details.focused):has(.layer-grid-wrap.show) .svg-container:hover .toggle-details-button,
+body:has(.seed-details.focused):has(.display-settings-wrap.show) .svg-container:hover .toggle-details-button {
+  opacity: 1;
+  pointer-events: auto;
+}
 
-body:has(.seed-overlay.focused) {
+body:has(.seed-details.focused) .svg-container {
+  transform: scale3d(1.15, 1.15, 1)translate(0, 0.9vh);
+}
+
+body:has(.seed-details.focused) {
   background-color: #0d0d0d;
 }
 
-body:has(.seed-overlay.focused) .theme-bkg {
+body:has(.seed-details.focused) .theme-bkg {
   opacity:0.05;
 }
 
-body:has(.seed-overlay.focused) .seed-indicator,
-body:has(.seed-overlay.focused) .seed-input,
-body:has(.seed-overlay.focused) .seed-label,
-body:has(.seed-overlay.focused) .reset-seed-button {
+body:has(.seed-details.focused) .seed-indicator,
+body:has(.seed-details.focused) .seed-input,
+body:has(.seed-details.focused) .seed-label,
+body:has(.seed-details.focused) .reset-seed-button {
   color: #fff;
   opacity: 1;
 }
-.queue-container,
-.app-pane.right {
-  transition: transform 0.5s .3s, opacity 0.5s 0.3s
+
+body:has(.seed-details.focused) .editor-inner:hover .mod-reset {
+  color: #fff;
 }
 
 .editor-inner {pointer-events: none}
@@ -5175,85 +5277,115 @@ body:has(.layer-grid-wrap.show) .queue-container {
   opacity: 0;
   transition: transform 0s, opacity 0s
 }
-/*
-body:has(.seed-overlay.focused) .basic-actions .mod-button {
-  opacity: 0;
-  pointer-events: none;
-  display: none;
-}
-*/
 
-body:has(.seed-overlay.focused) .ui-button.advanced {
-  
-}
 
-body:has(.seed-overlay.focused) .basic-actions .ui-button {
+body:has(.seed-details.focused) .basic-actions .ui-button {
   pointer-events: auto;
   opacity: 1;
 }
 
+body:has(.seed-details.focused) .basic-actions .mod-button.disabled {
+  opacity: 0.1;
+  pointer-events: none;
+}
 
-body:has(.seed-overlay.focused) .basic-actions .ui-button:hover {
+body:has(.seed-details.focused) .basic-actions .ui-button:hover {
   color: #fff;
   border-color: #fff;
 }
 
-body:has(.seed-overlay.focused) .basic-actions .ui-button:active {
+body:has(.seed-details.focused) .basic-actions .ui-button:active {
   background-color: #fff;
   color: #000;
   border-color: #000;
 }
 
-body:has(.seed-overlay.focused) .editor-inner:hover .ui-element,
-body:has(.seed-overlay.focused) .editor-inner:hover .layer-grid-wrap.show .btn-layer,
-body:has(.seed-overlay.focused) .editor-inner:hover .layer-grid-wrap.show .btn-layer.selected,
-body:has(.seed-overlay.focused) .editor-inner:hover .layer-grid-wrap.show .grid,
-body:has(.seed-overlay.focused) .editor-inner:hover .basic-actions .ui-button,
-body:has(.seed-overlay.focused) .editor-inner:hover .seed-input,
-body:has(.seed-overlay.focused) .editor-inner:hover .seed-label,
-body:has(.seed-overlay.focused) .editor-inner:hover .reset-seed-button {
+body:has(.seed-details.focused) .editor-inner:hover .ui-element,
+body:has(.seed-details.focused) .editor-inner:hover .layer-grid-wrap.show .btn-layer,
+body:has(.seed-details.focused) .editor-inner:hover .layer-grid-wrap.show .btn-layer.selected,
+body:has(.seed-details.focused) .editor-inner:hover .layer-grid-wrap.show .grid,
+body:has(.seed-details.focused) .editor-inner:hover .basic-actions .ui-button,
+body:has(.seed-details.focused) .editor-inner:hover .seed-input,
+body:has(.seed-details.focused) .editor-inner:hover .seed-label,
+body:has(.seed-details.focused) .editor-inner:hover .reset-seed-button {
   color: #fff;
   border-color: #fff;
 }
 
+body:has(.seed-details.focused) .editor-inner:hover .layer-grid-wrap.show .btn-layer:hover {
+  background-color: #ffffff2f;
+}
 
-body:has(.seed-overlay.focused) .editor-inner:hover .btn-display-setting svg .cls-1,
-body:has(.seed-overlay.focused) .editor-inner:hover .btn-display-setting svg .cls-2 {
+body:has(.seed-details.focused) .editor-inner:hover .layer-grid-wrap.show .btn-layer.selected,
+body:has(.seed-details.focused) .editor-inner:hover .basic-actions .ui-button:active,
+body:has(.seed-details.focused) .editor-inner:hover .basic-actions .ui-button.selected {
+  color: #000;
+  background-color: #fff;
+}
+
+body:has(.seed-details.focused) .app-pane.right,
+body:has(.seed-details.focused) .app-pane.right .seed-details {
+  opacity: 1;
+  background: transparent;
+  box-shadow: none;
+}
+body:has(.seed-details.focused) .app-pane.right .seed-details {
+  padding: 0;
+  height: 100%;
+  min-height: 70vh;
+  max-height: 80vh;
+}
+
+body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting svg .cls-1,
+body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting svg .cls-2 {
   stroke: #fff;
 }
-body:has(.seed-overlay.focused) .editor-inner:hover .btn-display-setting svg .cls-0 {
+body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting svg .cls-0 {
   fill: #fff;
 }
 
-body:has(.seed-overlay.focused) .editor-inner:hover .slider-ui {
+body:has(.seed-details.focused) .editor-inner:hover .slider-ui {
   background-color: #fff;
 }
 
-body:has(.seed-overlay.focused) .editor-inner:hover .range-slider__range::-webkit-slider-thumb {
+.range-slider__value::after {
+  transition: border 0.4s
+}
+
+body:has(.seed-details.focused) .editor-inner:hover .range-slider__range::-webkit-slider-thumb {
   background-color: #fff;
 }
 
-body:has(.seed-overlay.focused) .editor-inner:hover .range-slider__range::-moz-range-thumb {
+body:has(.seed-details.focused) .editor-inner:hover .range-slider__value {
+  background-color: #fff;
+  color: #000;
+}
+
+body:has(.seed-details.focused) .editor-inner:hover .range-slider__value::after {
+  border-right-color: #fff;
+}
+
+body:has(.seed-details.focused) .editor-inner:hover .range-slider__range::-moz-range-thumb {
   background-color: #fff;
 }
 
-body:has(.seed-overlay.focused) .seed-indicator {
+body:has(.seed-details.focused) .seed-indicator {
   border-bottom: solid 2px #00000000;
 }
 
-body:has(.seed-overlay.focused) .queue-item {
+body:has(.seed-details.focused) .queue-item {
   color: #fff;
 }
 
 /* 
-body:has(.seed-overlay.focused) .reset-seed-button{
+body:has(.seed-details.focused) .reset-seed-button{
   opacity:0.1;
 }
-body:has(.seed-overlay.focused) .reset-seed-button:hover{
+body:has(.seed-details.focused) .reset-seed-button:hover{
   opacity:1;
 }
 
-body:has(.seed-overlay.focused) .seed-indicator{
+body:has(.seed-details.focused) .seed-indicator{
   border-color:#00000000;
   color: #fff;
 }
@@ -5264,7 +5396,7 @@ body:has(.seed-overlay.focused) .seed-indicator{
   .svg-container:active {
     box-shadow: 0 2px 5px 1px rgba(54, 54, 54, 0.12);
   }
-  .seed-overlay {
+  .seed-details {
     display:none;
   }
 }
@@ -5617,8 +5749,28 @@ body:has(.seed-overlay.focused) .seed-indicator{
   }
 
   .app-pane {
-    max-width: 560px;
     max-height: 80vh;
+    max-width: 580px;
+  }
+
+  body:has(.seed-details.focused) .app-pane {
+    width: 580px;
+  }
+
+  body:has(.seed-details.focused) .app-pane.left {
+    transform: translate(-1vw, 0);
+  }
+  body:has(.seed-details.focused) .app-pane.right {
+    transform: translate(1vw, 0);
+  }
+
+  body:has(.seed-details.focused):has(.layer-grid-wrap.show) .app-pane.left,
+  body:has(.seed-details.focused):has(.display-settings-wrap.show) .app-pane.left {
+    transform: translate(-4vw,0);
+  }
+
+  body:has(.seed-details.focused) .svg-container {
+    transform: scale3d(1.21, 1.21, 1) translate(0, 1.4vh);
   }
 
   .svg-aspect-ratio {

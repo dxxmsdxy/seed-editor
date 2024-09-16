@@ -34,13 +34,14 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
 
   // Parse display settings and slider values from editorMod
   const displaySettings = useMemo(() => parseInt(editorMod.slice(0, 3), 10), [editorMod]);
+
   const sliderValues = useMemo(() => ({
-    color: parseInt(editorMod.slice(3, 6), 10),
-    depth: parseInt(editorMod.slice(6, 9), 10),
-    spin: parseInt(editorMod.slice(9, 12), 10),
-    tint: parseInt(editorMod.slice(12, 13), 10),
-    "tint%": editorMod.slice(13) === "99" ? 100 : parseInt(editorMod.slice(13), 10),
-  }), [editorMod]);
+  color: parseInt(editorMod.slice(3, 6), 10),
+  spin: parseInt(editorMod.slice(9, 12), 10),
+  depth: parseInt(editorMod.slice(6, 9), 10),
+  tint: parseInt(editorMod.slice(12, 13), 10),
+  "tint%": editorMod.slice(13) === "99" ? 100 : parseInt(editorMod.slice(13), 10),
+}), [editorMod]);
 
   const colorValueRef = useRef(sliderValues.color);
   const depthValueRef = useRef(sliderValues.depth);
@@ -50,12 +51,7 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
     colorValueRef.current = sliderValues.color;
     depthValueRef.current = sliderValues.depth;
     spinValueRef.current = sliderValues.spin;
-  }, [sliderValues.spin]);
-
-  const adjustAnimationState = useCallback(() => {
-    const layers = document.querySelectorAll('.seedartwork:has(g.on),.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline');
-    applyModValueToElements(layers, spinValueRef.current);
-  }, []);
+  }, [sliderValues.color, sliderValues.depth, sliderValues.spin]);
 
   // Render display setting icons
   const renderDisplaySettingIcons = () => icons.map((Icon, index) => (
@@ -101,35 +97,34 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
 
   // Handle slider change
   const handleSliderChange = useCallback((name: string, value: number, isSliding: boolean) => {
-    if (!isLocked) {
-      dispatch(updateSliderValue({ name, value }));
-      if (!isSliding) {
-        let newMod = editorMod;
-        switch (name) {
-          case 'color':
-            newMod = newMod.slice(0, 3) + value.toString().padStart(3, '0') + newMod.slice(6);
-            break;
-          case 'depth':
-            newMod = newMod.slice(0, 6) + value.toString().padStart(3, '0') + newMod.slice(9);
-            break;
-          case 'spin':
-            newMod = newMod.slice(0, 9) + value.toString().padStart(3, '0') + newMod.slice(12);
-            handleModNumberChange(newMod);
-            adjustAnimationState();
-            break;
-          case 'tint':
-            newMod = newMod.slice(0, 12) + value.toString() + (value === 0 ? "00" : newMod.slice(13));
-            break;
-          case 'tint%':
-            if (sliderValues.tint !== 0) {
-              newMod = newMod.slice(0, 13) + (value === 100 ? "99" : value.toString().padStart(2, '0'));
-            }
-            break;
-        }
-        handleModNumberChange(newMod);
+  if (!isLocked) {
+    dispatch(updateSliderValue({ name, value }));
+    
+    if (!isSliding) {
+      let newMod = editorMod;
+      switch (name) {
+        case 'color':
+          newMod = newMod.slice(0, 3) + value.toString().padStart(3, '0') + newMod.slice(6);
+          break;
+        case 'spin':
+          newMod = newMod.slice(0, 9) + value.toString().padStart(3, '0') + newMod.slice(12);
+          break;
+        case 'depth':
+          newMod = newMod.slice(0, 6) + value.toString().padStart(3, '0') + newMod.slice(9);
+          break;
+        case 'tint':
+          newMod = newMod.slice(0, 12) + value.toString().padStart(1, '0') + (value === 0 ? "00" : newMod.slice(13));
+          break;
+        case 'tint%':
+          if (sliderValues.tint !== 0) {
+            newMod = newMod.slice(0, 13) + (value === 100 ? "99" : value.toString().padStart(2, '0'));
+          }
+          break;
       }
+      handleModNumberChange(newMod);
     }
-  }, [isLocked, editorMod, dispatch, sliderValues.tint, handleModNumberChange, adjustAnimationState]);
+  }
+}, [isLocked, editorMod, dispatch, sliderValues.tint, handleModNumberChange]);
 
   // Handle attunement change via text input
   const handleAttunementChange = React.useCallback((value: string) => {
@@ -155,10 +150,31 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
     }
   }, [isLocked, dispatch]);
 
+  // Add this effect
+  useEffect(() => {
+    const layers = document.querySelectorAll('.seedartwork:has(g.on),.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline');
+    if (layers.length > 0) {
+      applyModValueToElements(layers, parseInt(editorMod.slice(3, 6), 10));
+    } else {
+      console.warn('No elements found to apply mod value');
+    }
+  }, [editorMod]);
+
+  // Applying spin mod number changes
+  useEffect(() => {
+    const spinTargets = document.querySelectorAll('.lr.on');
+    applyModValueToElements(spinTargets, parseInt(editorMod.slice(9, 12), 10));
+  }, [editorMod]);
+
+  // Applying depth mod number changes
+  useEffect(() => {
+    const depthTargets = document.querySelectorAll('.lr.on .fx');
+    applyModValueToElements(depthTargets, parseInt(editorMod.slice(6, 9), 10));
+  }, [editorMod]);
 
 
 
-
+  
   // STRUCTURE -------------------------------------
 
   return (
@@ -213,7 +229,7 @@ const DisplaySettings: React.FC<DisplaySettingsProps> = React.memo(({ isLocked, 
       <RangeSlider name="tint" value={sliderValues.tint} onChange={handleSliderChange} min={0} max={9} step={1} defaultValue={0} disabled={isLocked} />
       <RangeSlider 
         name="tint%" 
-        value={actualTintPercentValue} 
+        value={sliderValues["tint%"]} 
         onChange={handleSliderChange} 
         min={0} 
         max={100} 
