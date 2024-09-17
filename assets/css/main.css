@@ -5478,6 +5478,43 @@ body:has(.seed-details.focused) .seed-indicator{
     list-style: none;
   }
 
+.rgblens {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index:10;
+  border-radius: 6px;
+  mix-blend-mode:multiply;
+  pointer-events:none;
+  background-color:#ffffff00;
+  -webkit-transition: background-color 100ms linear !important;
+  -ms-transition: background-color 100ms linear !important;
+  transition: background-color 100ms linear !important;
+}
+*:has(.red) .rgblens{background-color:#ff0000ff}
+*:has(.green) .rgblens{background-color:#00ff00ff}
+*:has(.blue) .rgblens{background-color:#0000ffff}
+*:has(.invert.red) .rgblens{background-color:#00ffff}
+*:has(.invert.green) .rgblens{background-color:#ff00ff}
+*:has(.invert.blue) .rgblens{background-color:#ffff00}
+*:has(.rgbCycle) .rgblens,*:has(.rgbCycle) .overlay{animation: rgbAnimation 60s linear infinite}
+
+*:has(.invert) .rgblens{mix-blend-mode:difference;}
+*:has(.invert.rgbCycle) .rgblens,*:has(.invert.rgbCycle) .overlay{animation: cmykAnimation 60s linear infinite}
+
+*:has(.invert.red) .rgblens{background-color:cyan}
+*:has(.invert.green) .rgblens{background-color:magenta}
+*:has(.invert.blue) .rgblens{background-color:yellow}
+
+*:has(.invert.rgbCycle.snap) .rgblens,*:has(.invert.rgbCycle.snap) .overlay{animation: cmykSnapAnimation 60s linear infinite}
+*:has(.rgbCycle.snap) .rgblens,*:has(.rgbCycle.snap) .overlay{animation: rgbSnapAnimation 60s linear infinite}
+
+.overlay{display:none}
+*:has(.pauseRGB) .rgblens,*:has(.pauseRGB) .overlay{animation-play-state:paused!important}
+
+
 
 
 

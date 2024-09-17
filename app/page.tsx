@@ -79,10 +79,10 @@ export default function Home() {
   // CHECKS -----------------------------------------
 
   const [isArtworkFocused, setIsArtworkFocused] = useState(false);
-
   const [isOverlayToggled, setisOverlayToggled] = useState(false);
-
   const [isPlaying, playSVGAnimation] = useState(false);
+  const isSpinAnimationPaused = useAppSelector((state: RootState) => state.seed.isSpinAnimationPaused);
+
 
   const isSelectedItemLocked = useCallback(() => {
     if (selectedQueueIndex === null || selectedQueueIndex >= queueItems.length) return false;
@@ -258,12 +258,12 @@ export default function Home() {
   }, []);
 
   // Toggle the SVG Overlay element
-  const toggleSvgOverlay = useCallback(() => {
+  const toggleArtworkOverlay = useCallback(() => {
     setisOverlayToggled(prev => !prev);
   }, []);
 
   const togglePlay = useCallback(() => {
-    playSVGAnimation(prev => !prev);
+    dispatch(toggleSpinAnimationPause());
   }, []);
 
   // Queue logic ---------------------------------
@@ -624,6 +624,7 @@ export default function Home() {
                     const pastedText = e.clipboardData.getData('text');
                     handleSeedInputChange(pastedText);
                     e.currentTarget.textContent = editorSeed;
+                    clearSelection();
                   }
                 }}
               >{editorSeed}</span>
@@ -692,7 +693,9 @@ export default function Home() {
                 }}
                 className="svg-aspect-ratio"
               >
-                <div className={`svg-container ${isPlaying ? 'playing' : ''}`}>
+                <div 
+                  className={`svg-container ${isSpinAnimationPaused ? 'paused' : 'playing'}`}
+                >
                   <div 
                     className="svg-outer"
                     {...handleSvgOverlayInteraction()}
@@ -708,19 +711,20 @@ export default function Home() {
                         editorAttunement={calculatedAttunement}
                       />
                     )}
+                    <div class="rgblens"></div>
                   </div>
                   <div className="seed-overlay-container">
                     <SeedDetails
                       isFocused={isArtworkFocused}
                       showOverlay={isOverlayToggled}
-                      editorSeed={editorSeed}
-                      editorAttunement={editorAttunement}
+                      editorSeed={editorSeed ?? ''}
+                      editorAttunement={editorAttunement ?? 0}
                       bitsArray={bitsArray}
                     />
                     <div className="toggle-overlay-wrapper">
                       <div
                         className="toggle-details-button"
-                        onClick={toggleSvgOverlay}
+                        onClick={toggleArtworkOverlay}
                       >
                         i
                       </div>
@@ -742,7 +746,6 @@ export default function Home() {
                     hasEditorChanges && selectedQueueIndex !== null ? "" : "disabled"
                   }`}
                   onClick={handleSetQueueItem}
-                  disabled={!hasEditorChanges || selectedQueueIndex === null}
                 >
                   Set Queue Item
                   <span className="select-icon z-embed">
@@ -773,8 +776,8 @@ export default function Home() {
               <SeedDetails
                 isFocused={isArtworkFocused}
                 showOverlay={isOverlayToggled}
-                editorSeed={editorSeed}
-                editorAttunement={editorAttunement}
+                editorSeed={editorSeed ?? ''}
+                editorAttunement={editorAttunement ?? 0}
                 bitsArray={bitsArray}
               />
             </div>

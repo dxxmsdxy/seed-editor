@@ -29,6 +29,7 @@ interface EditorState {
   actualTintPercentValue: number;
   layersUIToggled: boolean;
   displaySettingsToggled: boolean;
+  isOverlayToggled: boolean;
   activeSelection: boolean;
   isActive: { [key: string]: boolean };
   editorHistory: {
@@ -70,7 +71,7 @@ const initialState: EditorState = {
   newAttunement: null,
   editorSeed: "0",
   editorMod: "000000000000000",
-  editorAttunement: '',
+  editorAttunement: 0,
   isAttunementOverridden: false,
   shouldResetLayers: false,
   hasEditorChanges: false,
@@ -83,6 +84,7 @@ const initialState: EditorState = {
   actualTintPercentValue: 100,
   layersUIToggled: false,
   displaySettingsToggled: false,
+  isOverlayToggled: false,
   activeSelection: false,
   isActive: {},
   editorHistory: {
@@ -146,8 +148,8 @@ const editorSlice = createSlice({
         editorAttunement: selectedItem ? selectedItem.attunementNumber || 0 : 0,
         hasEditorChanges: false,
         actualTintPercentValue: 100,
-        // Preserve the overlay state
-        isOverlayToggled: state.isOverlayToggled,
+        isOverlayToggled: false,
+        // Preserve focus state
         isArtworkFocused: state.isArtworkFocused,
       };
       
@@ -324,8 +326,25 @@ const editorSlice = createSlice({
     },
 
     // Update display setting
+    // Update display setting
     updateDisplaySetting: (state, action: PayloadAction<number>) => {
-      state.displaySettings ^= (1 << action.payload);
+      const index = action.payload;
+      
+      if (index >= 6 && index <= 8) {
+        // For buttons 6-8, we'll use a special logic
+        if (state.displaySettings & (1 << index)) {
+          // If the clicked button is already on, turn it off
+          state.displaySettings &= ~(1 << index);
+        } else {
+          // If the clicked button is off, turn it on and turn off the others
+          state.displaySettings &= ~(0b111 << 6); // Turn off bits 6, 7, and 8
+          state.displaySettings |= (1 << index);  // Turn on the clicked button
+        }
+      } else {
+        // For other buttons, toggle as before
+        state.displaySettings ^= (1 << index);
+      }
+
       state.editorMod = calculateModNumber(state);
       state.hasEditorChanges = true;
       pushToHistory(state, { editorMod: state.editorMod });
@@ -408,6 +427,14 @@ const editorSlice = createSlice({
     },
     toggleSpinAnimationPause: (state) => {
       state.isSpinAnimationPaused = !state.isSpinAnimationPaused;
+    },
+
+    toggleOverlay: (state, action: PayloadAction<boolean | undefined>) => {
+      if (action.payload !== undefined) {
+        state.isOverlayToggled = action.payload;
+      } else {
+        state.isOverlayToggled = !state.isOverlayToggled;
+      }
     },
 
     // Undo Editor state change

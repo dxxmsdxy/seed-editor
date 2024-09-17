@@ -236,7 +236,7 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
       <RangeSlider name="spin" value={modValues.spin} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
       <RangeSlider name="tint" value={modValues.tint} onChange={handleSliderChange} min={0} max={9} step={1} defaultValue={0} disabled={isLocked} />
       <RangeSlider 
-        name="tintPercent" 
+        name="tint%" 
         value={modValues.tintPercent} 
         onChange={handleSliderChange} 
         min={0} 
