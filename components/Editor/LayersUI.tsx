@@ -38,6 +38,7 @@ export const Bit = ({
     if (activeSelection) {endSelection()}
   };
 
+  // Individual button structure
   return (
     <div
       onMouseDown={handleMouseDown}
@@ -59,6 +60,9 @@ export const BitsArray = ({ toggleBit }: { toggleBit: (index: number) => void })
   const startSelection = () => setActiveSelection(true);
   const updateSelection = () => !activeSelection && setActiveSelection(true);
   const endSelection = () => setActiveSelection(false);
+
+
+  // STRUCTURE --------------------------------
 
   // Return structure for the LayersUI grid
   return (

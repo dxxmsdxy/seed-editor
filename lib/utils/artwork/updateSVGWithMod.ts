@@ -126,7 +126,7 @@ export function normalizeModValues(elements: NodeListOf<Element> | HTMLCollectio
  * const elements = document.querySelectorAll('.animated-element');
  * applyModValueToElements(elements, 500);
  */
-export function applyModValueToElements(elements: NodeListOf<Element> | HTMLCollectionOf<Element> | Element[], modValue: number): void {
+export function applyModValueToElements(elements: NodeListOf<Element> | HTMLCollectionOf<Element> | Element[], modValue: number, modType: 'color' | 'depth' | 'spin'): void {
   const elementsArray = Array.from(elements);
   if (elementsArray.length === 0) {
     console.warn('applyModValueToElements called with empty elements array');
@@ -136,7 +136,7 @@ export function applyModValueToElements(elements: NodeListOf<Element> | HTMLColl
   const normalizedPosition = modValue / MAX_MOD_VALUE;
   const firstElement = elementsArray[0];
   const computedStyle = window.getComputedStyle(firstElement);
-  const duration = parseFloat(computedStyle.animationDuration) * 2 || TOTAL_ANIMATION_DURATION;
+  const duration = parseFloat(computedStyle.animationDuration) || TOTAL_ANIMATION_DURATION;
   const delay = -(normalizedPosition * duration);
 
   elementsArray.forEach(element => {
@@ -154,6 +154,20 @@ export function applyModValueToElements(elements: NodeListOf<Element> | HTMLColl
     } else {
       const adjustedDelay = delay - originalDelay;
       (element as HTMLElement).style.animationDelay = `${adjustedDelay.toFixed(10)}s`;
+    }
+  });
+}
+
+export function resetLayers(svg: SVGSVGElement | null): void {
+  if (!svg) return;
+
+  const lrElements = svg.querySelectorAll('.lr');
+  lrElements.forEach(element => {
+    const originalDelay = element.getAttribute('data-original-delay');
+    if (originalDelay) {
+      (element as HTMLElement).style.animationDelay = `${originalDelay}s`;
+    } else {
+      (element as HTMLElement).style.animationDelay = '0s';
     }
   });
 }

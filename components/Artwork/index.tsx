@@ -1,6 +1,15 @@
 "use client";
 import React, { useEffect, useRef, useState } from 'react';
 import { useArtworkHotkeys } from "@/hooks";
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '@/store';
+import { clearShouldResetLayers, selectShouldResetLayers } from '@/store/slices/editorSlice';
+import { applyModValueToElements, resetLayers } from '@/lib/utils/artwork/updateSVGWithMod';
+
+
+
+
+//================================================//
 
 interface ArtworkProps {
   seed: string;
@@ -9,45 +18,111 @@ interface ArtworkProps {
   isPlaying: boolean;
 }
 
+
+// COMPONENT LOGIC ---------------------------------
+
 const Artwork = ({ seed, mod, attunement, isPlaying }: ArtworkProps) => {
   useArtworkHotkeys(seed);
   const currentDate = new Date();
-
+  const dispatch = useDispatch();
   const svgRef = useRef<SVGSVGElement>(null);
+  const shouldResetLayers = useSelector(selectShouldResetLayers);
+
+  const modValues = useSelector((state: RootState) => state.seed.modValues);
+  const selectedQueueItem = useSelector((state: RootState) => 
+    state.queue.selectedIndex !== null ? state.queue.items[state.queue.selectedIndex] : null
+  );
+
+  const isColorAnimationPaused = useSelector((state: RootState) => state.seed.isColorAnimationPaused);
+  const isDepthAnimationPaused = useSelector((state: RootState) => state.seed.isDepthAnimationPaused);
+  const isSpinAnimationPaused = useSelector((state: RootState) => state.seed.isSpinAnimationPaused);
+
+  // Reset artwork animations
+  const resetAnimations = (element: Element) => {
+    const animations = element.getAnimations();
+    animations.forEach(animation => {
+      const wasPaused = animation.playState === 'paused';
+      animation.cancel();
+      animation.play();
+      if (wasPaused) {
+        animation.pause();
+      }
+    });
+    element.querySelectorAll('*').forEach(child => {
+      resetAnimations(child);
+    });
+  };
 
   useEffect(() => {
-    if (svgRef.current) {
-      const svg = svgRef.current;
-      const spinValue = parseInt(mod.slice(9, 12), 10);
-      const depthValue = parseInt(mod.slice(6, 9), 10);
-
-
+    if (!svgRef.current) return;
+  
+    const svg = svgRef.current;
+    
+    const updateSVGClasses = () => {
       // Always ensure these classes are present
-      svg.classList.add('seedartwork', 'reveal');
-
-      // Handle spin classes
-      if (spinValue > 0) {
-        svg.classList.add('spin');
-        svg.classList.toggle('pauseSpin', !isPlaying);
-      } else {
-        svg.classList.remove('spin', 'pauseSpin');
+      svg.classList.add('seedartwork', 'pauseColor', 'pauseDepth', 'pauseSpin');
+  
+      // Apply paused state based on Redux state
+      svg.classList.toggle('pauseColor', isColorAnimationPaused);
+      svg.classList.toggle('pauseDepth', isDepthAnimationPaused);
+      svg.classList.toggle('pauseSpin', isSpinAnimationPaused);
+  
+      // Handle spin and depth classes
+      svg.classList.toggle('spin', parseInt(mod.slice(3, 6), 10) > 0);
+      svg.classList.toggle('depth', parseInt(mod.slice(6, 9), 10) > 0);
+  
+      // Update display settings
+      const displaySettings = parseInt(mod.slice(12), 10);
+      const displayClasses = ['reveal', 'removeBkg', 'invert', 'flip', 'hyper', 'cmyk', 'red', 'green', 'blue'];
+      displayClasses.forEach((className, index) => {
+        const isActive = index === 0 ? (displaySettings & (1 << 8)) === 0 : (displaySettings & (1 << (8 - index))) !== 0;
+        svg.classList.toggle(className, isActive);
+      });
+  
+      // Ensure only one of red, green, or blue is active
+      const colorClasses = ['red', 'green', 'blue'];
+      const activeColorClass = colorClasses.find(color => svg.classList.contains(color));
+      if (activeColorClass) {
+        colorClasses.forEach(color => {
+          if (color !== activeColorClass) svg.classList.remove(color);
+        });
       }
+    };
+  
+    const updateAnimations = () => {
+      const colorElements = svg.querySelectorAll('.lr');
+      const depthElements = svg.querySelectorAll('.depth');
+      const spinElements = svg.querySelectorAll('.spin');
+  
+      applyModValueToElements(colorElements, modValues.color, 'color');
+      applyModValueToElements(depthElements, modValues.depth, 'depth');
+      applyModValueToElements(spinElements, modValues.spin, 'spin');
+    };
+  
+    updateSVGClasses();
+    updateAnimations();
+  
+  }, [mod, modValues, isColorAnimationPaused, isDepthAnimationPaused, isSpinAnimationPaused]);
 
-      // Handle depth classes
-      if (depthValue > 0) {
-        svg.classList.add('depth');
-        svg.classList.toggle('pauseDepth', !isPlaying);
-      } else {
-        svg.classList.remove('depth', 'pauseDepth');
-      }
+  // Reset the animation delays to initial
+  useEffect(() => {
+    if (shouldResetLayers && svgRef.current) {
+      resetLayers(svgRef.current);
+      
+      // Apply mod values after resetting
+      const layers = svgRef.current.querySelectorAll('.lr');
+      applyModValueToElements(layers, modValues.color, 'color');
+      applyModValueToElements(layers, modValues.spin, 'spin');
+      applyModValueToElements(layers, modValues.depth, 'depth');
 
-      // Handle pauseColor class
-      svg.classList.toggle('pauseColor', !isPlaying);
-
-      // Add 'playing' class when isPlaying is true
-      svg.classList.toggle('playing', isPlaying);
+      dispatch(clearShouldResetLayers());
     }
-  }, [mod, isPlaying]);
+  }, [shouldResetLayers, modValues, dispatch]);
+
+
+
+
+
 
   return (
     <svg

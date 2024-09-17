@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
-import { setEditorState, resetEditorState } from './editorSlice';
+import { updateEditorState, resetEditorState } from './editorSlice';
 import { RootState } from '@/store';
 
 
@@ -209,7 +209,7 @@ export const selectAndUpdateQueueItemThunk = createAsyncThunk(
     
     if (index !== state.queue.selectedIndex) {
       const isSet = selectedItem.isSet;
-      dispatch(setEditorState({
+      dispatch(updateEditorState({
         seed: isSet ? selectedItem.newSeed || selectedItem.seed : selectedItem.seed || '0',
         mod: isSet ? selectedItem.newMod || selectedItem.modNumber : selectedItem.modNumber || "000000000000000",
         attunement: isSet ? selectedItem.newAttunement ?? selectedItem.attunementNumber : selectedItem.attunementNumber ?? 0

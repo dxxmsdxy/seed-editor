@@ -3,6 +3,7 @@ import { useRef, useCallback, useEffect, useState } from "react";
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { debounce } from 'lodash';
 
 import Artwork from "@/components/Artwork";
 import SeedDetails from '@/components/Artwork/SeedDetails';
@@ -11,10 +12,12 @@ import { BitsArray } from "@/components/Editor/LayersUI";
 import DisplaySettings from '@/components/Editor/DisplaySettingsUI';
 import InscribeModal from "@/components/Editor/InscribeModal";
 
-import { setEditorState, setEditorSeed, updateHasEditorChanges, resetEditorState, resetEditorSeed, toggleBit, randomizeBits, undo, redo, selectLayersUIToggled, selectDisplaySettingsToggled, toggleLayersUI, toggleDisplaySettings, checkEditorMatchesSelectedItem } from '@/store/slices/editorSlice';
+import { updateEditorState, updateEditorSeed, updateHasEditorChanges, resetEditorState, resetEditorSeed, resetEditorMod, toggleBit, randomizeBits, undo, redo, selectLayersUIToggled, selectDisplaySettingsToggled, toggleLayersUI, toggleDisplaySettings, checkEditorMatchesSelectedItem, toggleColorAnimationPause, toggleDepthAnimationPause, toggleSpinAnimationPause } from '@/store/slices/editorSlice';
 import { initializeQueue, getSetQueueItems, setSelectedIndex, updateQueueItem } from '@/store/slices/queueSlice';
 import { setShowInscribeModal } from '@/store/slices/modalSlice';
 import { selectElementContents, clearSelection } from '@/lib/utils';
+import { selectModValues, selectDisplaySettings } from '@/store/slices/editorSlice';
+import { applyModValueToElements, resetLayers } from '@/lib/utils/artwork/updateSVGWithMod';
 
 
 
@@ -37,22 +40,102 @@ export default function Home() {
   const walletConnected = useSelector((state: RootState) => state.wallet.connected);
   const layersUIToggled = useSelector(selectLayersUIToggled);
   const displaySettingsToggled = useSelector(selectDisplaySettingsToggled);
+  const modValues = useAppSelector(selectModValues);
+  
+
 
 
   // REFS -------------------------------------------
 
   const inputRef = useRef<HTMLDivElement>(null);
-
-  const [isSvgOverlayFocused, setIsSvgOverlayFocused] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const svgOverlayRef = useRef<HTMLDivElement>(null);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [showSvgOverlay, setShowSvgOverlay] = useState(false);
+
+
+
+  // CHECKS -----------------------------------------
+
+  const [isArtworkFocused, setIsArtworkFocused] = useState(false);
+
+  const [isOverlayToggled, setisOverlayToggled] = useState(false);
+
   const [isPlaying, playSVGAnimation] = useState(false);
-  
+
+  const isSelectedItemLocked = useCallback(() => {
+    if (selectedQueueIndex === null || selectedQueueIndex >= queueItems.length) return false;
+    return queueItems[selectedQueueIndex].locked;
+  }, [selectedQueueIndex, queueItems]);
+
 
 
   // CALLBACKS --------------------------------------
+
+  // Editor initialization --------------------------
+
+  // React to user interaction with the Editor UI
+  const handleEditorInteraction = useCallback(() => {
+    if (selectedQueueIndex === null && seed !== BigInt(0)) {
+      // dispatch(selectNextUnsetQueueItemThunk());
+    }
+  }, [selectedQueueIndex, seed]);
+
+  // Add event listeners to editor elements
+  useEffect(() => {
+    const editorElements = document.querySelectorAll('.editor .app-pane *');
+    editorElements.forEach(element => {
+      element.addEventListener('click', handleEditorInteraction);
+    });
+
+    return () => {
+      editorElements.forEach(element => {
+        element.removeEventListener('click', handleEditorInteraction);
+      });
+    };
+  }, [handleEditorInteraction]);
+
+  // Editor logic ---------------------------------
+
+  // Update the Editor's seed number via the seed input
+  const handleSeedInputChange = useCallback((updatedSeed: string) => {
+    if (selectedQueueIndex !== null) {
+      const selectedItem = queueItems[selectedQueueIndex];
+      if (updatedSeed === (selectedItem.newSeed || selectedItem.seed)) {
+        dispatch(updateEditorSeed({ seed: updatedSeed, updateChanges: false }));
+      } else if (!isSelectedItemLocked()) {
+        dispatch(updateEditorSeed({ seed: updatedSeed, updateChanges: true }));
+      }
+    } else {
+      dispatch(updateEditorSeed({ seed: updatedSeed, updateChanges: false }));
+    }
+  }, [dispatch, isSelectedItemLocked, queueItems, selectedQueueIndex]);
+
+  // Reset the Editor's seed number
+  const handleResetEditorSeed = useCallback(() => {
+    if (isSelectedItemLocked()) return;
+    
+    let seedToResetTo: string;
+    if (selectedQueueIndex === null) {
+      seedToResetTo = '0';
+      dispatch(resetEditorSeed(seedToResetTo));
+    } else {
+      const selectedItem = queueItems[selectedQueueIndex];
+      seedToResetTo = selectedItem.seed;
+      // Reset the seed, confirm it matches the selected queue item
+      dispatch(resetEditorSeed(seedToResetTo));
+      dispatch(checkEditorMatchesSelectedItem(selectedItem));
+    }
+  }, [dispatch, selectedQueueIndex, queueItems, isSelectedItemLocked]);
+
+  // Reset the Editor's mod number
+  const handleResetEditorMod = useCallback(() => {
+    if (isSelectedItemLocked()) return;
+    dispatch(resetEditorMod());
+    if (selectedQueueIndex !== null) {
+      const selectedItem = queueItems[selectedQueueIndex];
+      dispatch(checkEditorMatchesSelectedItem(selectedItem));
+    }
+  }, [dispatch, selectedQueueIndex, queueItems, isSelectedItemLocked]);
 
   // Enable the Editor's seed reset button
   const enableSeedResetButton = useCallback(() => {
@@ -67,28 +150,73 @@ export default function Home() {
     return editorSeed !== selectedItem.seed;
   }, [selectedQueueIndex, queueItems, editorSeed]);
 
-  // Check if selected queue item is locked
-  const isSelectedItemLocked = useCallback(() => {
-    if (selectedQueueIndex === null || selectedQueueIndex >= queueItems.length) return false;
-    return queueItems[selectedQueueIndex].locked;
-  }, [selectedQueueIndex, queueItems]);
-
-  // Reset the Editor's seed number
-  const handleResetEditorSeed = useCallback(() => {
-    if (isSelectedItemLocked()) return;
-  
-    let seedToReset: string;
-    if (selectedQueueIndex === null) {
-      seedToReset = '0';
-      dispatch(resetEditorSeed(seedToReset));
-    } else {
-      const selectedItem = queueItems[selectedQueueIndex];
-      seedToReset = selectedItem.seed;
-      // Check if editor matches selected queue item
-      dispatch(resetEditorSeed(seedToReset));
-      dispatch(checkEditorMatchesSelectedItem(selectedItem));
+  // Randomize the Editor's seed number
+  const handleRandomizeBits = () => {
+    if (!isSelectedItemLocked()) {
+      dispatch(randomizeBits());
     }
-  }, [dispatch, selectedQueueIndex, queueItems, isSelectedItemLocked]);
+  };
+
+  // Toggle individual bits in the seed number
+  const handleToggleBit = (index: number) => {
+    if (!isSelectedItemLocked()) {
+      dispatch(toggleBit(index));
+    }
+  };
+
+  // Artwork Preview logic --------------------------
+
+  // Apply display style to artwork preview
+  const debouncedApplyModValueToElements = useCallback(
+    debounce((elements, modValue, modType) => {
+      applyModValueToElements(elements, modValue, modType);
+    }, 50),
+    []
+  );
+
+  // Handle SVG overlay mouse interactions
+  const handleSvgOverlayInteraction = useCallback(() => {
+    const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+      if (isArtworkFocused) {
+        setisOverlayToggled(false);
+      } else {setIsArtworkFocused(prevState => !prevState)}
+      event.stopPropagation();
+    };
+    const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+      if (event.target === event.currentTarget) {
+        clickTimerRef.current = setTimeout(() => {
+          clickTimerRef.current = null;
+        }, 500);
+      }
+    };
+    const handleMouseUp = (event: React.MouseEvent<HTMLDivElement>) => {
+      if (event.target === event.currentTarget) {
+        if (clickTimerRef.current) {
+          clearTimeout(clickTimerRef.current);
+          handleClick(event);
+        }
+      }
+      event.stopPropagation();
+    };
+
+    return {
+      onMouseDown: handleMouseDown,
+      onMouseUp: handleMouseUp,
+      onClick: handleClick,
+      onDoubleClick: handleClick,
+    };
+  }, []);
+
+  // Toggle the SVG Overlay element
+  const toggleSvgOverlay = useCallback(() => {
+    setisOverlayToggled(prev => !prev);
+  }, []);
+
+  const togglePlay = useCallback(() => {
+    playSVGAnimation(prev => !prev);
+  }, []);
+
+  // Queue logic ---------------------------------
 
   // Set the selected queue item with the Editor's state
   const handleSetQueueItem = useCallback(() => {
@@ -108,110 +236,28 @@ export default function Home() {
     }
   }, [selectedQueueIndex, hasEditorChanges, editorSeed, editorMod, editorAttunement, dispatch]);
 
-  // React to user interaction with the Editor UI
-  const handleEditorInteraction = useCallback(() => {
-    if (selectedQueueIndex === null && seed !== BigInt(0)) {
-      // dispatch(selectNextUnsetQueueItemThunk());
-    }
-  }, [selectedQueueIndex, seed]);
-
-  // Handle SVG overlay interactions
-  const handleSvgOverlayInteraction = useCallback(() => {
-    const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
-      if (isSvgOverlayFocused) {
-        setShowSvgOverlay(false);
-      } else {
-        setIsSvgOverlayFocused(prevState => !prevState);
-      }
-      
-      event.stopPropagation();
-    };
-
-    const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
-      // Only start the timer if the mousedown is directly on the seed-details
-      if (event.target === event.currentTarget) {
-        clickTimerRef.current = setTimeout(() => {
-          clickTimerRef.current = null;
-        }, 500);
-      }
-    };
-
-    const handleMouseUp = (event: React.MouseEvent<HTMLDivElement>) => {
-      // Only process if the mouseup is directly on the seed-details
-      if (event.target === event.currentTarget) {
-        if (clickTimerRef.current) {
-          clearTimeout(clickTimerRef.current);
-          handleClick(event);
-        }
-      }
-      event.stopPropagation();
-    };
-
-    return {
-      onMouseDown: handleMouseDown,
-      onMouseUp: handleMouseUp,
-      onClick: handleClick,
-      onDoubleClick: handleClick,
-    };
-  }, []);
-
-
-  // EVENT HANDLERS ---------------------------------
-
-  // Update the Editor's seed number via the seed input
-  const handleSeedInputChange = useCallback((updatedSeed: string) => {
-    if (selectedQueueIndex !== null) {
-      const selectedItem = queueItems[selectedQueueIndex];
-      if (updatedSeed === (selectedItem.newSeed || selectedItem.seed)) {
-        dispatch(setEditorSeed({ seed: updatedSeed, updateChanges: false }));
-      } else if (!isSelectedItemLocked()) {
-        dispatch(setEditorSeed({ seed: updatedSeed, updateChanges: true }));
-      }
-    } else {
-      dispatch(setEditorSeed({ seed: updatedSeed, updateChanges: false }));
-    }
-  }, [dispatch, isSelectedItemLocked, queueItems, selectedQueueIndex]);
-
-  // Randomize the Editor's seed number
-  const handleRandomizeBits = () => {
-    if (!isSelectedItemLocked()) {
-      dispatch(randomizeBits());
-    }
-  };
-
-  // Toggle individual bits in the seed number
-  const handleToggleBit = (index: number) => {
-    if (!isSelectedItemLocked()) {
-      dispatch(toggleBit(index));
-    }
-  };
-
-  // Toggle the SVG Overlay element
-  const toggleSvgOverlay = useCallback(() => {
-    setShowSvgOverlay(prev => !prev);
-  }, []);
-
-  const togglePlay = useCallback(() => {
-    playSVGAnimation(prev => !prev);
-  }, []);
-
 
   
   // EFFECTS ----------------------------------------
 
-  // Add event listeners editor elements
-  useEffect(() => {
-    const editorElements = document.querySelectorAll('.editor .app-pane *');
-    editorElements.forEach(element => {
-      element.addEventListener('click', handleEditorInteraction);
-    });
+   // Handle clicks anywhere in the document
+   useEffect(() => {
+    const handleDocumentClick = (event: MouseEvent) => {
+      const editorElement = editorRef.current;
+      const svgOverlay = svgOverlayRef.current;
 
-    return () => {
-      editorElements.forEach(element => {
-        element.removeEventListener('click', handleEditorInteraction);
-      });
+      if (!editorElement || !svgOverlay) {return}
+
+      if (!editorElement.contains(event.target as Node)) {
+        setIsArtworkFocused(false);
+        dispatch(toggleLayersUI(false));
+        dispatch(toggleDisplaySettings(false));
+      }
     };
-  }, [handleEditorInteraction]);
+
+    document.addEventListener('mousedown', handleDocumentClick);
+    return () => document.removeEventListener('mousedown', handleDocumentClick);
+  }, [dispatch]);
 
   // Double-click listener
   useEffect(() => {
@@ -222,13 +268,12 @@ export default function Home() {
         dispatch(setSelectedIndex(null));
         dispatch(resetEditorState());
 
-        setShowSvgOverlay(false);
+        setisOverlayToggled(false);
       }
     };
-
     document.addEventListener('dblclick', handleDoubleClickOutside);
     return () => document.removeEventListener('dblclick', handleDoubleClickOutside);
-  }, [setShowSvgOverlay, dispatch]);
+  }, [setisOverlayToggled, dispatch]);
 
   // Toggle changes flag on Editor element
   useEffect(() => {
@@ -250,32 +295,54 @@ export default function Home() {
     }
   }, [queueItems, selectedQueueIndex, seed, modNumber, editorSeed, editorMod]);
 
-  // Update selected queue item's Editor preview
+  // Update the editor state to reflect current queue item
   useEffect(() => {
     if (selectedQueueIndex !== null && selectedQueueIndex < queueItems.length) {
       const selectedItem = queueItems[selectedQueueIndex];
       if (!hasEditorChanges) {
-        dispatch(setEditorState({
-          seed: selectedItem.newSeed || selectedItem.seed,
-          mod: selectedItem.newMod || selectedItem.modNumber || "000000000000000",
-          attunement: selectedItem.newAttunement ?? selectedItem.attunementNumber ?? 0
+        const newMod = selectedItem.newMod || selectedItem.modNumber || "000000000000000";
+        const newAttunement = selectedItem.newAttunement ?? selectedItem.attunementNumber ?? 0;
+        
+        dispatch(updateEditorState({
+          seed: selectedItem.newSeed || selectedItem.seed || '0',
+          mod: selectedItem.newMod || selectedItem.modNumber || '000000000000000',
+          attunement: selectedItem.newAttunement || selectedItem.attunementNumber || 0,
         }));
+  
+        // Update mod-input element
+        const modInput = document.querySelector('.mod-input') as HTMLElement;
+        if (modInput) {
+          modInput.textContent = newMod;
+        }
+  
+        // Update attunement-input element
+        const attunementInput = document.querySelector('.attunement-input') as HTMLElement;
+        if (attunementInput) {
+          attunementInput.textContent = newAttunement.toString();
+        }
       }
     }
-  }, [selectedQueueIndex, queueItems, dispatch, editorSeed]);
+  }, [selectedQueueIndex, queueItems, hasEditorChanges, dispatch]);
 
-  // Reset editor state when wallet is disconnected
+  // Update artwork preview based on mod value
+  const memoizedApplyModValueToElements = useCallback(applyModValueToElements, []);
+  const memoizedResetLayers = useCallback(resetLayers, []);
+
   useEffect(() => {
-    if (!walletConnected) {
-      dispatch(setSelectedIndex(null));
-      dispatch(resetEditorState());
-      dispatch(toggleLayersUI(false));
-      dispatch(toggleDisplaySettings(false));
-    } else if (walletConnected) {
-      dispatch(initializeQueue([]));
-      dispatch(setSelectedIndex(null));
+    const artwork = document.querySelector('.seedartwork') as SVGSVGElement;
+    if (artwork) {
+      memoizedResetLayers(artwork);
+
+      const layers = document.querySelectorAll('.seedartwork,.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline');
+      memoizedApplyModValueToElements(layers, modValues.color, 'color');
+  
+      const spinTargets = artwork.querySelectorAll('.lr.on');
+      memoizedApplyModValueToElements(spinTargets, modValues.spin, 'spin');
+  
+      const depthTargets = artwork.querySelectorAll('.lr.on .fx');
+      memoizedApplyModValueToElements(depthTargets, modValues.depth, 'depth');
     }
-  }, [walletConnected, dispatch]);
+  }, [modValues, memoizedApplyModValueToElements, editorMod]);
 
   // Keyboard shortcuts for Undo/Redo
   useEffect(() => {
@@ -292,25 +359,20 @@ export default function Home() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [dispatch]);
-  
-  // Handle clicks anywhere in the document
+
+  // Reset editor state when wallet is disconnected
   useEffect(() => {
-    const handleDocumentClick = (event: MouseEvent) => {
-      const editorElement = editorRef.current;
-      const svgOverlay = svgOverlayRef.current;
+    if (!walletConnected) {
+      dispatch(setSelectedIndex(null));
+      dispatch(resetEditorState());
+      dispatch(toggleLayersUI(false));
+      dispatch(toggleDisplaySettings(false));
+    } else if (walletConnected) {
+      dispatch(initializeQueue([]));
+      dispatch(setSelectedIndex(null));
+    }
+  }, [walletConnected, dispatch]);
 
-      if (!editorElement || !svgOverlay) {return}
-
-      if (!editorElement.contains(event.target as Node)) {
-        setIsSvgOverlayFocused(false);
-        dispatch(toggleLayersUI(false));
-        dispatch(toggleDisplaySettings(false));
-      }
-    };
-
-    document.addEventListener('mousedown', handleDocumentClick);
-    return () => document.removeEventListener('mousedown', handleDocumentClick);
-  }, [dispatch]);
 
 
 
@@ -396,7 +458,7 @@ export default function Home() {
                 <a
                   href="#"
                   className="ui-button reset-button reset z-button show"
-                  onClick={() => dispatch(resetEditorModOnly())}
+                  onClick={handleResetEditorMod}
                 >Reset</a>
               </div>
               <div className={`display-settings-wrap ${displaySettingsToggled ? "show" : ""}`}>
@@ -431,8 +493,8 @@ export default function Home() {
                   </div>
                   <div className="seed-overlay-container">
                     <SeedDetails
-                      isFocused={isSvgOverlayFocused}
-                      showOverlay={showSvgOverlay}
+                      isFocused={isArtworkFocused}
+                      showOverlay={isOverlayToggled}
                       editorSeed={editorSeed}
                       editorAttunement={editorAttunement}
                       bitsArray={bitsArray}
@@ -491,8 +553,8 @@ export default function Home() {
             <div className={`app-pane right ${(layersUIToggled || displaySettingsToggled) ? 'deactivated' : ''}`}>
               <Queue />
               <SeedDetails
-                isFocused={isSvgOverlayFocused}
-                showOverlay={showSvgOverlay}
+                isFocused={isArtworkFocused}
+                showOverlay={isOverlayToggled}
                 editorSeed={editorSeed}
                 editorAttunement={editorAttunement}
                 bitsArray={bitsArray}
@@ -509,6 +571,13 @@ export default function Home() {
         ></div>
       </div>
       <InscribeModal show={showInscribeModal} queueItems={setQueueItems} />
+      <div className="diagnostic">
+        <ul>
+          <li><span className="diagnostic-seed">SEED</span>
+            SEED
+          </li>
+        </ul>
+      </div>
     </>
   );
 }

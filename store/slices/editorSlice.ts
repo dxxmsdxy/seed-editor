@@ -1,9 +1,6 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit';
 import { seedToBits } from "@/lib/utils";
 import { RootState } from '@/store';
-
-
-
 
 
 //================================================//
@@ -19,8 +16,9 @@ interface EditorState {
   editorSeed: string;
   editorMod: string;
   editorAttunement: number;
+  shouldResetLayers: boolean;
   hasEditorChanges: boolean;
-  displaySettings: number[];  // Array of display settings
+  displaySettings: number;
   colorValue: number;  // Color value
   depthValue: number;  // Depth value
   spinValue: number;  // Spin value
@@ -45,6 +43,16 @@ interface EditorState {
       bitsArray: boolean[];
     }>;
   };
+  modValues: {
+    color: number;
+    depth: number;
+    spin: number;
+    tint: number;
+    tintPercent: number;
+  };
+  isColorAnimationPaused: boolean;
+  isDepthAnimationPaused: boolean;
+  isSpinAnimationPaused: boolean;
 }
 
 
@@ -61,8 +69,9 @@ const initialState: EditorState = {
   editorSeed: '0',
   editorMod: "000000000000000",
   editorAttunement: 0,
+  shouldResetLayers: false,
   hasEditorChanges: false,
-  displaySettings: [],
+  displaySettings: 0,
   colorValue: 0,
   depthValue: 0,
   spinValue: 0,
@@ -77,18 +86,28 @@ const initialState: EditorState = {
     past: [],
     future: [],
   },
+  modValues: {
+    color: 0,
+    depth: 0,
+    spin: 0,
+    tint: 0,
+    tintPercent: 100,
+  },
+  isColorAnimationPaused: true,
+  isDepthAnimationPaused: true,
+  isSpinAnimationPaused: true,
 };
 
 
 // MODULE FUNCTIONS --------------------------------
 
 const editorSlice = createSlice({
-  name: 'seed',
+  name: 'editor',
   initialState,
   reducers: {
 
-    // Set Editor state with specified values
-    setEditorState: (state, action: PayloadAction<{ seed: string; mod: string; attunement: number }>) => {
+    // Update editor state with specified values
+    updateEditorState: (state, action: PayloadAction<{ seed: string; mod: string; attunement: number }>) => {
       const sanitizedSeed = sanitizeSeed(action.payload.seed);
       const sanitizedMod = sanitizeMod(action.payload.mod);
       const sanitizedAttunement = sanitizeAttunement(action.payload.attunement);
@@ -98,59 +117,20 @@ const editorSlice = createSlice({
         editorAttunement: sanitizedAttunement,
         bitsArray: seedToBits(BigInt(sanitizedSeed)),
         hasEditorChanges: false,
+        modValues: parseModValues(sanitizedMod), // Add this line
       };
       pushToHistory(state, newState);
       Object.assign(state, newState);
+
+      state.shouldResetLayers = true;
     },
 
-    // Set Editor seed number
-    setEditorSeed: (state, action: PayloadAction<{ seed: string; updateChanges?: boolean }>) => {
-      const sanitizedSeed = sanitizeSeed(action.payload.seed);
-      const newState = {
-        editorSeed: sanitizedSeed,
-        bitsArray: seedToBits(BigInt(sanitizedSeed)),
-        hasEditorChanges: action.payload.updateChanges ?? state.hasEditorChanges,
-      };
-      pushToHistory(state, newState);
-      Object.assign(state, newState);
+    setShouldResetLayers: (state, action: PayloadAction<boolean>) => {
+      state.shouldResetLayers = action.payload;
     },
 
-    // Set editor mod number
-    setEditorMod: (state, action: PayloadAction<{ modNumber: string; updateChanges: boolean }>) => {
-      const sanitizedMod = sanitizeMod(action.payload.modNumber);
-      const newState = {
-        editorMod: sanitizedMod,
-        hasEditorChanges: action.payload.updateChanges,
-      };
-      pushToHistory(state, newState);
-      Object.assign(state, newState);
-      state.actualTintPercentValue = state.tintValue === 0 ? 100 : state.tintPercentValue;
-    },
-
-    // Set editor attunement number
-    setEditorAttunement: (state, action: PayloadAction<{ attunementNumber: number; updateChanges?: boolean }>) => {
-      const sanitizedAttunement = sanitizeAttunement(action.payload.attunementNumber);
-      const newState = {
-        editorAttunement: sanitizedAttunement,
-        hasEditorChanges: action.payload.updateChanges ?? state.hasEditorChanges,
-      };
-      pushToHistory(state, newState);
-      Object.assign(state, newState);
-    },
-
-    // Increment the attunement number
-    incrementNewAttunementNumber: (state) => {
-        state.editorAttunement = (state.newAttunement + 1) % 10;
-    },
-
-    // Decrement the attunement number
-    decrementNewAttunementNumber: (state) => {
-      state.newAttunement = (state.attunementNumber - 1) % 10;
-    },
-
-    // Update the hasEditorChanges state
-    updateHasEditorChanges: (state, action: PayloadAction<boolean>) => {
-      state.hasEditorChanges = action.payload;
+    clearShouldResetLayers: (state) => {
+      state.shouldResetLayers = false;
     },
 
     // Reset the editor to initial state
@@ -176,12 +156,65 @@ const editorSlice = createSlice({
       }
     },
 
+    // Update the hasEditorChanges state
+    updateHasEditorChanges: (state, action: PayloadAction<boolean>) => {
+      state.hasEditorChanges = action.payload;
+    },
+
+    // Update seed/mod/attunement ------------------
+
+    // Update editor seed number
+    updateEditorSeed: (state, action: PayloadAction<{ seed: string; updateChanges?: boolean }>) => {
+      const sanitizedSeed = sanitizeSeed(action.payload.seed);
+      const newState = {
+        editorSeed: sanitizedSeed,
+        bitsArray: seedToBits(BigInt(sanitizedSeed)),
+        hasEditorChanges: action.payload.updateChanges ?? state.hasEditorChanges,
+      };
+      pushToHistory(state, newState);
+      Object.assign(state, newState);
+    },
+
+    //  Update editor mod number
+    updateEditorMod: (state, action: PayloadAction<{ mod: string; updateChanges?: boolean }>) => {
+      if (action.payload.mod === undefined) {
+        console.error('Received undefined mod value');
+        return;
+      }
+      const sanitizedMod = sanitizeMod(action.payload.mod);
+      const newState = {
+        editorMod: sanitizedMod,
+        hasEditorChanges: action.payload.updateChanges ?? state.hasEditorChanges,
+      };
+      pushToHistory(state, newState);
+      Object.assign(state, newState);
+    },
+
+    // Update editor attunement number
+    updateEditorAttunement: (state, action: PayloadAction<{ attunementNumber: number; updateChanges?: boolean }>) => {
+      const sanitizedAttunement = sanitizeAttunement(action.payload.attunementNumber);
+      const newState = {
+        editorAttunement: sanitizedAttunement,
+        hasEditorChanges: action.payload.updateChanges ?? state.hasEditorChanges,
+      };
+      pushToHistory(state, newState);
+      Object.assign(state, newState);
+    },
+
+    // Increment/decrement the attunement number
+    incrementEditorAttunementNumber: (state) => {
+        state.editorAttunement = (state.newAttunement + 1) % 10;
+    },
+    decrementEditorAttunementNumber: (state) => {
+      state.newAttunement = (state.attunementNumber - 1) % 10;
+    },
+
+    // Reset seed/mod/attunement ------------------
+
     // Reset the Editor's seed number
     resetEditorSeed: (state, action: PayloadAction<string>) => {
       pushToHistory(state, {
         editorSeed: state.editorSeed,
-        editorMod: state.editorMod,
-        editorAttunement: state.editorAttunement,
         bitsArray: state.bitsArray
       }, true);
     
@@ -190,18 +223,22 @@ const editorSlice = createSlice({
       state.bitsArray = seedToBits(BigInt(newState.editorSeed));
       Object.assign(state, newState);
     },
-    
-    // Reset the Editor's mod number
-    resetEditorMod: (state, action: PayloadAction<string>) => {
-      pushToHistory(state, {
-        editorSeed: state.editorSeed,
-        editorMod: state.editorMod,
-        editorAttunement: state.editorAttunement,
-        bitsArray: state.bitsArray
-      }, true);
 
-      const newState = {editorMod: action.payload}
-      state.editorMod = newState.editorMod;
+    // Reset the Editor's seed number
+    resetEditorMod: (state, action: PayloadAction<void>) => {
+      let modToResetTo: string = "000000000000000";
+    
+      const newState = {
+        editorMod: modToResetTo,
+        modValues: {
+          color: 0,
+          depth: 0,
+          spin: 0,
+          tint: 0,
+          tintPercent: 100,
+        },
+        hasEditorChanges: false,
+      };
       Object.assign(state, newState);
     },
 
@@ -218,19 +255,7 @@ const editorSlice = createSlice({
       state.editorAttunement = newState.editorAttunement;
     },
 
-    // Toggle a specific bit in the bitsArray
-    toggleBit: (state, action: PayloadAction<number>) => {
-      const index = action.payload;
-      const newBitsArray = state.bitsArray.slice();
-      newBitsArray[index] = !newBitsArray[index];
-      const newState = {
-        bitsArray: newBitsArray,
-        editorSeed: BigInt('0b' + newBitsArray.map(b => b ? '1' : '0').join('')).toString(),
-        hasEditorChanges: true,
-      };
-      pushToHistory(state, newState);
-      Object.assign(state, newState);
-    },
+    // Editor UI state ------------------------------
 
     // Randomize all bits in the bitsArray
     randomizeBits: (state) => {
@@ -250,6 +275,20 @@ const editorSlice = createSlice({
       pushToHistory(state, newState);
       Object.assign(state, newState);
     },
+    
+    // Toggle a specific bit in the bitsArray
+    toggleBit: (state, action: PayloadAction<number>) => {
+      const index = action.payload;
+      const newBitsArray = state.bitsArray.slice();
+      newBitsArray[index] = !newBitsArray[index];
+      const newState = {
+        bitsArray: newBitsArray,
+        editorSeed: BigInt('0b' + newBitsArray.map(b => b ? '1' : '0').join('')).toString(),
+        hasEditorChanges: true,
+      };
+      pushToHistory(state, newState);
+      Object.assign(state, newState);
+    },
 
     // Track click + hold while selecting bit buttons
     setActiveSelection: (state, action: PayloadAction<boolean>) => {
@@ -258,15 +297,10 @@ const editorSlice = createSlice({
 
     // Update display setting
     updateDisplaySetting: (state, action: PayloadAction<number>) => {
-      const displaySettings = action.payload;
-      state.displaySettings = [];
-      for (let i = 0; i < 9; i++) {
-        if (displaySettings & (1 << (8 - i))) {
-          state.displaySettings.push(1 << (8 - i));
-        }
-      }
-      state.modNumber = calculateModNumber(state);
-      state.displaySettingsToggled = true;
+      state.displaySettings ^= (1 << action.payload);
+      state.editorMod = calculateModNumber(state);
+      state.hasEditorChanges = true;
+      pushToHistory(state, { editorMod: state.editorMod });
     },
 
     // Set slider active
@@ -275,13 +309,12 @@ const editorSlice = createSlice({
     },
 
     // Update slider value
-    updateSliderValue: (state, action: PayloadAction<{name: string, value: number}>) => {
+    updateSliderValue: (state, action: PayloadAction<{ name: string; value: number }>) => {
       const { name, value } = action.payload;
-      const key = name as keyof Pick<EditorState, 'colorValue' | 'depthValue' | 'spinValue' | 'tintValue' | 'tintPercentValue'>;
-      if (state[key] !== value) {
-        state[key] = value;
-        state.modNumber = calculateModNumber(state);
-      }
+      state.modValues[name] = value;
+      state.editorMod = calculateModNumber(state);
+      state.hasEditorChanges = true;
+      pushToHistory(state, { editorMod: state.editorMod });
     },
 
     // Addresses the Tint% conversion
@@ -289,7 +322,7 @@ const editorSlice = createSlice({
       state.actualTintPercentValue = action.payload;
     },
 
-    // Toggle layers UI
+    // Show/hide layers UI
     toggleLayersUI: (state, action: PayloadAction<boolean | undefined>) => {
       if (action.payload !== undefined) {
         state.layersUIToggled = action.payload;
@@ -298,7 +331,7 @@ const editorSlice = createSlice({
       }
     },
 
-    // Toggle display settings
+    // Show/hide display settings UI
     toggleDisplaySettings: (state, action: PayloadAction<boolean | undefined>) => {
       if (action.payload !== undefined) {
         state.displaySettingsToggled = action.payload;
@@ -307,7 +340,7 @@ const editorSlice = createSlice({
       }
     },
 
-    // Check if selected queue item has edits
+    // Check if selected queue item has unsaved edits
     checkEditorMatchesSelectedItem: (state, action: PayloadAction<QueueItem>) => {
       const selectedItem = action.payload;
       if (!selectedItem) {
@@ -330,6 +363,16 @@ const editorSlice = createSlice({
       }
     
       state.hasEditorChanges = !editorMatchesItem;
+    },
+
+    toggleColorAnimationPause: (state) => {
+      state.isColorAnimationPaused = !state.isColorAnimationPaused;
+    },
+    toggleDepthAnimationPause: (state) => {
+      state.isDepthAnimationPaused = !state.isDepthAnimationPaused;
+    },
+    toggleSpinAnimationPause: (state) => {
+      state.isSpinAnimationPaused = !state.isSpinAnimationPaused;
     },
 
     // Undo Editor state change
@@ -401,6 +444,9 @@ function sanitizeSeed(seed: string): string {
 
 // Sanitize mod number
 function sanitizeMod(mod: string): string {
+  if (mod === undefined) {
+    return '000000000000000';
+  }
   const sanitized = mod.replace(/\D/g, '').slice(0, 15);
   return sanitized.padStart(15, '0');
 }
@@ -408,6 +454,17 @@ function sanitizeMod(mod: string): string {
 // Sanitize attunement number
 function sanitizeAttunement(attunement: number): number {
   return Math.max(0, Math.min(9, Math.floor(attunement)));
+}
+
+// Parsing individual mod values
+function parseModValues(mod: string) {
+  return {
+    tint: parseInt(mod.slice(0, 1)),
+    tintPercent: parseInt(mod.slice(1, 3)),
+    spin: parseInt(mod.slice(3, 6)),
+    depth: parseInt(mod.slice(6, 9)),
+    color: parseInt(mod.slice(9, 12)),
+  };
 }
 
 // Shuffle an array of bits
@@ -426,16 +483,17 @@ const getRandomNumber = (min: number, max: number) => {
 };
 
 // Calculate a Mod number
-export const calculateModNumber = (state: EditorState): string => {
-  const displaySettingsValue = state.displaySettings.reduce((sum, value) => sum + value, 0).toString().padStart(3, '0');
-  const colorValue = state.colorValue.toString().padStart(3, '0');
-  const depthValue = state.depthValue.toString().padStart(3, '0');
-  const spinValue = state.spinValue.toString().padStart(3, '0');
-  const tintValue = state.tintValue.toString();
-  const tintPercentValue = state.tintValue === 0 ? "00" : 
-    (state.actualTintPercentValue === 100 ? "99" : state.actualTintPercentValue.toString().padStart(2, '0'));
+const calculateModNumber = (state: EditorState): string => {
+  const { color, depth, spin, tint, tintPercent } = state.modValues;
+  const displaySettingsValue = state.displaySettings.toString().padStart(3, '0');
+  const colorValue = color.toString().padStart(3, '0');
+  const depthValue = depth.toString().padStart(3, '0');
+  const spinValue = spin.toString().padStart(3, '0');
+  const tintValue = tint.toString();
+  const tintPercentValue = tint === 0 ? "00" : 
+    (tintPercent === 100 ? "99" : tintPercent.toString().padStart(2, '0'));
 
-  return `${displaySettingsValue}${colorValue}${depthValue}${spinValue}${tintValue}${tintPercentValue}`;
+  return `${tintValue}${tintPercentValue}${spinValue}${depthValue}${colorValue}${displaySettingsValue}`;
 };
 
 
@@ -445,17 +503,29 @@ export const selectLayersUIToggled = (state: RootState) => state.seed.layersUITo
 
 export const selectDisplaySettingsToggled = (state: RootState) => state.seed.displaySettingsToggled;
 
+export const selectModValues = createSelector(
+  (state: RootState) => state.seed.modValues,
+  (modValues) => modValues
+);
+export const selectDisplaySettings = (state: RootState) => state.seed.displaySettings;
+
+export const selectShouldResetLayers = (state: RootState) => state.seed.shouldResetLayers;
+
 
 // EXPORTS -----------------------------------------
 
 export const {
-  setEditorState,
-  setEditorSeed,
-  setEditorMod,
-  setEditorAttunement,
+  updateEditorState,
+  updateEditorSeed,
+  updateEditorMod,
+  updateEditorAttunement,
   updateHasEditorChanges,
+  setShouldResetLayers,
+  clearShouldResetLayers,
   resetEditorState,
   resetEditorSeed,
+  resetEditorMod,
+  resetEditorAttunement,
   undo,
   redo,
   toggleBit,
@@ -464,12 +534,15 @@ export const {
   updateDisplaySetting,
   updateSliderValue,
   updateActualTintPercent,
-  incrementNewAttunementNumber,
-  decrementNewAttunementNumber,
+  incrementEditorAttunementNumber,
+  decrementEditorAttunementNumber,
   toggleLayersUI,
   toggleDisplaySettings,
   setSliderActive,
   checkEditorMatchesSelectedItem,
+  toggleColorAnimationPause,
+  toggleDepthAnimationPause,
+  toggleSpinAnimationPause,
 } = editorSlice.actions;
 
 export default editorSlice.reducer;

@@ -4870,7 +4870,7 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   text-align: center;
   letter-spacing: 2px;
   text-transform: none;
-  transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  transition: background-color 0.4s 0.1s ease-in-out, border-color 0.4s 0.1s ease-in-out, color 0.4s 0.1s ease-in-out, opacity 0.4s 0.1s ease-in-out;
   cursor: pointer;
   opacity: 0;
 }
@@ -4894,14 +4894,16 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   height: 80px;
   pointer-events: auto;
   border-radius: 50px;
-  transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.5s 0.3s ease-in-out, box-shadow 0.3s ease-in-out;;
   box-shadow: 0 0 0px 0px rgba(0,0,0,0);
+  background-color: #000000;
+  border-color: #00000000;
 }
 .play-button::before {
   content: "Play";
 }
 
 .play-button:hover {
+  background-color: #000000;
   box-shadow: 0 0 0px 5px rgba(0,0,0,0.2);
 }
 
@@ -4915,7 +4917,7 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   border-color: #fff;
 }
 .svg-container.playing .play-button::before {
-  content: "Pause";
+  content: "Stop";
 }
 
 .svg-container:has(.seed-details.show) .play-button {
@@ -5342,6 +5344,18 @@ body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting svg .cl
 }
 body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting svg .cls-0 {
   fill: #fff;
+}
+
+body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected {
+  background-color: #fff;
+}
+
+body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-1,
+body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-2 {
+  stroke: #000;
+}
+body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-0 {
+  fill: #000;
 }
 
 body:has(.seed-details.focused) .editor-inner:hover .slider-ui {

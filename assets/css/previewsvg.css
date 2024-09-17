@@ -1747,16 +1747,7 @@
   from {
     filter: blur(1.15px);
   }
-  26% {
-    filter: blur(1.15px);
-  }
-  34% {
-    filter: blur(2.2px);
-  }
-  70% {
-    filter: blur(17px);
-  }
-  89% {
+  90% {
     filter: blur(36px);
   }
   to {

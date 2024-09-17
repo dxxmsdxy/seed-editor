@@ -8,6 +8,15 @@ interface SeedDetailsProps {
   bitsArray: boolean[];
 }
 
+const getAttunementString = (attunement: number): string => {
+  const attunements = [
+    'creation', 'destruction', 'perception', 'protection',
+    'passion', 'fortune', 'wisdom', 'resilience',
+    'transformation', 'eternity'
+  ];
+  return `(${attunements[attunement]}) ${attunement}`;
+};
+
 const SeedDetails: React.FC<SeedDetailsProps> = ({
   isFocused,
   showOverlay,
@@ -41,8 +50,12 @@ const SeedDetails: React.FC<SeedDetailsProps> = ({
                 <span className="metadata-value">Genesis</span>
               </li>
               <li className="metadata-item">
-                <span className="metadata-label">Attunement:</span>
-                <span className="metadata-value">{editorAttunement}</span>
+                <span className="metadata-label">State:</span>
+                <span className="metadata-value">Natural</span>
+              </li>
+              <li className="metadata-item">
+              <span className="metadata-label">Attunement:</span>
+              <span className="metadata-value">{getAttunementString(editorAttunement)}</span>
               </li>
               <li className="metadata-item">
                 <span className="metadata-label">Bits:</span>
