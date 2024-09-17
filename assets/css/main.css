@@ -3116,6 +3116,13 @@ body:has(.theme-bkg) {
   stroke: #ffffff;
 }
 
+.btn-display-setting.selected .cls-y {
+  stroke: #ffffff00;
+}
+.btn-display-setting.selected .cls-x {
+  stroke: #ffffffff
+}
+
 .btn-display-setting:active .cls-0,
 .btn-display-setting.selected .cls-0 {
   fill: #ffffff;
@@ -4898,13 +4905,14 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   box-shadow: 0 0 0px 0px rgba(0,0,0,0);
   background-color: #000000;
   border-color: #00000000;
+  transition: background-color 0.4s 0s ease-out, border-color 0.4s 0.1s ease-in-out, color 0.4s 0.1s ease-in-out, opacity 0.4s 0.1s ease-in-out, box-shadow 0.3s 0.05s;
 }
 .play-button::before {
   content: "Play";
 }
 
 .play-button:hover {
-  background-color: #000000;
+  background-color: #000000dd;
   box-shadow: 0 0 0px 5px rgba(0,0,0,0.2);
 }
 
@@ -4916,6 +4924,7 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   color:#000;
   background-color: #ffffff;
   border-color: #fff;
+  box-shadow: 0 0 0px 3px rgba(0,0,0,0.2);
 }
 .svg-container.playing .play-button::before {
   content: "Stop";
@@ -5130,6 +5139,7 @@ body:has(.seed-details.focused) .editor  #seedsArtwork {
   pointer-events:none;
 }
 
+
 .set-queue-item-container,
 body:has(.seed-details.focused) .ui-button,
 body:has(.seed-details.focused) .seed-input,
@@ -5139,13 +5149,19 @@ body:has(.seed-details.focused) .mod-reset,
 body:has(.seed-details.focused) .btn-layer,
 body:has(.seed-details.focused) .grid,
 body:has(.seed-details.focused) .ui-element,
-body:has(.seed-details.focused) .slider-ui {
+body:has(.seed-details.focused) .slider-ui,
+body:has(.seed-details.focused) .attunement-label,
+body:has(.seed-details.focused) .page-label,
+body:has(.seed-details.focused) .attunement-selector,
+body:has(.seed-details.focused) .attune-nav:has(*) {
   transition: border-color 0.4s, color 0.4s, background-color 0.4s, opacity 0.4s;
 }
 
 body:has(.seed-details.focused) .cls-0,
 body:has(.seed-details.focused) .cls-1,
-body:has(.seed-details.focused) .cls-2 {
+body:has(.seed-details.focused) .cls-2,
+body:has(.seed-details.focused) .cls-x,
+body:has(.seed-details.focused) .cls-y {
   transition: fill 0.4s, stroke 0.4s
 }
 
@@ -5346,6 +5362,8 @@ body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting svg .cl
 body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting svg .cls-0 {
   fill: #fff;
 }
+body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting svg .cls-x,
+body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting svg .cls-y
 
 body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected {
   background-color: #fff;
@@ -5353,10 +5371,10 @@ body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selecte
 
 body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-1,
 body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-2 {
-  stroke: #000;
+  stroke: #fff;
 }
 body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-0 {
-  fill: #000;
+  fill: #fff;
 }
 
 body:has(.seed-details.focused) .editor-inner:hover .slider-ui {
@@ -5392,6 +5410,10 @@ body:has(.seed-details.focused) .queue-item {
   color: #fff;
 }
 
+body:has(.seed-details.focused) .editor-inner:hover .attunement-selector {
+  border-color: #fff;
+}
+
 /* 
 body:has(.seed-details.focused) .reset-seed-button{
   opacity:0.1;
@@ -5419,6 +5441,7 @@ body:has(.seed-details.focused) .seed-indicator{
 
 
 .diagnostic {
+  display: none;
   position: fixed;
   bottom: 8px;
   left: 15px;
@@ -5427,7 +5450,7 @@ body:has(.seed-details.focused) .seed-indicator{
   letter-spacing: 0;
   color: #00000099;
   transition: opacity 0.5s;
-  opacity: 0;
+  opacity: 0.5;
 }
 .diagnostic:hover {
   opacity: 1;
@@ -5813,6 +5836,7 @@ body:has(.seed-details.focused) .seed-indicator{
   body:has(.seed-details.focused) .svg-container {
     transform: scale3d(1.21, 1.21, 1) translate(0, 1.4vh);
   }
+
 
   .svg-aspect-ratio {
     margin-bottom: 20px;

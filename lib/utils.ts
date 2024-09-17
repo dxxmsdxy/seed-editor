@@ -26,12 +26,14 @@ const stringToBigInt = (str) => BigInt(str.replace(/[^0-9]/g, '') || 0);
 
 // Select all input contents
 export function selectElementContents(element: HTMLElement) {
+  console.log('Selecting contents of:', element);
   const range = document.createRange();
   range.selectNodeContents(element);
   const selection = window.getSelection();
   if (selection) {
     selection.removeAllRanges();
     selection.addRange(range);
+    console.log('Selection applied');
   }
 }
 

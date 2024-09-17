@@ -52,13 +52,15 @@ const queueSlice = createSlice({
           : item.attunementNumber;
 
         return {
-        ...item,
-        newSeed: null,
-        newMod: null,
-        newAttunement: null,
-        initialLocked: item.locked || false,
-        isSet: false,
-      }});
+          ...item,
+          attunementNumber,
+          newSeed: null,
+          newMod: null,
+          newAttunement: null,
+          initialLocked: item.locked || false,
+          isSet: false,
+        };
+      });
     
       queueSlice.caseReducers.updateQueueOrder(state);
     
@@ -218,7 +220,9 @@ export const selectAndUpdateQueueItemThunk = createAsyncThunk(
       dispatch(updateEditorState({
         seed: isSet ? selectedItem.newSeed || selectedItem.seed : selectedItem.seed || '0',
         mod: isSet ? selectedItem.newMod || selectedItem.modNumber : selectedItem.modNumber || "000000000000000",
-        attunement: isSet ? selectedItem.newAttunement ?? selectedItem.attunementNumber : selectedItem.attunementNumber ?? 0
+        attunement: isSet && selectedItem.newAttunement !== null 
+          ? selectedItem.newAttunement 
+          : selectedItem.attunementNumber ?? calculateMostFrequentNumeral(BigInt(selectedItem.seed)) ?? 0
       }));
 
       if (selectedItem.justSet) {

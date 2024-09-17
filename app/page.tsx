@@ -269,6 +269,13 @@ export default function Home() {
       dispatch(updateHasEditorChanges(false));
       dispatch(toggleLayersUI(false));
       dispatch(toggleDisplaySettings(false));
+      
+      // Update the editor state to reflect the new queue item
+      dispatch(updateEditorState({
+        seed: editorSeed,
+        mod: editorMod,
+        attunement: editorAttunement,
+      }));
     }
   }, [selectedQueueIndex, hasEditorChanges, editorSeed, editorMod, editorAttunement, dispatch]);
 
@@ -524,6 +531,28 @@ export default function Home() {
 
   return (
     <>
+      <div className="diagnostic">
+        <ul>
+          <li><span className="diagnostic-seed">SEED</span>
+            svg: <span>{diagnosticValues.seed.svg || 'N/A'}</span> | 
+            editor: <span>{diagnosticValues.seed.editor || 'N/A'}</span> | 
+            new: <span>{diagnosticValues.seed.new || 'N/A'}</span> | 
+            initial: <span>{diagnosticValues.seed.initial || 'N/A'}</span>
+          </li>
+          <li><span className="diagnostic-mod">MOD</span>
+            svg: <span>{diagnosticValues.mod.svg || 'N/A'}</span> | 
+            editor: <span>{diagnosticValues.mod.editor || 'N/A'}</span> | 
+            new: <span>{diagnosticValues.mod.new || 'N/A'}</span> | 
+            initial: <span>{diagnosticValues.mod.initial || 'N/A'}</span>
+          </li>
+          <li><span className="diagnostic-attunement">ATTUNEMENT</span>
+            svg: <span>{diagnosticValues.attunement.svg || 'N/A'}</span> | 
+            editor: <span>{diagnosticValues.attunement.editor || 'N/A'}</span> | 
+            new: <span>{diagnosticValues.attunement.new || 'N/A'}</span> | 
+            initial: <span>{diagnosticValues.attunement.initial || 'N/A'}</span>
+          </li>
+        </ul>
+      </div>
       <div className="editor">
         <div className="editor-inner" ref={editorRef}>
           <div className="seed-indicator">
@@ -719,28 +748,6 @@ export default function Home() {
         ></div>
       </div>
       <InscribeModal show={showInscribeModal} queueItems={setQueueItems} />
-      <div className="diagnostic">
-        <ul>
-          <li><span className="diagnostic-seed">SEED</span>
-            svg: <span>{diagnosticValues.seed.svg || 'N/A'}</span> | 
-            editor: <span>{diagnosticValues.seed.editor || 'N/A'}</span> | 
-            new: <span>{diagnosticValues.seed.new || 'N/A'}</span> | 
-            initial: <span>{diagnosticValues.seed.initial || 'N/A'}</span>
-          </li>
-          <li><span className="diagnostic-mod">MOD</span>
-            svg: <span>{diagnosticValues.mod.svg || 'N/A'}</span> | 
-            editor: <span>{diagnosticValues.mod.editor || 'N/A'}</span> | 
-            new: <span>{diagnosticValues.mod.new || 'N/A'}</span> | 
-            initial: <span>{diagnosticValues.mod.initial || 'N/A'}</span>
-          </li>
-          <li><span className="diagnostic-attunement">ATTUNEMENT</span>
-            svg: <span>{diagnosticValues.attunement.svg || 'N/A'}</span> | 
-            editor: <span>{diagnosticValues.attunement.editor || 'N/A'}</span> | 
-            new: <span>{diagnosticValues.attunement.new || 'N/A'}</span> | 
-            initial: <span>{diagnosticValues.attunement.initial || 'N/A'}</span>
-          </li>
-        </ul>
-      </div>
     </>
   );
 }

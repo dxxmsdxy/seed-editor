@@ -2,15 +2,15 @@
     {
       "id": "0",
       "seed": "1441364086502720260",
-      "modNumber": "000100200300400",
-      "attunementNumber": 3,
+      "modNumber": null,
+      "attunementNumber": null,
       "locked": false
     },
     {
       "id": "1",
       "seed": "366439965536495724053954347008",
-      "modNumber": "000100200300400",
-      "attunementNumber": 3,
+      "modNumber": null,
+      "attunementNumber": null,
       "locked": false
     },
     {
@@ -31,14 +31,14 @@
     "id": "4",
     "seed": "35184373137440",
     "modNumber": null,
-    "attunementNumber": 2,
+    "attunementNumber": null,
     "locked": true
     },
     {
       "id": "5",
       "seed": "719321829781190289397945401512",
-      "modNumber": "000100200300400",
-      "attunementNumber": 1,
+      "modNumber": null,
+      "attunementNumber": null,
       "locked": false
     },
     {
@@ -58,15 +58,15 @@
     {
       "id": "8",
       "seed": "1245232702021080271756001347",
-      "modNumber": "000000000000000",
-      "attunementNumber": 3,
+      "modNumber": null,
+      "attunementNumber": null,
       "locked": false
     },
     {
     "id": "9",
     "seed": "454",
     "modNumber": null,
-    "attunementNumber": 2,
+    "attunementNumber": null,
     "locked": true
     }
   ]

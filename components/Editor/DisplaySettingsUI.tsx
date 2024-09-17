@@ -249,13 +249,15 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
               e.stopPropagation();
               selectElementContents(e.currentTarget);
             }}
+            contentEditable="true"
             suppressContentEditableWarning={true}
             onInput={(e) => {
               const value = e.currentTarget.textContent;
               if (value === '') {
                 handleResetMod();
               } else {
-                handleAttunementChange(parseInt(value || "000000000000000"));
+                dispatch(updateEditorMod({ mod: e.currentTarget.textContent || '', updateChanges: true }));
+                clearSelection();
               }
             }}
             onBlur={(e) => {
@@ -263,10 +265,10 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
               if (e.currentTarget.textContent === '') {
                 handleResetMod();
               } else {
-                handleAttunementChange(parseInt(e.currentTarget.textContent || "0", 10));
+                dispatch(updateEditorMod({ mod: e.currentTarget.textContent || '', updateChanges: true }));
                 clearSelection();
               }
-              e.currentTarget.textContent = editorAttunement.toString();
+              e.currentTarget.textContent = editorMod.toString();
             }}
           >
             {useAppSelector(state => state.seed.editorMod)}

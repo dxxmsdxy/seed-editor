@@ -11,12 +11,12 @@ interface EditorState {
   bitsArray: boolean[];
   modNumber: string;
   attunementNumber: number;
-  newSeed: string;
-  newMod: string;
-  newAttunement: number;
-  editorSeed: string;
-  editorMod: string;
-  editorAttunement: number;
+  newSeed: string | null;
+  newMod: string | null;
+  newAttunement: number | null;
+  editorSeed: string | null;
+  editorMod: string | null;
+  editorAttunement: number | null;
   isAttunementOverridden: boolean;
   shouldResetLayers: boolean;
   hasEditorChanges: boolean;
@@ -65,12 +65,12 @@ const initialState: EditorState = {
   bitsArray: Array(100).fill(false),
   modNumber: "000000000000000",
   attunementNumber: 0,
-  newSeed: '',
-  newMod: "000000000000000",
-  newAttunement: 0,
-  editorSeed: '0',
+  newSeed: null,
+  newMod: null,
+  newAttunement: null,
+  editorSeed: "0",
   editorMod: "000000000000000",
-  editorAttunement: 0,
+  editorAttunement: '',
   isAttunementOverridden: false,
   shouldResetLayers: false,
   hasEditorChanges: false,
@@ -120,13 +120,13 @@ const editorSlice = createSlice({
         editorAttunement: sanitizedAttunement,
         bitsArray: seedToBits(BigInt(sanitizedSeed)),
         hasEditorChanges: false,
-        modValues: parseModValues(sanitizedMod), // Add this line
+        modValues: parseModValues(sanitizedMod),
       };
       pushToHistory(state, newState);
       Object.assign(state, newState);
-
+    
       state.shouldResetLayers = true;
-      state.isAttunementOverridden = false;
+      state.isAttunementOverridden = sanitizedAttunement !== calculateMostFrequentNumeral(BigInt(sanitizedSeed));
     },
 
     setShouldResetLayers: (state, action: PayloadAction<boolean>) => {
@@ -180,8 +180,8 @@ const editorSlice = createSlice({
         isAttunementOverridden: false,
       };
     
-      pushToHistory(state, newState);
       Object.assign(state, newState);
+      pushToHistory(state, newState);
     },
 
     //  Update editor mod number
@@ -403,39 +403,43 @@ const editorSlice = createSlice({
     // Undo Editor state change
     undo: (state) => {
       if (state.editorHistory.past.length > 0) {
-        const previous = state.editorHistory.past.pop()!;
-        state.editorHistory.future.push({
-          editorSeed: state.editorSeed,
-          editorMod: state.editorMod,
-          editorAttunement: state.editorAttunement,
-          bitsArray: state.bitsArray,
-        });
-        state.editorSeed = previous.editorSeed;
-        state.editorMod = previous.editorMod;
-        state.editorAttunement = previous.editorAttunement;
-        state.bitsArray = previous.bitsArray;
-        state.hasEditorChanges = true;
+        let previous = state.editorHistory.past.pop()!;
+        while (state.editorHistory.past.length > 0 && previous.editorSeed === state.editorSeed) {
+          previous = state.editorHistory.past.pop()!;
+        }
+        if (previous.editorSeed !== state.editorSeed) {
+          state.editorHistory.future.push({
+            editorSeed: state.editorSeed,
+            editorMod: state.editorMod,
+            editorAttunement: state.editorAttunement,
+            bitsArray: state.bitsArray,
+          });
+          Object.assign(state, previous);
+          state.hasEditorChanges = true;
+        }
       }
     },
 
     // Redo Editor state change
     redo: (state) => {
       if (state.editorHistory.future.length > 0) {
-        const next = state.editorHistory.future.pop()!;
-        state.editorHistory.past.push({
-          editorSeed: state.editorSeed,
-          editorMod: state.editorMod,
-          editorAttunement: state.editorAttunement,
-          bitsArray: state.bitsArray,
-        });
-        state.editorSeed = next.editorSeed;
-        state.editorMod = next.editorMod;
-        state.editorAttunement = next.editorAttunement;
-        state.bitsArray = next.bitsArray;
-        state.hasEditorChanges = true;
+        let next = state.editorHistory.future.pop()!;
+        while (state.editorHistory.future.length > 0 && next.editorSeed === state.editorSeed) {
+          next = state.editorHistory.future.pop()!;
+        }
+        if (next.editorSeed !== state.editorSeed) {
+          state.editorHistory.past.push({
+            editorSeed: state.editorSeed,
+            editorMod: state.editorMod,
+            editorAttunement: state.editorAttunement,
+            bitsArray: state.bitsArray,
+          });
+          Object.assign(state, next);
+          state.hasEditorChanges = true;
+        }
       }
     },
-  },
+  }
 });
 
 
@@ -444,11 +448,13 @@ const editorSlice = createSlice({
 // Update Editor history
 const MAX_HISTORY_LENGTH = 25;
 const pushToHistory = (state: EditorState, newState: Partial<EditorState>, force: boolean = false) => {
-  if (force || (state.editorSeed !== '0' && (
-    state.editorSeed !== newState.editorSeed ||
-    state.editorMod !== newState.editorMod ||
-    state.editorAttunement !== newState.editorAttunement
-  ))) {
+  const lastHistoryState = state.editorHistory.past[state.editorHistory.past.length - 1];
+  const isNewStateDifferent = !lastHistoryState ||
+    newState.editorSeed !== lastHistoryState.editorSeed ||
+    newState.editorMod !== lastHistoryState.editorMod ||
+    newState.editorAttunement !== lastHistoryState.editorAttunement;
+
+  if (force || (state.editorSeed !== '0' && isNewStateDifferent)) {
     state.editorHistory.past.push({
       editorSeed: state.editorSeed,
       editorMod: state.editorMod,
