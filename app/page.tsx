@@ -15,7 +15,7 @@ import InscribeModal from "@/components/Editor/InscribeModal";
 import { updateEditorState, updateEditorSeed, updateEditorMod, updateEditorAttunement, updateHasEditorChanges, resetEditorState, resetEditorSeed, resetEditorMod, resetEditorAttunement, toggleBit, randomizeBits, undo, redo, selectLayersUIToggled, selectDisplaySettingsToggled, toggleLayersUI, toggleDisplaySettings, checkEditorMatchesSelectedItem, toggleColorAnimationPause, toggleDepthAnimationPause, toggleSpinAnimationPause } from '@/store/slices/editorSlice';
 import { initializeQueue, getSetQueueItems, setSelectedIndex, updateQueueItem } from '@/store/slices/queueSlice';
 import { setShowInscribeModal } from '@/store/slices/modalSlice';
-import { selectElementContents, clearSelection } from '@/lib/utils';
+import { selectElementContents, clearSelection, hideMouseCursor } from '@/lib/utils';
 import { selectModValues, selectDisplaySettings } from '@/store/slices/editorSlice';
 import { applyModValueToElements, resetLayers } from '@/lib/utils/artwork/updateSVGWithMod';
 import { attunementNames, updateThemeColor, calculateMostFrequentNumeral } from '@/lib/utils/artwork/helpers';
@@ -121,34 +121,52 @@ export default function Home() {
 
   // Update the Editor's seed number via the seed input
   const handleSeedInputChange = useCallback((updatedSeed: string) => {
+    const parts = updatedSeed.split(/[.:]/);
+    let newSeed = parts[0];
+    let newMod = editorMod;
+    let newAttunement = editorAttunement;
+
+    if (parts.length > 1) {
+      if (parts[1].length === 15 && /^\d+$/.test(parts[1])) {
+        newMod = parts[1];
+      }
+      if (parts.length > 2 && /^\d+$/.test(parts[2])) {
+        newAttunement = parseInt(parts[2]);
+      }
+    }
+
     if (selectedQueueIndex !== null) {
       const selectedItem = queueItems[selectedQueueIndex];
-      if (updatedSeed === (selectedItem.newSeed || selectedItem.seed)) {
-        dispatch(updateEditorSeed({ seed: updatedSeed, updateChanges: false }));
+      if (newSeed === (selectedItem.newSeed || selectedItem.seed) &&
+          newMod === (selectedItem.newMod || selectedItem.modNumber) &&
+          newAttunement === (selectedItem.newAttunement || selectedItem.attunementNumber)) {
+        dispatch(updateEditorState({ seed: newSeed, mod: newMod, attunement: newAttunement, updateChanges: false }));
       } else if (!isSelectedItemLocked()) {
-        dispatch(updateEditorSeed({ seed: updatedSeed, updateChanges: true }));
+        dispatch(updateEditorState({ seed: newSeed, mod: newMod, attunement: newAttunement, updateChanges: true }));
       }
     } else {
-      dispatch(updateEditorSeed({ seed: updatedSeed, updateChanges: false }));
+      dispatch(updateEditorState({ seed: newSeed, mod: newMod, attunement: newAttunement, updateChanges: false }));
     }
-  }, [dispatch, isSelectedItemLocked, queueItems, selectedQueueIndex]);
+  }, [dispatch, isSelectedItemLocked, queueItems, selectedQueueIndex, editorMod, editorAttunement]);
+
 
   // Reset the Editor's seed number
   const handleResetEditorSeed = useCallback(() => {
     if (isSelectedItemLocked()) return;
-    
-    let seedToResetTo: string;
-    if (selectedQueueIndex === null) {
-      seedToResetTo = '0';
-      dispatch(resetEditorSeed(seedToResetTo));
-    } else {
-      const selectedItem = queueItems[selectedQueueIndex];
-      seedToResetTo = selectedItem.seed;
-      // Reset the seed, confirm it matches the selected queue item
-      dispatch(resetEditorSeed(seedToResetTo));
-      dispatch(checkEditorMatchesSelectedItem(selectedItem));
-    }
-  }, [dispatch, selectedQueueIndex, queueItems, isSelectedItemLocked]);
+    dispatch(resetEditorState());
+  }, [dispatch]);
+//    let seedToResetTo: string;
+//    if (selectedQueueIndex === null) {
+//      seedToResetTo = '0';
+//      dispatch(resetEditorSeed(seedToResetTo));
+//    } else {
+//      const selectedItem = queueItems[selectedQueueIndex];
+//      seedToResetTo = selectedItem.seed;
+//      // Reset the seed, confirm it matches the selected queue item
+//      dispatch(resetEditorSeed(seedToResetTo));
+//      dispatch(checkEditorMatchesSelectedItem(selectedItem));
+//    }
+//  }, [dispatch, selectedQueueIndex, queueItems, isSelectedItemLocked]);
 
   // Reset the Editor's mod number
   const handleResetEditorMod = useCallback(() => {
@@ -162,16 +180,12 @@ export default function Home() {
 
   // Enable the Editor's seed reset button
   const enableSeedResetButton = useCallback(() => {
-    if (selectedQueueIndex === null) {
-      return editorSeed !== '0';
-    }
-
-    if (selectedQueueIndex >= queueItems.length) {return false;}
-
-    const selectedItem = queueItems[selectedQueueIndex];
+    const isNonZeroSeed = editorSeed !== '0';
+    const isNonDefaultMod = editorMod !== '000000000000000';
+    const isNonDefaultAttunement = editorAttunement !== calculateMostFrequentNumeral(BigInt(editorSeed));
     
-    return editorSeed !== selectedItem.seed;
-  }, [selectedQueueIndex, queueItems, editorSeed]);
+    return isNonZeroSeed && (isNonDefaultMod || isNonDefaultAttunement);
+  }, [editorSeed, editorMod, editorAttunement]);
 
   const handleResetEditorAttunement = useCallback(() => {
     if (isSelectedItemLocked()) return;
@@ -278,6 +292,27 @@ export default function Home() {
       }));
     }
   }, [selectedQueueIndex, hasEditorChanges, editorSeed, editorMod, editorAttunement, dispatch]);
+
+  // New function to handle the special copy
+  const handleSpecialCopy = useCallback((event: React.KeyboardEvent<HTMLSpanElement>) => {
+    if (event.ctrlKey && event.shiftKey && event.key === 'C') {
+      event.preventDefault();
+      let copyText = editorSeed;
+
+      if (editorMod !== '000000000000000') {
+        copyText += '.' + editorMod;
+      }
+
+      const calculatedAttunement = calculateMostFrequentNumeral(BigInt(editorSeed));
+      if (editorAttunement !== calculatedAttunement) {
+        copyText += ':' + editorAttunement;
+      }
+
+      navigator.clipboard.writeText(copyText).then(() => {
+        console.log('Copied to clipboard:', copyText);
+      });
+    }
+  }, [editorSeed, editorMod, editorAttunement]);
 
 
 
@@ -458,6 +493,15 @@ export default function Home() {
     }
   }, [editorAttunement]);
 
+  // Hide cursor after inactivity
+  useEffect(() => {
+    const editorElement = editorRef.current;
+    if (editorElement) {
+      const cleanup = hideMouseCursor(editorElement);
+      return cleanup;
+    }
+  }, []);
+
 
 
 
@@ -564,25 +608,22 @@ export default function Home() {
                 contentEditable={!isSelectedItemLocked()}
                 inputMode="numeric"
                 onClick={(e) => !isSelectedItemLocked() && selectElementContents(e.currentTarget)}
+                onKeyDown={handleSpecialCopy}
                 onBlur={(e) => {
                   e.preventDefault();
                   if (!isSelectedItemLocked()) {
                     const updatedSeed = e.currentTarget.textContent || '';
                     handleSeedInputChange(updatedSeed);
-                    e.currentTarget.textContent = updatedSeed.trim() || '0';
+                    e.currentTarget.textContent = editorSeed;
                     clearSelection();
                   }
                 }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    if (!isSelectedItemLocked()) {
-                      const updatedSeed = e.currentTarget.textContent || '';
-                      handleSeedInputChange(updatedSeed);
-                      e.currentTarget.textContent = updatedSeed.trim() || '0';
-                      clearSelection();
-                    }
-                    e.currentTarget.blur();
+                onPaste={(e) => {
+                  e.preventDefault();
+                  if (!isSelectedItemLocked()) {
+                    const pastedText = e.clipboardData.getData('text');
+                    handleSeedInputChange(pastedText);
+                    e.currentTarget.textContent = editorSeed;
                   }
                 }}
               >{editorSeed}</span>

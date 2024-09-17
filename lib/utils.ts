@@ -48,6 +48,54 @@ export function clearSelection() {
   }
 }
 
+// Seed number to bits
 export function seedToBits(seed: bigint): boolean[] {
   return seed.toString(2).padStart(100, '0').split('').map(bit => bit === '1');
+}
+
+// Hide mouse cursor after 5 seconds of inactivity and disable interactions
+export function hideMouseCursor(element: HTMLElement) {
+  let timeout: NodeJS.Timeout;
+  let isHidden = false;
+  
+  const hideCursor = () => {
+    document.body.classList.add('cursor-hidden');
+    isHidden = true;
+  };
+
+  const showCursor = () => {
+    if (isHidden) {
+      document.body.classList.remove('cursor-hidden');
+      isHidden = false;
+      // Explicitly reset cursor style
+      element.style.cursor = 'auto';
+      // Force a repaint to ensure hover states are updated
+      element.style.display = 'none';
+      element.offsetHeight; // Trigger a reflow
+      element.style.display = '';
+    }
+    clearTimeout(timeout);
+    timeout = setTimeout(hideCursor, 5000);
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    showCursor();
+  };
+
+  element.addEventListener('mousemove', handleMouseMove);
+  element.addEventListener('mousedown', showCursor);
+  element.addEventListener('mouseup', showCursor);
+
+  // Initial setup
+  showCursor();
+
+  // Return a cleanup function
+  return () => {
+    element.removeEventListener('mousemove', handleMouseMove);
+    element.removeEventListener('mousedown', showCursor);
+    element.removeEventListener('mouseup', showCursor);
+    clearTimeout(timeout);
+    document.body.classList.remove('cursor-hidden');
+    element.style.cursor = 'auto';
+  };
 }

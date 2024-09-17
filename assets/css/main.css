@@ -8,6 +8,11 @@ body {
   margin: 0;
 }
 
+.cursor-hidden * {
+  cursor: none;
+}
+
+
 article,
 aside,
 details,
@@ -2724,8 +2729,9 @@ body:has(.theme-bkg) {
 
 .seed-input,
 .seed-label,
-.reset-seed-button {
-  transition: border-color 0.1s, color 0.2s, background-color 0.2s;
+.reset-seed-button,
+.mod-reset {
+  transition: border-color 0.1s, color 0.2s, background-color 0.2s, opacity 0.4s;
 }
 
 .seed:hover {
@@ -3043,6 +3049,10 @@ body:has(.theme-bkg) {
   left: 104%;
   pointer-events: auto;
   cursor: pointer;
+  opacity: 0;
+}
+
+.mod-reset.show {
   opacity: 1;
 }
 
@@ -4924,7 +4934,6 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
   color:#000;
   background-color: #ffffff;
   border-color: #fff;
-  box-shadow: 0 0 0px 3px rgba(0,0,0,0.2);
 }
 .svg-container.playing .play-button::before {
   content: "Stop";
@@ -5095,6 +5104,10 @@ body:has(.seed-details.focused) .app-pane.right .details-actions-container {
 
 .seed-overlay-container .seed-details.show .details-actions-list {
   pointer-events: auto;
+}
+
+.seed-overlay-container .seed-details.show.focused .details-actions-list {
+  pointer-events: none;
 }
 
 .details-actions-list li:active {

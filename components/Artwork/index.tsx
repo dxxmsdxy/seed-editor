@@ -147,15 +147,13 @@ const Artwork = ({ seed, mod, attunement, isPlaying, editorSeed, editorMod, edit
       width="100%"
       height="100%"
       viewBox="0 0 1440 1920"
-      aria-labelledby="seedsTitle seedsDesc"
       role="img"
       data-seed={0}
       tabIndex={0}
       data-attunement={8}
     >
-      <title id="seedsTitle">seeds by dxxmsdxy</title>
       <desc id="seedsDesc">
-        Interpretable artwork. Code &amp; art by dxxmsdxy. Inscribed{" "}
+        SEEDS. Interpretable artwork. Code &amp; art by dxxmsdxy. Inscribed{" "}
         {`${currentDate.getMonth() + 1}/${currentDate.getDate()}/${currentDate
           .getFullYear()
           .toString()

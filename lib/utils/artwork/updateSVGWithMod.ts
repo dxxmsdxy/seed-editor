@@ -23,6 +23,7 @@
 
 const TOTAL_ANIMATION_DURATION = 100; // seconds
 const MAX_MOD_VALUE = 999;
+const DEPTH_MULTIPLIER = 2; // New constant for depth multiplier
 
 /**
  * Calculates the normalized play position of an element's animation.
@@ -89,16 +90,23 @@ export function getElementModValue(element: Element): number {
  * applyModValueToElement(document.querySelector('.animated-element'), 500);
  */
 
-function modValueToDelay(modValue: number): number {
-    return -(modValue / MAX_MOD_VALUE) * TOTAL_ANIMATION_DURATION;
+function modValueToDelay(modValue: number, modType: 'color' | 'depth' | 'spin'): number {
+  let delay = -(modValue / MAX_MOD_VALUE) * TOTAL_ANIMATION_DURATION;
+  
+  // Apply multiplier for depth mod
+  if (modType === 'depth') {
+      delay *= DEPTH_MULTIPLIER;
+  }
+  
+  return delay;
 }
 
-export function applyModValueToElement(element: Element, modValue: number): void {
-    const computedStyle = window.getComputedStyle(element);
-    const initialDelay = parseFloat(computedStyle.animationDelay) || 0;
-    const newDelay = modValueToDelay(modValue);
-    const adjustedDelay = newDelay - initialDelay;
-    (element as HTMLElement).style.animationDelay = `${adjustedDelay.toFixed(1)}s`;
+export function applyModValueToElement(element: Element, modValue: number, modType: 'color' | 'depth' | 'spin'): void {
+  const computedStyle = window.getComputedStyle(element);
+  const initialDelay = parseFloat(computedStyle.animationDelay) || 0;
+  const newDelay = modValueToDelay(modValue, modType);
+  const adjustedDelay = newDelay - initialDelay;
+  (element as HTMLElement).style.animationDelay = `${adjustedDelay.toFixed(1)}s`;
 }
 
 /**
@@ -137,7 +145,12 @@ export function applyModValueToElements(elements: NodeListOf<Element> | HTMLColl
   const firstElement = elementsArray[0];
   const computedStyle = window.getComputedStyle(firstElement);
   const duration = parseFloat(computedStyle.animationDuration) || TOTAL_ANIMATION_DURATION;
-  const delay = -(normalizedPosition * duration);
+  let delay = -(normalizedPosition * duration);
+
+  // Apply depth multiplier if the modType is 'depth'
+  if (modType === 'depth') {
+    delay *= DEPTH_MULTIPLIER;
+  }
 
   elementsArray.forEach(element => {
     let originalDelay: number;

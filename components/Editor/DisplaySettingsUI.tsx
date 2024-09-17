@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { useSelector, useDispatch } from 'react-redux';
-import { updateDisplaySetting, updateEditorMod, resetEditorMod, updateEditorAttunement, overrideEditorAttunement, resetAttunementOverride, selectModValues, resetEditorAttunement, selectDisplaySettings, toggleColorAnimationPause, toggleDepthAnimationPause, toggleSpinAnimationPause, updateSliderValue, selectAttunement } from '@/store/slices/editorSlice';
+import { updateDisplaySetting, updateEditorMod, resetEditorMod, updateEditorAttunement, overrideEditorAttunement, resetAttunementOverride, selectModValues, selectShouldShowResetMod, resetEditorAttunement, selectDisplaySettings, toggleColorAnimationPause, toggleDepthAnimationPause, toggleSpinAnimationPause, updateSliderValue, selectAttunement, updateDisplaySettingsFromMod } from '@/store/slices/editorSlice';
 import { selectElementContents, clearSelection } from '@/lib/utils';
 import { attunementNames } from '@/lib/utils/artwork/helpers';
 import RangeSlider from './RangeSlider';
@@ -29,6 +29,7 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
   const displaySettings = useAppSelector(selectDisplaySettings);
   const attunement = useSelector(selectAttunement);
   const [showAttunementName, setShowAttunementName] = useState(false);
+  const shouldShowResetMod = useAppSelector(selectShouldShowResetMod);
 
 
   const [activeSelection, setActiveSelection] = useState(false);
@@ -38,8 +39,8 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
 
   // Reset the mod value
   const handleResetMod = () => {
-    if (!isLocked) {
-      dispatch(resetEditorMod("000000000000000"));
+    if (!isLocked && shouldShowResetMod) {
+      dispatch(resetEditorMod());
     }
   };
 
@@ -160,6 +161,11 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
     }
   }, [isLocked, dispatch]);
 
+  // Update the display settings buttons when editor mod changes
+  useEffect(() => {
+    dispatch(updateDisplaySettingsFromMod(editorMod ?? "000000000000000"));
+  }, [editorMod, dispatch]);
+
 
   // STRUCTURE ---------------------------------------
 
@@ -273,7 +279,12 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
           >
             {useAppSelector(state => state.seed.editorMod)}
           </span>
-          <span className="mod-reset" onClick={handleResetMod}>Reset</span>
+          <span 
+            className={`mod-reset ${shouldShowResetMod ? 'show' : ''}`} 
+            onClick={handleResetMod}
+          >
+            Reset
+          </span>
         </div>
       </div>
     </div>

@@ -146,6 +146,9 @@ const editorSlice = createSlice({
         editorAttunement: selectedItem ? selectedItem.attunementNumber || 0 : 0,
         hasEditorChanges: false,
         actualTintPercentValue: 100,
+        // Preserve the overlay state
+        isOverlayToggled: state.isOverlayToggled,
+        isArtworkFocused: state.isArtworkFocused,
       };
       
       // Only push to history if the current state is not '0'
@@ -331,6 +334,13 @@ const editorSlice = createSlice({
     // Set slider active
     setSliderActive: (state, action: PayloadAction<{ name: string; isActive: boolean }>) => {
       state.isActive[action.payload.name] = action.payload.isActive;
+    },
+
+    // Update display settings toggle buttons from mod
+    updateDisplaySettingsFromMod: (state, action: PayloadAction<string>) => {
+      const mod = action.payload;
+      const displaySettingsValue = parseInt(mod.slice(-3), 10);
+      state.displaySettings = displaySettingsValue;
     },
 
     // Update slider value
@@ -544,6 +554,26 @@ export const selectShouldResetLayers = (state: RootState) => state.seed.shouldRe
 
 export const selectAttunement = (state: RootState) => state.seed.editorAttunement;
 
+// Should the Mod Reset button show
+export const selectShouldShowResetMod = createSelector(
+  [
+    (state: RootState) => state.seed.editorMod,
+    (state: RootState) => state.queue.selectedIndex,
+    (state: RootState) => state.queue.items,
+  ],
+  (editorMod, selectedIndex, queueItems) => {
+    if (selectedIndex === null) {
+      // No queue item selected
+      return editorMod !== "000000000000000";
+    }
+
+    const selectedItem = queueItems[selectedIndex];
+    const itemMod = selectedItem.newMod || selectedItem.modNumber || "000000000000000";
+    
+    return editorMod !== itemMod;
+  }
+);
+
 
 // EXPORTS -----------------------------------------
 
@@ -560,6 +590,7 @@ export const {
   resetEditorState,
   resetEditorSeed,
   resetEditorMod,
+  updateDisplaySettingsFromMod,
   resetEditorAttunement,
   undo,
   redo,
