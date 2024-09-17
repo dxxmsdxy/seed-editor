@@ -12,12 +12,13 @@ import { BitsArray } from "@/components/Editor/LayersUI";
 import DisplaySettings from '@/components/Editor/DisplaySettingsUI';
 import InscribeModal from "@/components/Editor/InscribeModal";
 
-import { updateEditorState, updateEditorSeed, updateHasEditorChanges, resetEditorState, resetEditorSeed, resetEditorMod, toggleBit, randomizeBits, undo, redo, selectLayersUIToggled, selectDisplaySettingsToggled, toggleLayersUI, toggleDisplaySettings, checkEditorMatchesSelectedItem, toggleColorAnimationPause, toggleDepthAnimationPause, toggleSpinAnimationPause } from '@/store/slices/editorSlice';
+import { updateEditorState, updateEditorSeed, updateEditorMod, updateEditorAttunement, updateHasEditorChanges, resetEditorState, resetEditorSeed, resetEditorMod, resetEditorAttunement, toggleBit, randomizeBits, undo, redo, selectLayersUIToggled, selectDisplaySettingsToggled, toggleLayersUI, toggleDisplaySettings, checkEditorMatchesSelectedItem, toggleColorAnimationPause, toggleDepthAnimationPause, toggleSpinAnimationPause } from '@/store/slices/editorSlice';
 import { initializeQueue, getSetQueueItems, setSelectedIndex, updateQueueItem } from '@/store/slices/queueSlice';
 import { setShowInscribeModal } from '@/store/slices/modalSlice';
 import { selectElementContents, clearSelection } from '@/lib/utils';
 import { selectModValues, selectDisplaySettings } from '@/store/slices/editorSlice';
 import { applyModValueToElements, resetLayers } from '@/lib/utils/artwork/updateSVGWithMod';
+import { attunementNames, updateThemeColor } from '@/lib/utils/artwork/helpers';
 
 
 
@@ -149,6 +150,19 @@ export default function Home() {
     
     return editorSeed !== selectedItem.seed;
   }, [selectedQueueIndex, queueItems, editorSeed]);
+
+  const handleResetEditorAttunement = useCallback(() => {
+    if (isSelectedItemLocked()) return;
+    
+    let attunementToResetTo: number;
+    if (selectedQueueIndex === null) {
+      attunementToResetTo = 0;
+    } else {
+      const selectedItem = queueItems[selectedQueueIndex];
+      attunementToResetTo = selectedItem.attunementNumber || 0;
+    }
+    dispatch(resetEditorAttunement(attunementToResetTo));
+  }, [dispatch, selectedQueueIndex, queueItems, isSelectedItemLocked]);
 
   // Randomize the Editor's seed number
   const handleRandomizeBits = () => {
@@ -333,6 +347,15 @@ export default function Home() {
     if (artwork) {
       memoizedResetLayers(artwork);
 
+      // Update attunement class
+      attunementNames.forEach(name => {
+        artwork.classList.remove(name);
+      });
+      if (editorAttunement >= 0 && editorAttunement < attunementNames.length) {
+        artwork.classList.add(attunementNames[editorAttunement]);
+        updateThemeColor(attunementNames[editorAttunement]);
+      }
+
       const layers = document.querySelectorAll('.seedartwork,.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline');
       memoizedApplyModValueToElements(layers, modValues.color, 'color');
   
@@ -342,7 +365,7 @@ export default function Home() {
       const depthTargets = artwork.querySelectorAll('.lr.on .fx');
       memoizedApplyModValueToElements(depthTargets, modValues.depth, 'depth');
     }
-  }, [modValues, memoizedApplyModValueToElements, editorMod]);
+  }, [modValues, memoizedApplyModValueToElements, editorMod, editorAttunement]);
 
   // Keyboard shortcuts for Undo/Redo
   useEffect(() => {
@@ -373,6 +396,21 @@ export default function Home() {
     }
   }, [walletConnected, dispatch]);
 
+  // Listen for and apply Editor attunement changes
+  useEffect(() => {
+    const artwork = document.querySelector('.seedartwork') as SVGSVGElement;
+    if (artwork) {
+      // Remove all attunement classes
+      attunementNames.forEach(name => {
+        artwork.classList.remove(name);
+      });
+  
+      // Add the current attunement class
+      if (editorAttunement >= 0 && editorAttunement < attunementNames.length) {
+        artwork.classList.add(attunementNames[editorAttunement]);
+      }
+    }
+  }, [editorAttunement]);
 
 
 
@@ -485,10 +523,12 @@ export default function Home() {
                     {...handleSvgOverlayInteraction()}
                   >
                     <Artwork 
-                      seed={editorSeed} 
-                      mod={editorMod} 
-                      attunement={editorAttunement} 
-                      isPlaying={isPlaying} 
+                      seed={editorSeed}
+                      mod={editorMod}
+                      attunement={editorAttunement.toString()}
+                      isPlaying={isPlaying}
+                      editorSeed={editorSeed}
+                      editorAttunement={editorAttunement}
                     />
                   </div>
                   <div className="seed-overlay-container">

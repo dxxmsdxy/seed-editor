@@ -15,13 +15,16 @@ interface ArtworkProps {
   seed: string;
   mod: string;
   attunement: string;
+  editorSeed: string;
+  editorMod: string;
+  editorAttunement: number;
   isPlaying: boolean;
 }
 
 
 // COMPONENT LOGIC ---------------------------------
 
-const Artwork = ({ seed, mod, attunement, isPlaying }: ArtworkProps) => {
+const Artwork = ({ seed, mod, attunement, isPlaying, editorSeed, editorMod, editorAttunement }: ArtworkProps) => {
   useArtworkHotkeys(seed);
   const currentDate = new Date();
   const dispatch = useDispatch();
@@ -75,7 +78,7 @@ const Artwork = ({ seed, mod, attunement, isPlaying }: ArtworkProps) => {
       const displaySettings = parseInt(mod.slice(12), 10);
       const displayClasses = ['reveal', 'removeBkg', 'invert', 'flip', 'hyper', 'cmyk', 'red', 'green', 'blue'];
       displayClasses.forEach((className, index) => {
-        const isActive = index === 0 ? (displaySettings & (1 << 8)) === 0 : (displaySettings & (1 << (8 - index))) !== 0;
+        const isActive = index === 0 ? (displaySettings & (1 << 0)) === 0 : (displaySettings & (1 << index)) !== 0;
         svg.classList.toggle(className, isActive);
       });
   
@@ -87,6 +90,14 @@ const Artwork = ({ seed, mod, attunement, isPlaying }: ArtworkProps) => {
           if (color !== activeColorClass) svg.classList.remove(color);
         });
       }
+      
+      if (svg.getAttribute('data-seed') !== editorSeed) {
+        svg.setAttribute('data-seed', editorSeed);
+      }
+      if (svg.getAttribute('data-attunement') !== editorAttunement.toString()) {
+        svg.setAttribute('data-attunement', editorAttunement.toString());
+      }
+
     };
   
     const updateAnimations = () => {
@@ -102,7 +113,7 @@ const Artwork = ({ seed, mod, attunement, isPlaying }: ArtworkProps) => {
     updateSVGClasses();
     updateAnimations();
   
-  }, [mod, modValues, isColorAnimationPaused, isDepthAnimationPaused, isSpinAnimationPaused]);
+  }, [mod, modValues, isColorAnimationPaused, isDepthAnimationPaused, isSpinAnimationPaused, editorSeed, editorAttunement]);
 
   // Reset the animation delays to initial
   useEffect(() => {

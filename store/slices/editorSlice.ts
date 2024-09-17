@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit';
+import { calculateMostFrequentNumeral } from '@/lib/utils/artwork/helpers';
 import { seedToBits } from "@/lib/utils";
 import { RootState } from '@/store';
 
@@ -16,6 +17,7 @@ interface EditorState {
   editorSeed: string;
   editorMod: string;
   editorAttunement: number;
+  isAttunementOverridden: boolean;
   shouldResetLayers: boolean;
   hasEditorChanges: boolean;
   displaySettings: number;
@@ -69,6 +71,7 @@ const initialState: EditorState = {
   editorSeed: '0',
   editorMod: "000000000000000",
   editorAttunement: 0,
+  isAttunementOverridden: false,
   shouldResetLayers: false,
   hasEditorChanges: false,
   displaySettings: 0,
@@ -123,6 +126,7 @@ const editorSlice = createSlice({
       Object.assign(state, newState);
 
       state.shouldResetLayers = true;
+      state.isAttunementOverridden = false;
     },
 
     setShouldResetLayers: (state, action: PayloadAction<boolean>) => {
@@ -149,6 +153,7 @@ const editorSlice = createSlice({
         pushToHistory(state, newState, true);
       }
       
+      state.isAttunementOverridden = false;
       Object.assign(state, newState);
       
       if (selectedItem) {
@@ -166,11 +171,22 @@ const editorSlice = createSlice({
     // Update editor seed number
     updateEditorSeed: (state, action: PayloadAction<{ seed: string; updateChanges?: boolean }>) => {
       const sanitizedSeed = sanitizeSeed(action.payload.seed);
+      const calculatedAttunement = calculateMostFrequentNumeral(BigInt(sanitizedSeed));
       const newState = {
         editorSeed: sanitizedSeed,
         bitsArray: seedToBits(BigInt(sanitizedSeed)),
+        editorAttunement: calculatedAttunement !== null ? calculatedAttunement : 0,
         hasEditorChanges: action.payload.updateChanges ?? state.hasEditorChanges,
+        isAttunementOverridden: false,
       };
+
+      // Calculate new attunement if not overridden
+      if (!state.isAttunementOverridden) {
+        const calculatedAttunement = calculateMostFrequentNumeral(BigInt(sanitizedSeed));
+        state.editorAttunement = calculatedAttunement !== null ? calculatedAttunement : 0;
+        newState.editorAttunement = state.editorAttunement;
+      }
+
       pushToHistory(state, newState);
       Object.assign(state, newState);
     },
@@ -191,11 +207,12 @@ const editorSlice = createSlice({
     },
 
     // Update editor attunement number
-    updateEditorAttunement: (state, action: PayloadAction<{ attunementNumber: number; updateChanges?: boolean }>) => {
+    updateEditorAttunement: (state, action: PayloadAction<{ attunementNumber: number; updateChanges?: boolean; isOverride?: boolean }>) => {
       const sanitizedAttunement = sanitizeAttunement(action.payload.attunementNumber);
       const newState = {
         editorAttunement: sanitizedAttunement,
         hasEditorChanges: action.payload.updateChanges ?? state.hasEditorChanges,
+        isAttunementOverridden: action.payload.isOverride ?? state.isAttunementOverridden,
       };
       pushToHistory(state, newState);
       Object.assign(state, newState);
@@ -243,16 +260,26 @@ const editorSlice = createSlice({
     },
 
     // Reset the Editor's attunement number
-    resetEditorAttunement: (state, action: PayloadAction<number>) => {
+    resetEditorAttunement: (state) => {
+      const calculatedAttunement = calculateMostFrequentNumeral(BigInt(state.editorSeed));
+      state.editorAttunement = calculatedAttunement !== null ? calculatedAttunement : 0;
+      state.isAttunementOverridden = false;
       pushToHistory(state, {
         editorSeed: state.editorSeed,
         editorMod: state.editorMod,
         editorAttunement: state.editorAttunement,
         bitsArray: state.bitsArray
       }, true);
+      state.isAttunementOverridden = false;
+    },
 
-      const newState = {editorAttunement: action.payload}
-      state.editorAttunement = newState.editorAttunement;
+    overrideEditorAttunement: (state, action: PayloadAction<number>) => {
+      state.editorAttunement = action.payload;
+      state.isAttunementOverridden = true;
+    },
+
+    resetAttunementOverride: (state) => {
+      state.isAttunementOverridden = false;
     },
 
     // Editor UI state ------------------------------
@@ -272,6 +299,11 @@ const editorSlice = createSlice({
         editorSeed: BigInt('0b' + bitArray.map(b => b ? '1' : '0').join('')).toString(),
         hasEditorChanges: true,
       };
+      
+      const calculatedAttunement = calculateMostFrequentNumeral(BigInt(state.editorSeed));
+      newState.editorAttunement = calculatedAttunement !== null ? calculatedAttunement : 0;
+      state.isAttunementOverridden = false;
+
       pushToHistory(state, newState);
       Object.assign(state, newState);
     },
@@ -511,6 +543,8 @@ export const selectDisplaySettings = (state: RootState) => state.seed.displaySet
 
 export const selectShouldResetLayers = (state: RootState) => state.seed.shouldResetLayers;
 
+export const selectAttunement = (state: RootState) => state.seed.editorAttunement;
+
 
 // EXPORTS -----------------------------------------
 
@@ -519,6 +553,8 @@ export const {
   updateEditorSeed,
   updateEditorMod,
   updateEditorAttunement,
+  overrideEditorAttunement,
+  resetAttunementOverride,
   updateHasEditorChanges,
   setShouldResetLayers,
   clearShouldResetLayers,
