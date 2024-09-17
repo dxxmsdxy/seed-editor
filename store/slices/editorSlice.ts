@@ -179,14 +179,7 @@ const editorSlice = createSlice({
         hasEditorChanges: action.payload.updateChanges ?? state.hasEditorChanges,
         isAttunementOverridden: false,
       };
-
-      // Calculate new attunement if not overridden
-      if (!state.isAttunementOverridden) {
-        const calculatedAttunement = calculateMostFrequentNumeral(BigInt(sanitizedSeed));
-        state.editorAttunement = calculatedAttunement !== null ? calculatedAttunement : 0;
-        newState.editorAttunement = state.editorAttunement;
-      }
-
+    
       pushToHistory(state, newState);
       Object.assign(state, newState);
     },

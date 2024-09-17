@@ -18,8 +18,29 @@ import { setShowInscribeModal } from '@/store/slices/modalSlice';
 import { selectElementContents, clearSelection } from '@/lib/utils';
 import { selectModValues, selectDisplaySettings } from '@/store/slices/editorSlice';
 import { applyModValueToElements, resetLayers } from '@/lib/utils/artwork/updateSVGWithMod';
-import { attunementNames, updateThemeColor } from '@/lib/utils/artwork/helpers';
+import { attunementNames, updateThemeColor, calculateMostFrequentNumeral } from '@/lib/utils/artwork/helpers';
 
+
+interface DiagnosticValues {
+  seed: {
+    svg: string;
+    editor: string;
+    new: string;
+    initial: string;
+  };
+  mod: {
+    svg: string;
+    editor: string;
+    new: string;
+    initial: string;
+  };
+  attunement: {
+    svg: string;
+    editor: string;
+    new: string;
+    initial: string;
+  };
+}
 
 
 
@@ -68,6 +89,7 @@ export default function Home() {
     return queueItems[selectedQueueIndex].locked;
   }, [selectedQueueIndex, queueItems]);
 
+  const calculatedAttunement = calculateMostFrequentNumeral(BigInt(editorSeed));
 
 
   // CALLBACKS --------------------------------------
@@ -251,7 +273,7 @@ export default function Home() {
   }, [selectedQueueIndex, hasEditorChanges, editorSeed, editorMod, editorAttunement, dispatch]);
 
 
-  
+
   // EFFECTS ----------------------------------------
 
    // Handle clicks anywhere in the document
@@ -314,8 +336,13 @@ export default function Home() {
     if (selectedQueueIndex !== null && selectedQueueIndex < queueItems.length) {
       const selectedItem = queueItems[selectedQueueIndex];
       if (!hasEditorChanges) {
+        
+        
+
+        const newSeed = selectedItem.newSeed || selectedItem.seed || '0';
         const newMod = selectedItem.newMod || selectedItem.modNumber || "000000000000000";
-        const newAttunement = selectedItem.newAttunement ?? selectedItem.attunementNumber ?? 0;
+        const calculatedAttunement = calculateMostFrequentNumeral(BigInt(newSeed));
+        const newAttunement = calculatedAttunement !== null ? calculatedAttunement : 0;
         
         dispatch(updateEditorState({
           seed: selectedItem.newSeed || selectedItem.seed || '0',
@@ -383,6 +410,18 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [dispatch]);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'r' || event.key === 'R') {
+        event.preventDefault();
+        handleRandomizeBits();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleRandomizeBits]);
+
   // Reset editor state when wallet is disconnected
   useEffect(() => {
     if (!walletConnected) {
@@ -411,6 +450,72 @@ export default function Home() {
       }
     }
   }, [editorAttunement]);
+
+
+
+
+  //=======================================================
+  //================== DIAGNOSTICS ========================
+  //=======================================================
+
+  const [diagnosticValues, setDiagnosticValues] = useState<DiagnosticValues>({
+    seed: { svg: '', editor: '', new: '', initial: '' },
+    mod: { svg: '', editor: '', new: '', initial: '' },
+    attunement: { svg: '', editor: '', new: '', initial: '' },
+  });
+
+  const diagnosticWalletConnected = useSelector((state: RootState) => state.wallet.connected);
+  const editorState = useSelector((state: RootState) => state.seed);
+  console.log('Current editorState:', editorState);
+
+  // Ref for the SVG element
+  const artRef = useRef<SVGSVGElement | null>(null);
+
+  // Effect to update the diagnostic display
+  useEffect(() => {
+    if (!diagnosticWalletConnected) return;
+
+    const updateDiagnostic = () => {
+      const svg = artRef.current;
+      
+      setDiagnosticValues({
+        seed: {
+          svg: svg?.getAttribute('data-seed') || '',
+          editor: editorState.editorSeed || '',
+          new: editorState.newSeed || '',
+          initial: editorState.seed || '',
+        },
+        mod: {
+          svg: svg?.getAttribute('data-mod') || '',
+          editor: editorState.editorMod || '',
+          new: editorState.newMod || '',
+          initial: editorState.modNumber || '',
+        },
+        attunement: {
+          svg: svg?.getAttribute('data-attunement') || '',
+          editor: editorState.editorAttunement?.toString() || '',
+          new: editorState.newAttunement?.toString() || '',
+          initial: editorState.attunementNumber?.toString() || '',
+        },
+      });
+    };
+
+    // Run the update immediately
+    updateDiagnostic();
+
+    // Set up a MutationObserver to watch for changes in the SVG attributes
+    const observer = new MutationObserver(updateDiagnostic);
+    if (artRef.current) {
+      observer.observe(artRef.current, { attributes: true, attributeFilter: ['data-seed', 'data-mod', 'data-attunement'] });
+    }
+
+    // Clean up the observer when the component unmounts or wallet disconnects
+    return () => observer.disconnect();
+  }, [diagnosticWalletConnected, editorState, artRef]);
+
+  //=======================================================
+  //================== DIAGNOSTICS ========================
+  //=======================================================
 
 
 
@@ -522,14 +627,17 @@ export default function Home() {
                     className="svg-outer"
                     {...handleSvgOverlayInteraction()}
                   >
-                    <Artwork 
-                      seed={editorSeed}
-                      mod={editorMod}
-                      attunement={editorAttunement.toString()}
-                      isPlaying={isPlaying}
-                      editorSeed={editorSeed}
-                      editorAttunement={editorAttunement}
-                    />
+                    {editorState && (
+                      <Artwork 
+                        ref={artRef}
+                        seed={editorSeed}
+                        mod={editorMod}
+                        attunement={editorAttunement.toString()}
+                        isPlaying={isPlaying}
+                        editorSeed={editorSeed}
+                        editorAttunement={calculatedAttunement}
+                      />
+                    )}
                   </div>
                   <div className="seed-overlay-container">
                     <SeedDetails
@@ -614,7 +722,22 @@ export default function Home() {
       <div className="diagnostic">
         <ul>
           <li><span className="diagnostic-seed">SEED</span>
-            SEED
+            svg: <span>{diagnosticValues.seed.svg || 'N/A'}</span> | 
+            editor: <span>{diagnosticValues.seed.editor || 'N/A'}</span> | 
+            new: <span>{diagnosticValues.seed.new || 'N/A'}</span> | 
+            initial: <span>{diagnosticValues.seed.initial || 'N/A'}</span>
+          </li>
+          <li><span className="diagnostic-mod">MOD</span>
+            svg: <span>{diagnosticValues.mod.svg || 'N/A'}</span> | 
+            editor: <span>{diagnosticValues.mod.editor || 'N/A'}</span> | 
+            new: <span>{diagnosticValues.mod.new || 'N/A'}</span> | 
+            initial: <span>{diagnosticValues.mod.initial || 'N/A'}</span>
+          </li>
+          <li><span className="diagnostic-attunement">ATTUNEMENT</span>
+            svg: <span>{diagnosticValues.attunement.svg || 'N/A'}</span> | 
+            editor: <span>{diagnosticValues.attunement.editor || 'N/A'}</span> | 
+            new: <span>{diagnosticValues.attunement.new || 'N/A'}</span> | 
+            initial: <span>{diagnosticValues.attunement.initial || 'N/A'}</span>
           </li>
         </ul>
       </div>

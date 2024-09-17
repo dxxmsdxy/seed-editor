@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
 import { updateEditorState, resetEditorState } from './editorSlice';
 import { RootState } from '@/store';
+import { calculateMostFrequentNumeral } from '@/lib/utils/artwork/helpers';
 
 
 
@@ -45,14 +46,19 @@ const queueSlice = createSlice({
 
     // Set the entire queue of items
     initializeQueue: (state, action: PayloadAction<QueueItem[]>) => {
-      state.items = action.payload.map(item => ({
+      state.items = action.payload.map(item => {
+        const attunementNumber = item.attunementNumber === null
+          ? (calculateMostFrequentNumeral(BigInt(item.seed)) ?? 0)
+          : item.attunementNumber;
+
+        return {
         ...item,
         newSeed: null,
         newMod: null,
         newAttunement: null,
         initialLocked: item.locked || false,
         isSet: false,
-      }));
+      }});
     
       queueSlice.caseReducers.updateQueueOrder(state);
     

@@ -3,6 +3,7 @@ import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateDisplaySetting, updateEditorMod, resetEditorMod, updateEditorAttunement, overrideEditorAttunement, resetAttunementOverride, selectModValues, resetEditorAttunement, selectDisplaySettings, toggleColorAnimationPause, toggleDepthAnimationPause, toggleSpinAnimationPause, updateSliderValue, selectAttunement } from '@/store/slices/editorSlice';
 import { selectElementContents, clearSelection } from '@/lib/utils';
+import { attunementNames } from '@/lib/utils/artwork/helpers';
 import RangeSlider from './RangeSlider';
 import debounce from 'lodash/debounce';
 
@@ -27,6 +28,7 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
   const modValues = useAppSelector(selectModValues);
   const displaySettings = useAppSelector(selectDisplaySettings);
   const attunement = useSelector(selectAttunement);
+  const [showAttunementName, setShowAttunementName] = useState(false);
 
 
   const [activeSelection, setActiveSelection] = useState(false);
@@ -44,6 +46,7 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
   const handleResetAttunement = React.useCallback(() => {
     if (!isLocked) {
       dispatch(resetEditorAttunement());
+      setShowAttunementName(false);
     }
   }, [isLocked, dispatch]);
 
@@ -152,6 +155,7 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
     if (!isLocked) {
       if (!isNaN(newAttunement) && newAttunement >= 0 && newAttunement <= 9) {
         dispatch(updateEditorAttunement({ attunementNumber: newAttunement, isOverride: true }));
+        setShowAttunementName(true);
       }
     }
   }, [isLocked, dispatch]);
@@ -168,7 +172,9 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
         </div>
         <div className="attunement-label-container ui-element" onClick={handleResetAttunement}>
           <div className="attunement-label ui-element">
-            Attunement: 
+            <span className="attunement-name">
+              { showAttunementName ? attunementNames[editorAttunement] + ":" : "Attunement:"}
+            </span>
             <span
               className="attunement-input ui-element"
               contentEditable={!isLocked}
