@@ -90,7 +90,7 @@ const Artwork = ({ seed, mod, attunement, isPlaying }: ArtworkProps) => {
     };
   
     const updateAnimations = () => {
-      const colorElements = svg.querySelectorAll('.lr');
+      const colorElements = svg.querySelectorAll('.lr.on');
       const depthElements = svg.querySelectorAll('.depth');
       const spinElements = svg.querySelectorAll('.spin');
   

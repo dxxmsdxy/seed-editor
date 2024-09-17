@@ -161,8 +161,20 @@ export function applyModValueToElements(elements: NodeListOf<Element> | HTMLColl
 export function resetLayers(svg: SVGSVGElement | null): void {
   if (!svg) return;
 
-  const lrElements = svg.querySelectorAll('.lr');
-  lrElements.forEach(element => {
+  const selectors = [
+    '.lr',
+    '.lr path',
+    '.lr polygon',
+    '.lr circle',
+    '.lr ellipse',
+    '.lr line',
+    '.lr rect',
+    '.lr polyline',
+    '.lr .fx'
+  ];
+
+  const elements = svg.querySelectorAll(selectors.join(', '));
+  elements.forEach(element => {
     const originalDelay = element.getAttribute('data-original-delay');
     if (originalDelay) {
       (element as HTMLElement).style.animationDelay = `${originalDelay}s`;
