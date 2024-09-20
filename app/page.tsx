@@ -4,43 +4,24 @@ import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { debounce } from 'lodash';
+import { useSearchParams } from 'next/navigation';
 
 import Artwork from "@/components/Artwork";
-import SeedDetails from '@/components/Artwork/SeedDetails';
+import Details from '@/components/Artwork/Details';
 import Queue from '@/components/Editor/Queue';
 import { BitsArray } from "@/components/Editor/LayersUI";
 import DisplaySettings from '@/components/Editor/DisplaySettingsUI';
 import InscribeModal from "@/components/Editor/InscribeModal";
+import DiagnosticsPanel from "@/components/Editor/DiagnosticsPanel";
+import { selectOTCMode } from '@/store/slices/otcSlice';
 
-import { updateEditorState, updateEditorSeed, updateEditorMod, updateEditorAttunement, updateHasEditorChanges, resetEditorState, resetEditorSeed, resetEditorMod, resetEditorAttunement, toggleBit, randomizeBits, undo, redo, selectLayersUIToggled, selectDisplaySettingsToggled, toggleLayersUI, toggleDisplaySettings, checkEditorMatchesSelectedItem, toggleColorAnimationPause, toggleDepthAnimationPause, toggleSpinAnimationPause } from '@/store/slices/editorSlice';
+import { updateEditorState, updateEditorSeed, updateEditorMod, updateHasEditorChanges, resetEditorState, resetEditorMod, resetEditorAttunement, toggleBit, randomizeBits, undo, redo, selectLayersUIToggled, selectDisplaySettingsToggled, toggleLayersUI, toggleDisplaySettingsUI, checkEditorMatchesSelectedItem, toggleDepthAnimationPause, toggleSpinAnimationPause, overrideEditorAttunement, setUrlParams } from '@/store/slices/editorSlice';
 import { initializeQueue, getSetQueueItems, setSelectedIndex, updateQueueItem } from '@/store/slices/queueSlice';
 import { setShowInscribeModal } from '@/store/slices/modalSlice';
 import { selectElementContents, clearSelection, hideMouseCursor } from '@/lib/utils';
-import { selectModValues, selectDisplaySettings } from '@/store/slices/editorSlice';
+import { selectModValues } from '@/store/slices/editorSlice';
 import { applyModValueToElements, resetLayers } from '@/lib/utils/artwork/updateSVGWithMod';
 import { attunementNames, updateThemeColor, calculateMostFrequentNumeral } from '@/lib/utils/artwork/helpers';
-
-
-interface DiagnosticValues {
-  seed: {
-    svg: string;
-    editor: string;
-    new: string;
-    initial: string;
-  };
-  mod: {
-    svg: string;
-    editor: string;
-    new: string;
-    initial: string;
-  };
-  attunement: {
-    svg: string;
-    editor: string;
-    new: string;
-    initial: string;
-  };
-}
 
 
 
@@ -48,13 +29,15 @@ interface DiagnosticValues {
 
 export default function Home() {
   const dispatch = useAppDispatch();
-
+  const urlSeed = useAppSelector(state => state.seed.urlSeed);
+  const urlMod = useAppSelector(state => state.seed.urlMod);
+  const urlAttunement = useAppSelector(state => state.seed.urlAttunement);
 
   // REDUX STATE ------------------------------------
 
   const {
     seed, bitsArray, modNumber, attunementNumber,
-    editorSeed, editorMod, editorAttunement, hasEditorChanges
+    editorSeed, editorMod, editorAttunement, hasEditorChanges, isAttunementOverridden
   } = useAppSelector((state: RootState) => state.seed);
   const { items: queueItems, selectedIndex: selectedQueueIndex} = useAppSelector((state: RootState) => state.queue);
   const showInscribeModal = useAppSelector((state) => state.modal.showInscribeModal);
@@ -63,6 +46,10 @@ export default function Home() {
   const layersUIToggled = useSelector(selectLayersUIToggled);
   const displaySettingsToggled = useSelector(selectDisplaySettingsToggled);
   const modValues = useAppSelector(selectModValues);
+  
+  const isOTC = useAppSelector(selectOTCMode);
+  const searchParams = useSearchParams();
+  const claimId = searchParams.get('claim');
   
 
 
@@ -73,8 +60,6 @@ export default function Home() {
   const editorRef = useRef<HTMLDivElement>(null);
   const svgOverlayRef = useRef<HTMLDivElement>(null);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-
 
   // CHECKS -----------------------------------------
 
@@ -88,8 +73,6 @@ export default function Home() {
     if (selectedQueueIndex === null || selectedQueueIndex >= queueItems.length) return false;
     return queueItems[selectedQueueIndex].locked;
   }, [selectedQueueIndex, queueItems]);
-
-  const calculatedAttunement = calculateMostFrequentNumeral(BigInt(editorSeed));
 
 
   // CALLBACKS --------------------------------------
@@ -132,6 +115,7 @@ export default function Home() {
       }
       if (parts.length > 2 && /^\d+$/.test(parts[2])) {
         newAttunement = parseInt(parts[2]);
+        dispatch(overrideEditorAttunement(newAttunement));
       }
     }
 
@@ -145,9 +129,14 @@ export default function Home() {
         dispatch(updateEditorState({ seed: newSeed, mod: newMod, attunement: newAttunement, updateChanges: true }));
       }
     } else {
-      dispatch(updateEditorState({ seed: newSeed, mod: newMod, attunement: newAttunement, updateChanges: false }));
+      dispatch(updateEditorSeed({ seed: newSeed, updateChanges: false }));
+      dispatch(updateEditorMod({ mod: newMod, updateChanges: false }));
+      if (parts.length > 2) {
+        dispatch(overrideEditorAttunement(newAttunement));
+      }
     }
   }, [dispatch, isSelectedItemLocked, queueItems, selectedQueueIndex, editorMod, editorAttunement]);
+
 
 
   // Reset the Editor's seed number
@@ -155,20 +144,6 @@ export default function Home() {
     if (isSelectedItemLocked()) return;
     dispatch(resetEditorState());
   }, [dispatch]);
-//    let seedToResetTo: string;
-//    if (selectedQueueIndex === null) {
-//      seedToResetTo = '0';
-//      dispatch(resetEditorSeed(seedToResetTo));
-//    } else {
-//      const selectedItem = queueItems[selectedQueueIndex];
-//      seedToResetTo = selectedItem.seed;
-//      // Reset the seed, confirm it matches the selected queue item
-//      dispatch(resetEditorSeed(seedToResetTo));
-//      dispatch(checkEditorMatchesSelectedItem(selectedItem));
-//    }
-//  }, [dispatch, selectedQueueIndex, queueItems, isSelectedItemLocked]);
-
-  // Reset the Editor's mod number
   const handleResetEditorMod = useCallback(() => {
     if (isSelectedItemLocked()) return;
     dispatch(resetEditorMod());
@@ -189,16 +164,8 @@ export default function Home() {
 
   const handleResetEditorAttunement = useCallback(() => {
     if (isSelectedItemLocked()) return;
-    
-    let attunementToResetTo: number;
-    if (selectedQueueIndex === null) {
-      attunementToResetTo = 0;
-    } else {
-      const selectedItem = queueItems[selectedQueueIndex];
-      attunementToResetTo = selectedItem.attunementNumber || 0;
-    }
-    dispatch(resetEditorAttunement(attunementToResetTo));
-  }, [dispatch, selectedQueueIndex, queueItems, isSelectedItemLocked]);
+    dispatch(resetEditorAttunement());
+  }, [dispatch, isSelectedItemLocked]);
 
   // Randomize the Editor's seed number
   const handleRandomizeBits = () => {
@@ -264,6 +231,7 @@ export default function Home() {
 
   const togglePlay = useCallback(() => {
     dispatch(toggleSpinAnimationPause());
+    dispatch(toggleDepthAnimationPause());
   }, []);
 
   // Queue logic ---------------------------------
@@ -282,7 +250,7 @@ export default function Home() {
       }));
       dispatch(updateHasEditorChanges(false));
       dispatch(toggleLayersUI(false));
-      dispatch(toggleDisplaySettings(false));
+      dispatch(toggleDisplaySettingsUI(false));
       
       // Update the editor state to reflect the new queue item
       dispatch(updateEditorState({
@@ -329,7 +297,7 @@ export default function Home() {
       if (!editorElement.contains(event.target as Node)) {
         setIsArtworkFocused(false);
         dispatch(toggleLayersUI(false));
-        dispatch(toggleDisplaySettings(false));
+        dispatch(toggleDisplaySettingsUI(false));
       }
     };
 
@@ -341,7 +309,7 @@ export default function Home() {
   useEffect(() => {
     const handleDoubleClickOutside = (event: MouseEvent) => {
       const editorWrapper = document.querySelector('.editor-inner');
-      const SeedDetails = document.querySelector('.seed-details');
+      const Details = document.querySelector('.seed-details');
       if (editorWrapper && (!editorWrapper.contains(event.target as Node) || event.target === editorWrapper)) {
         dispatch(setSelectedIndex(null));
         dispatch(resetEditorState());
@@ -369,7 +337,7 @@ export default function Home() {
   useEffect(() => {
     const selectedItem = queueItems[selectedQueueIndex];
     if (editorSeed === '0' || selectedQueueIndex !== null && selectedItem.newSeed === '0') {
-      dispatch(toggleDisplaySettings(false));
+      dispatch(toggleDisplaySettingsUI(false));
     }
   }, [queueItems, selectedQueueIndex, seed, modNumber, editorSeed, editorMod]);
 
@@ -379,8 +347,6 @@ export default function Home() {
       const selectedItem = queueItems[selectedQueueIndex];
       if (!hasEditorChanges) {
         
-        
-
         const newSeed = selectedItem.newSeed || selectedItem.seed || '0';
         const newMod = selectedItem.newMod || selectedItem.modNumber || "000000000000000";
         const calculatedAttunement = calculateMostFrequentNumeral(BigInt(newSeed));
@@ -412,29 +378,30 @@ export default function Home() {
   const memoizedResetLayers = useCallback(resetLayers, []);
 
   useEffect(() => {
-    const artwork = document.querySelector('.seedartwork') as SVGSVGElement;
-    if (artwork) {
-      memoizedResetLayers(artwork);
+  const artwork = document.querySelector('.seedartwork') as SVGSVGElement;
+  if (artwork) {
+    memoizedResetLayers(artwork);
 
-      // Update attunement class
-      attunementNames.forEach(name => {
-        artwork.classList.remove(name);
-      });
-      if (editorAttunement >= 0 && editorAttunement < attunementNames.length) {
-        artwork.classList.add(attunementNames[editorAttunement]);
-        updateThemeColor(attunementNames[editorAttunement]);
-      }
-
-      const layers = document.querySelectorAll('.seedartwork,.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline');
-      memoizedApplyModValueToElements(layers, modValues.color, 'color');
-  
-      const spinTargets = artwork.querySelectorAll('.lr.on');
-      memoizedApplyModValueToElements(spinTargets, modValues.spin, 'spin');
-  
-      const depthTargets = artwork.querySelectorAll('.lr.on .fx');
-      memoizedApplyModValueToElements(depthTargets, modValues.depth, 'depth');
+    // Update attunement class
+    attunementNames.forEach(name => {
+      artwork.classList.remove(name);
+    });
+    if (editorAttunement >= 0 && editorAttunement < attunementNames.length) {
+      artwork.classList.add(attunementNames[editorAttunement]);
+      updateThemeColor(attunementNames[editorAttunement]);
     }
-  }, [modValues, memoizedApplyModValueToElements, editorMod, editorAttunement]);
+
+    const layers = document.querySelectorAll('.seedartwork,.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline');
+    memoizedApplyModValueToElements(layers, modValues.color, 'color');
+
+    const spinTargets = artwork.querySelectorAll('.lr.on');
+    memoizedApplyModValueToElements(spinTargets, modValues.spin, 'spin');
+
+    const depthTargets = artwork.querySelectorAll('.lr.on .fx');
+    memoizedApplyModValueToElements(depthTargets, modValues.depth, 'depth');
+
+    }
+  }, [modValues, memoizedApplyModValueToElements, editorMod, editorAttunement, selectedQueueIndex]);
 
   // Keyboard shortcuts for Undo/Redo
   useEffect(() => {
@@ -454,7 +421,7 @@ export default function Home() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'r' || event.key === 'R') {
+      if (event.key === 'r' && !event.ctrlKey || event.key === 'R'  && !event.ctrlKey) {
         event.preventDefault();
         handleRandomizeBits();
       }
@@ -470,7 +437,7 @@ export default function Home() {
       dispatch(setSelectedIndex(null));
       dispatch(resetEditorState());
       dispatch(toggleLayersUI(false));
-      dispatch(toggleDisplaySettings(false));
+      dispatch(toggleDisplaySettingsUI(false));
     } else if (walletConnected) {
       dispatch(initializeQueue([]));
       dispatch(setSelectedIndex(null));
@@ -495,78 +462,105 @@ export default function Home() {
 
   // Hide cursor after inactivity
   useEffect(() => {
-    const editorElement = editorRef.current;
-    if (editorElement) {
-      const cleanup = hideMouseCursor(editorElement);
+    const sleeptarget = document.querySelector('.body');
+    if (sleeptarget) {
+      const cleanup = hideMouseCursor(sleeptarget);
       return cleanup;
     }
   }, []);
 
 
+  const [isArtworkReady, setIsArtworkReady] = useState(false);
+  const [urlParamsProcessed, setUrlParamsProcessed] = useState(false);
 
+  useEffect(() => {
+    const checkArtworkReady = () => {
+      const artwork = document.querySelector('.seedartwork');
+      if (artwork) {
+        setIsArtworkReady(true);
+      } else {
+        setTimeout(checkArtworkReady, 100); // Check every 100ms
+      }
+    };
+    checkArtworkReady();
+  }, []);
 
-  //=======================================================
-  //================== DIAGNOSTICS ========================
-  //=======================================================
+  useEffect(() => {
+    if (!isArtworkReady) return;
+  
+    const params = new URLSearchParams(window.location.search).get('seed');
+    console.log('URL params:', params); // Log the raw params
+  
+    if (params) {
+      const [seedAndMod, attunement] = params.split(':');
+      const [seed, mod] = seedAndMod.includes('.') ? seedAndMod.split('.') : [seedAndMod, ''];
+      
+      console.log('Parsed URL params:', { seed, mod, attunement }); // Log parsed params
+  
+      dispatch(setUrlParams({
+        seed: seed || '',
+        mod: mod || '',
+        attunement: attunement || ''
+      }));
+  
+      console.log('Dispatching updateEditorState with:', {
+        seed: seed || '0',
+        mod: mod || '000000000000000',
+        attunement: parseInt(attunement) || 0,
+      });
+  
+      dispatch(updateEditorState({
+        seed: seed || '0',
+        mod: mod || '000000000000000',
+        attunement: parseInt(attunement) || 0,
+      }));
+    }
+  }, [isArtworkReady, dispatch]);
 
-  const [diagnosticValues, setDiagnosticValues] = useState<DiagnosticValues>({
-    seed: { svg: '', editor: '', new: '', initial: '' },
-    mod: { svg: '', editor: '', new: '', initial: '' },
-    attunement: { svg: '', editor: '', new: '', initial: '' },
-  });
-
-  const diagnosticWalletConnected = useSelector((state: RootState) => state.wallet.connected);
-  const editorState = useSelector((state: RootState) => state.seed);
-  console.log('Current editorState:', editorState);
+  const updateBrowserURL = (seed: string, mod: string, attunement: number, isAttunementOverridden: boolean) => {
+    let params = seed;
+  
+    if (mod !== "000000000000000") {
+      params += `.${mod}`; // Add the dot here
+    }
+  
+    const defaultAttunement = calculateMostFrequentNumeral(BigInt(seed));
+    const shouldIncludeAttunement = isAttunementOverridden || (attunement !== defaultAttunement && attunement !== 0);
+  
+    if (shouldIncludeAttunement) {
+      params += `:${attunement}`;
+    }
+  
+    const newUrl = `${window.location.pathname}?seed=${params}`;
+    history.replaceState(null, '', newUrl);
+  };
+  const shouldUpdateURL = useAppSelector(state => state.seed.shouldUpdateURL);
+  useEffect(() => {
+      updateBrowserURL(
+        editorSeed, 
+        editorMod || "000000000000000", 
+        editorAttunement || 0, 
+        isAttunementOverridden
+      );
+    
+  }, [shouldUpdateURL, editorSeed, editorMod, editorAttunement, isAttunementOverridden]);
 
   // Ref for the SVG element
   const artRef = useRef<SVGSVGElement | null>(null);
+  const editorState = useSelector((state: RootState) => state.seed);
 
-  // Effect to update the diagnostic display
   useEffect(() => {
-    if (!diagnosticWalletConnected) return;
-
-    const updateDiagnostic = () => {
-      const svg = artRef.current;
-      
-      setDiagnosticValues({
-        seed: {
-          svg: svg?.getAttribute('data-seed') || '',
-          editor: editorState.editorSeed || '',
-          new: editorState.newSeed || '',
-          initial: editorState.seed || '',
-        },
-        mod: {
-          svg: svg?.getAttribute('data-mod') || '',
-          editor: editorState.editorMod || '',
-          new: editorState.newMod || '',
-          initial: editorState.modNumber || '',
-        },
-        attunement: {
-          svg: svg?.getAttribute('data-attunement') || '',
-          editor: editorState.editorAttunement?.toString() || '',
-          new: editorState.newAttunement?.toString() || '',
-          initial: editorState.attunementNumber?.toString() || '',
-        },
-      });
-    };
-
-    // Run the update immediately
-    updateDiagnostic();
-
-    // Set up a MutationObserver to watch for changes in the SVG attributes
-    const observer = new MutationObserver(updateDiagnostic);
-    if (artRef.current) {
-      observer.observe(artRef.current, { attributes: true, attributeFilter: ['data-seed', 'data-mod', 'data-attunement'] });
+    if (claimId && isOTC) {
+      // Fetch OTC inscription data using the claimId
+      // API CALL GOES HERE
+      // For now, seting a dummy seed
+      dispatch(updateEditorState({
+        seed: '12345',
+        mod: '000000000000000',
+        attunement: 0,
+      }));
     }
-
-    // Clean up the observer when the component unmounts or wallet disconnects
-    return () => observer.disconnect();
-  }, [diagnosticWalletConnected, editorState, artRef]);
-
-  //=======================================================
-  //================== DIAGNOSTICS ========================
-  //=======================================================
+  }, [claimId, isOTC, dispatch]);
 
 
 
@@ -575,28 +569,7 @@ export default function Home() {
 
   return (
     <>
-      <div className="diagnostic">
-        <ul>
-          <li><span className="diagnostic-seed">SEED</span>
-            svg: <span>{diagnosticValues.seed.svg || 'N/A'}</span> | 
-            editor: <span>{diagnosticValues.seed.editor || 'N/A'}</span> | 
-            new: <span>{diagnosticValues.seed.new || 'N/A'}</span> | 
-            initial: <span>{diagnosticValues.seed.initial || 'N/A'}</span>
-          </li>
-          <li><span className="diagnostic-mod">MOD</span>
-            svg: <span>{diagnosticValues.mod.svg || 'N/A'}</span> | 
-            editor: <span>{diagnosticValues.mod.editor || 'N/A'}</span> | 
-            new: <span>{diagnosticValues.mod.new || 'N/A'}</span> | 
-            initial: <span>{diagnosticValues.mod.initial || 'N/A'}</span>
-          </li>
-          <li><span className="diagnostic-attunement">ATTUNEMENT</span>
-            svg: <span>{diagnosticValues.attunement.svg || 'N/A'}</span> | 
-            editor: <span>{diagnosticValues.attunement.editor || 'N/A'}</span> | 
-            new: <span>{diagnosticValues.attunement.new || 'N/A'}</span> | 
-            initial: <span>{diagnosticValues.attunement.initial || 'N/A'}</span>
-          </li>
-        </ul>
-      </div>
+      <DiagnosticsPanel/>
       <div className="editor">
         <div className="editor-inner" ref={editorRef}>
           <div className="seed-indicator">
@@ -650,7 +623,7 @@ export default function Home() {
                   onClick={() => {
                     if (!isSelectedItemLocked()) {
                       dispatch(toggleLayersUI());
-                      dispatch(toggleDisplaySettings(false));
+                      dispatch(toggleDisplaySettingsUI(false));
                     }
                   }}
                 >Lr</a>
@@ -662,10 +635,10 @@ export default function Home() {
                   onClick={() => {
                     if (editorSeed !== '0' && !isSelectedItemLocked()) {
                       dispatch(toggleLayersUI(false));
-                      dispatch(toggleDisplaySettings());
+                      dispatch(toggleDisplaySettingsUI());
                     }
                   }}
-                >+</a>
+                >+<span></span></a>
               </div>
               <div className={`layer-grid-wrap ${layersUIToggled ? "show" : ""}`}>
                 <BitsArray bitsArray={bitsArray} toggleBit={handleToggleBit} />
@@ -708,13 +681,17 @@ export default function Home() {
                         attunement={editorAttunement.toString()}
                         isPlaying={isPlaying}
                         editorSeed={editorSeed}
-                        editorAttunement={calculatedAttunement}
+                        editorAttunement={editorAttunement}
+                        urlParamsProcessed={urlParamsProcessed}
+                        urlSeed={urlSeed}
+                        urlMod={urlMod}
+                        urlAttunement={urlAttunement}
                       />
                     )}
                     <div class="rgblens"></div>
                   </div>
                   <div className="seed-overlay-container">
-                    <SeedDetails
+                    <Details
                       isFocused={isArtworkFocused}
                       showOverlay={isOverlayToggled}
                       editorSeed={editorSeed ?? ''}
@@ -773,7 +750,7 @@ export default function Home() {
             </div>
             <div className={`app-pane right ${(layersUIToggled || displaySettingsToggled) ? 'deactivated' : ''}`}>
               <Queue />
-              <SeedDetails
+              <Details
                 isFocused={isArtworkFocused}
                 showOverlay={isOverlayToggled}
                 editorSeed={editorSeed ?? ''}
@@ -787,11 +764,11 @@ export default function Home() {
           className={`reset-editor ${layersUIToggled || displaySettingsToggled ? '' : 'hidden'}`}
           onClick={() => {
             dispatch(toggleLayersUI(false));
-            dispatch(toggleDisplaySettings(false));
+            dispatch(toggleDisplaySettingsUI(false));
           }}
         ></div>
       </div>
-      <InscribeModal show={showInscribeModal} queueItems={setQueueItems} />
+      <InscribeModal show={showInscribeModal} queueItems={setQueueItems} isOTC={isOTC} />
     </>
   );
 }

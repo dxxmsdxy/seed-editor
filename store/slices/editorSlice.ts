@@ -7,6 +7,10 @@ import { RootState } from '@/store';
 //================================================//
 
 interface EditorState {
+  urlSeed: string | null;
+  urlMod: string | null;
+  urlAttunement: string | null;
+  shouldUpdateURL: boolean,
   seed: string;
   bitsArray: boolean[];
   modNumber: string;
@@ -31,7 +35,7 @@ interface EditorState {
   displaySettingsToggled: boolean;
   isOverlayToggled: boolean;
   activeSelection: boolean;
-  isActive: { [key: string]: boolean };
+  isActive: { [ key: string ]: boolean };
   editorHistory: {
     past: Array<{
       editorSeed: string;
@@ -62,10 +66,14 @@ interface EditorState {
 // INITIALIZE STATE ---------------------------------
 
 const initialState: EditorState = {
+  urlSeed: null,
+  urlMod: null,
+  urlAttunement: null,
   seed: '0',
   bitsArray: Array(100).fill(false),
   modNumber: "000000000000000",
   attunementNumber: 0,
+  shouldUpdateURL: false,
   newSeed: null,
   newMod: null,
   newAttunement: null,
@@ -112,10 +120,11 @@ const editorSlice = createSlice({
   reducers: {
 
     // Update editor state with specified values
-    updateEditorState: (state, action: PayloadAction<{ seed: string; mod: string; attunement: number }>) => {
+    updateEditorState: (state, action: PayloadAction<{ seed: string; mod: string; attunement: number; updateURL?: boolean }>) => {
       const sanitizedSeed = sanitizeSeed(action.payload.seed);
       const sanitizedMod = sanitizeMod(action.payload.mod);
       const sanitizedAttunement = sanitizeAttunement(action.payload.attunement);
+      const { seed, mod, attunement, updateURL = true } = action.payload;
       const newState = {
         editorSeed: sanitizedSeed,
         editorMod: sanitizedMod,
@@ -123,6 +132,7 @@ const editorSlice = createSlice({
         bitsArray: seedToBits(BigInt(sanitizedSeed)),
         hasEditorChanges: false,
         modValues: parseModValues(sanitizedMod),
+        shouldUpdateURL: updateURL,
       };
       pushToHistory(state, newState);
       Object.assign(state, newState);
@@ -142,13 +152,16 @@ const editorSlice = createSlice({
     // Reset the editor to initial state
     resetEditorState: (state, action: PayloadAction<{ selectedItem?: QueueItem | null } | undefined>) => {
       const selectedItem = action.payload?.selectedItem;
+      const newSeed = selectedItem ? selectedItem.seed : '0';
       const newState = {
         editorSeed: selectedItem ? selectedItem.seed : '0',
         editorMod: selectedItem ? selectedItem.modNumber || "000000000000000" : "000000000000000",
         editorAttunement: selectedItem ? selectedItem.attunementNumber || 0 : 0,
+        bitsArray: seedToBits(BigInt(newSeed)),
         hasEditorChanges: false,
         actualTintPercentValue: 100,
         isOverlayToggled: false,
+        isAttunementOverridden: false, // Reset the override flag
         // Preserve focus state
         isArtworkFocused: state.isArtworkFocused,
       };
@@ -158,7 +171,6 @@ const editorSlice = createSlice({
         pushToHistory(state, newState, true);
       }
       
-      state.isAttunementOverridden = false;
       Object.assign(state, newState);
       
       if (selectedItem) {
@@ -176,14 +188,17 @@ const editorSlice = createSlice({
     // Update editor seed number
     updateEditorSeed: (state, action: PayloadAction<{ seed: string; updateChanges?: boolean }>) => {
       const sanitizedSeed = sanitizeSeed(action.payload.seed);
-      const calculatedAttunement = calculateMostFrequentNumeral(BigInt(sanitizedSeed));
       const newState = {
         editorSeed: sanitizedSeed,
         bitsArray: seedToBits(BigInt(sanitizedSeed)),
-        editorAttunement: calculatedAttunement !== null ? calculatedAttunement : 0,
         hasEditorChanges: action.payload.updateChanges ?? state.hasEditorChanges,
-        isAttunementOverridden: false,
       };
+    
+      // Only update attunement if it's not overridden
+      if (!state.isAttunementOverridden) {
+        const calculatedAttunement = calculateMostFrequentNumeral(BigInt(sanitizedSeed));
+        newState.editorAttunement = calculatedAttunement !== null ? calculatedAttunement : 0;
+      }
     
       Object.assign(state, newState);
       pushToHistory(state, newState);
@@ -260,15 +275,23 @@ const editorSlice = createSlice({
     // Reset the Editor's attunement number
     resetEditorAttunement: (state) => {
       const calculatedAttunement = calculateMostFrequentNumeral(BigInt(state.editorSeed));
-      state.editorAttunement = calculatedAttunement !== null ? calculatedAttunement : 0;
-      state.isAttunementOverridden = false;
+      const defaultAttunement = calculatedAttunement !== null ? calculatedAttunement : 0;
+    
+      if (state.editorAttunement === defaultAttunement) {
+        // If the current attunement is already the default, toggle the override
+        state.isAttunementOverridden = !state.isAttunementOverridden;
+      } else {
+        // Otherwise, reset to the default attunement and remove the override
+        state.editorAttunement = defaultAttunement;
+        state.isAttunementOverridden = false;
+      }
+    
       pushToHistory(state, {
         editorSeed: state.editorSeed,
         editorMod: state.editorMod,
         editorAttunement: state.editorAttunement,
         bitsArray: state.bitsArray
       }, true);
-      state.isAttunementOverridden = false;
     },
 
     overrideEditorAttunement: (state, action: PayloadAction<number>) => {
@@ -292,15 +315,19 @@ const editorSlice = createSlice({
         bitArray[shuffledIndices[i]] = true;
       }
       
+      const newSeed = BigInt('0b' + bitArray.map(b => b ? '1' : '0').join('')).toString();
+      
       const newState = {
         bitsArray: bitArray,
-        editorSeed: BigInt('0b' + bitArray.map(b => b ? '1' : '0').join('')).toString(),
+        editorSeed: newSeed,
         hasEditorChanges: true,
       };
       
-      const calculatedAttunement = calculateMostFrequentNumeral(BigInt(state.editorSeed));
-      newState.editorAttunement = calculatedAttunement !== null ? calculatedAttunement : 0;
-      state.isAttunementOverridden = false;
+      // Only update attunement if it's not overridden
+      if (!state.isAttunementOverridden) {
+        const calculatedAttunement = calculateMostFrequentNumeral(BigInt(newSeed));
+        newState.editorAttunement = calculatedAttunement !== null ? calculatedAttunement : 0;
+      }
 
       pushToHistory(state, newState);
       Object.assign(state, newState);
@@ -386,7 +413,7 @@ const editorSlice = createSlice({
     },
 
     // Show/hide display settings UI
-    toggleDisplaySettings: (state, action: PayloadAction<boolean | undefined>) => {
+    toggleDisplaySettingsUI: (state, action: PayloadAction<boolean | undefined>) => {
       if (action.payload !== undefined) {
         state.displaySettingsToggled = action.payload;
       } else {
@@ -426,7 +453,8 @@ const editorSlice = createSlice({
       state.isDepthAnimationPaused = !state.isDepthAnimationPaused;
     },
     toggleSpinAnimationPause: (state) => {
-      state.isSpinAnimationPaused = !state.isSpinAnimationPaused;
+      state.isSpinAnimationPaused = !state.
+      isSpinAnimationPaused;
     },
 
     toggleOverlay: (state, action: PayloadAction<boolean | undefined>) => {
@@ -476,6 +504,19 @@ const editorSlice = createSlice({
         }
       }
     },
+
+    setUrlParams: (state, action: PayloadAction<{ seed: string; mod: string; attunement: string }>) => {
+      state.urlSeed = action.payload.seed;
+      state.urlMod = action.payload.mod;
+      state.urlAttunement = action.payload.attunement;
+    },
+
+    clearUrlParams: (state) => {
+      state.urlSeed = null;
+      state.urlMod = null;
+      state.urlAttunement = null;
+    },
+
   }
 });
 
@@ -621,6 +662,8 @@ export const {
   resetEditorAttunement,
   undo,
   redo,
+  setUrlParams,
+  clearUrlParams,
   toggleBit,
   randomizeBits,
   setActiveSelection,
@@ -630,7 +673,7 @@ export const {
   incrementEditorAttunementNumber,
   decrementEditorAttunementNumber,
   toggleLayersUI,
-  toggleDisplaySettings,
+  toggleDisplaySettingsUI,
   setSliderActive,
   checkEditorMatchesSelectedItem,
   toggleColorAnimationPause,

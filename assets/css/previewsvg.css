@@ -12,8 +12,7 @@
 .seedartwork .square{display:none}
 .seedartwork .hid{opacity:0;stroke:none;fill:#00000000}
 .seedartwork .wrap{transform:translate3d(0,0,0)}
-.seedartwork .art g.on{transition:opacity 0.6s ease-in-out}
-.seedartwork .wrap,.seedartwork .bkg,.seedartwork .backdrop,.seedartwork .outline,.seedartwork text,.seedartwork .art g .fx,.seedartwork .art g.on,.seedartwork .art #ornate-frame{transition:opacity 2s ease-in-out 0.7s,filter 1s ease-in-out,mix-blend-mode 1s ease-in-out,fill 1s ease-in-out,stroke 1s ease-in-out}
+.seedartwork .art g.on{}
 .seedartwork.reveal .frame{transform:rotate(0deg)scaleX(1)}
 .seedartwork .art > g{display:none;pointer-events:none;opacity:0}
 .seedartwork .art > g.on{display:block;opacity:1;pointer-events:auto}
@@ -42,7 +41,7 @@
 .seedartwork.prime #ornate-frame{opacity:1;pointer-events:auto}
 
 @container(max-aspect-ratio:13.4/18){.seedartwork .wrap{transform:scale(0.92);background:#fff}.seedartwork .backdrop{transform:scale(1,2)}}
-@container(max-height:720px){.seedartwork.reveal:has(g.on) .art g.on .fx *{animation:none;filter:blur(0.3px)}}
+/*@container(max-height:720px){.seedartwork.reveal:has(g.on) .art g.on .fx *{animation:none;filter:blur(0.3px)}}*/
 @container(min-aspect-ratio:13.4/18){.seedartwork .wrap{transform:translate3d(0,0,0)}.seedartwork{background:#fff}.seedartwork .backdrop{display:none}.seedartwork .bkg{transform:scale(1.02)}}
 @container(min-aspect-ratio:13.6/18){.seedartwork .wrap{transform:scale(0.91)}.seedartwork{background:#efefef}.seedartwork.js .backdrop{display:block}.seedartwork .bkg{transform:scale(1)}}
 @container(min-aspect-ratio:16.1/9){
@@ -69,9 +68,8 @@
 .seedartwork.tapleft.flip .frame{transform:rotate(-90deg)scaleX(-1);transform-origin:50%}
 .seedartwork.tapright.flip .frame{transform:rotate(90deg)scaleX(-1);transform-origin:50%}
 /*.seedartwork .prime .art{transform-origin:50%;transform:rotate(180deg)}*/
-.seedartwork.invert .wrap,.seedartwork.invert .backdrop{filter:hue-rotate(270deg)saturate(1)invert(0)}
-.seedartwork.flip .wrap,.seedartwork.flip .backdrop{filter:hue-rotate(180deg)saturate(1)invert(1)}
-.seedartwork.invert.flip .wrap,.seedartwork.invert.flip .backdrop{filter:hue-rotate(270deg)saturate(1)invert(1)}
+/*.seedartwork.invert .wrap,.seedartwork.invert .backdrop{filter:hue-rotate(270deg)saturate(1)invert(0)}*/
+.seedartwork.invert .wrap,.seedartwork.invert .backdrop{filter:hue-rotate(180deg)saturate(1)invert(1)}
 .seedartwork.reveal:has(g.on) .art g.on .fx *{animation:pulseCycle 6.75s linear 0s infinite forwards}
 .seedartwork:has(g.on){animation:colorCycle 3.1s linear infinite forwards 0s}
 .seedartwork:has(g.on){animation:colorCycleClone 3.1s linear infinite forwards 0s}
@@ -87,9 +85,9 @@
 .seedartwork.creation .bkg,.seedartwork.creation .art,.seedartwork.creation g.pattern path,.seedartwork.creation g.orientation path{fill:#ffffff}
 .seedartwork.creation.reveal:has(g.on) .bkg{fill:#fffbf6}
 .seedartwork.creation.reveal:has(g.on) #ornate-frame{fill:#fffbf6;stroke:#1d3254}
-.seedartwork.creation.invert .wrap,.seedartwork.creation.invert .backdrop{filter:hue-rotate(270deg)saturate(1)invert(0)}
+/* .seedartwork.creation.invert .wrap,.seedartwork.creation.invert .backdrop{filter:hue-rotate(270deg)saturate(1)invert(0)}
 .seedartwork.creation.flip .wrap,.seedartwork.creation.flip .backdrop{filter:hue-rotate(180deg)saturate(3)invert(0.95)}
-.seedartwork.creation.invert.flip .wrap,.seedartwork.creation.invert.flip .backdrop{filter:hue-rotate(90deg)saturate(0.85)invert(0.92)}
+.seedartwork.creation.invert.flip .wrap,.seedartwork.creation.invert.flip .backdrop{filter:hue-rotate(90deg)saturate(0.85)invert(0.92)} */
 .seedartwork.creation g.pattern path,.seedartwork.creation g.orientation path{fill:#FFF;stroke:#000}
 .seedartwork.creation g.pattern path.on{fill:#000}
 .seedartwork.creation.reveal:has(g.on) .art g.on .fx{fill:#bfe3e0}
@@ -107,12 +105,12 @@
 .seedartwork.destruction{background:#832130}
 .seedartwork.destruction #ornate-frame{fill:#ff0040;stroke:#000}
 .seedartwork.destruction.reveal:has(g.on) #ornate-frame{fill:#ff1953;stroke:#3b1235}
-.seedartwork.destruction.invert .wrap,.seedartwork.destruction.invert .backdrop{filter:hue-rotate(255deg)saturate(0.85)invert(0)}
-.seedartwork.destruction.flip:not(.invert) .wrap{filter:hue-rotate(110deg)saturate(1)invert(1)}
+/* .seedartwork.destruction.invert .wrap,.seedartwork.destruction.invert .backdrop{filter:hue-rotate(255deg)saturate(0.85)invert(0)} */
+/*.seedartwork.destruction.flip:not(.invert) .wrap{filter:hue-rotate(110deg)saturate(1)invert(1)}
 .seedartwork.destruction.reveal.flip:has(g.on):not(.invert) .art g.on .fx{fill:#c11515}
 .seedartwork.destruction.reveal.flip:has(g.on):not(.invert) .art g.on:nth-child(3n of .on) .fx{stroke:#ffa2fd}
 .seedartwork.destruction.reveal.flip:has(g.on):not(.invert) .art g.on:nth-child(4n of .on) .fx{fill:#c14e85;stroke:#9f3d3d}
-.seedartwork.destruction.invert.flip .wrap,.seedartwork.destruction.invert.flip .backdrop{filter:hue-rotate(260deg)saturate(0.53)invert(1)}
+/*.seedartwork.destruction.invert.flip .wrap,.seedartwork.destruction.invert.flip .backdrop{filter:hue-rotate(260deg)saturate(0.53)invert(1)}*/
 .seedartwork.destruction .backdrop{fill:#832130}
 .seedartwork.destruction .bkg,.seedartwork.destruction .art,.seedartwork.destruction g.pattern path,.seedartwork.destruction g.orientation path{fill:#ff0040}
 .seedartwork.destruction .art,.seedartwork.destruction .outline,.seedartwork.destruction g.pattern path,.seedartwork.destruction g.orientation path{stroke:#000}
@@ -133,9 +131,9 @@
 .seedartwork.perception{background:#2c6d58}
 .seedartwork.perception #ornate-frame{fill:#168360;stroke:#FFF}
 .seedartwork.perception.reveal:has(g.on) #ornate-frame{fill:#13231a;stroke:#15ad42}
-.seedartwork.perception.invert .wrap,.seedartwork.perception.invert .backdrop{filter:hue-rotate(140deg)saturate(1)invert(0)}
+/* .seedartwork.perception.invert .wrap,.seedartwork.perception.invert .backdrop{filter:hue-rotate(140deg)saturate(1)invert(0)}
 .seedartwork.perception.flip .wrap,.seedartwork.perception.flip .backdrop{filter:hue-rotate(140deg)saturate(0.3)invert(1)}
-.seedartwork.perception.invert.flip .wrap,.seedartwork.perception.invert.flip .backdrop{filter:hue-rotate(244deg)saturate(0.63)invert(1)}
+.seedartwork.perception.invert.flip .wrap,.seedartwork.perception.invert.flip .backdrop{filter:hue-rotate(244deg)saturate(0.63)invert(1)} */
 .seedartwork.perception .backdrop{fill:#1d4d36}
 .seedartwork.perception .bkg,.seedartwork.perception .art,.seedartwork.perception g.pattern path,.seedartwork.perception g.orientation path{fill:#168360}
 .seedartwork.perception .art,.seedartwork.perception .outline,.seedartwork.perception g.pattern path,.seedartwork.perception g.orientation path{stroke:#fff}
@@ -158,8 +156,8 @@
 .seedartwork.protection{background:#2d34ff}
 .seedartwork.protection #ornate-frame{fill:#2205FF;stroke:#FFF}
 .seedartwork.protection.reveal:has(g.on) #ornate-frame{fill:#a2ebff;stroke:#1e0caa}
-.seedartwork.protection.invert .wrap,.seedartwork.protection.invert .backdrop{filter:hue-rotate(175deg)saturate(0.55)invert(0)}
-.seedartwork.protection.invert.flip .wrap,.seedartwork.protection.invert.flip .backdrop{filter:hue-rotate(270deg)saturate(0.65)invert(1)}
+/* .seedartwork.protection.invert .wrap,.seedartwork.protection.invert .backdrop{filter:hue-rotate(175deg)saturate(0.55)invert(0)}
+.seedartwork.protection.invert.flip .wrap,.seedartwork.protection.invert.flip .backdrop{filter:hue-rotate(270deg)saturate(0.65)invert(1)} */
 .seedartwork.protection .backdrop{fill:#332aff}
 .seedartwork.protection .bkg,.seedartwork.protection .art,.seedartwork.protection g.pattern path,.seedartwork.protection g.orientation path{fill:#2205FF}
 .seedartwork.protection .art,.seedartwork.protection .outline,.seedartwork.protection g.pattern path,.seedartwork.protection g.orientation path{stroke:#FFF}
@@ -185,9 +183,9 @@
 .seedartwork.passion{background:#c73dbb}
 .seedartwork.passion #ornate-frame{fill:#e13cd0;stroke:#FFF}
 .seedartwork.passion.reveal:has(g.on) #ornate-frame{fill:#6083df;stroke:#263da5}
-.seedartwork.passion.invert .wrap,.seedartwork.passion.invert .backdrop{filter:hue-rotate(300deg)saturate(0.75)invert(0)}
+/* .seedartwork.passion.invert .wrap,.seedartwork.passion.invert .backdrop{filter:hue-rotate(300deg)saturate(0.75)invert(0)}
 .seedartwork.passion.flip .wrap, .seedartwork.passion.flip .backdrop{filter:hue-rotate(166deg)saturate(1)invert(1)}
-.seedartwork.passion.invert.flip .wrap,.seedartwork.passion.invert.flip .backdrop{filter:hue-rotate(300deg)saturate(0.75)invert(1)}
+.seedartwork.passion.invert.flip .wrap,.seedartwork.passion.invert.flip .backdrop{filter:hue-rotate(300deg)saturate(0.75)invert(1)} */
 .seedartwork.passion .backdrop{fill:#c73dbb}
 .seedartwork.passion .bkg,.seedartwork.passion .art,.seedartwork.passion g.pattern path,.seedartwork.passion g.orientation path{fill:#e13cd0}
 .seedartwork.passion .art,.seedartwork.passion .outline,.seedartwork.passion g.pattern path,.seedartwork.passion g.orientation path{stroke:#FFF}
@@ -212,11 +210,11 @@
 .seedartwork.fortune{background:#e9cb4e}
 .seedartwork.fortune #ornate-frame{fill:#ffdc38;stroke:#000}
 .seedartwork.fortune.reveal:has(g.on) #ornate-frame{fill:#b17c21;stroke:#e9cf3f}
-.seedartwork.fortune.invert .wrap,.seedartwork.fortune.invert .backdrop{filter:hue-rotate(60deg)saturate(0.55)invert(0)}
+/* .seedartwork.fortune.invert .wrap,.seedartwork.fortune.invert .backdrop{filter:hue-rotate(60deg)saturate(0.55)invert(0)
 .seedartwork.fortune.flip .wrap, .seedartwork.fortune.flip .backdrop{filter:hue-rotate(181deg)saturate(1.8)invert(0.99)}
 .seedartwork.fortune.reveal.flip:not(.invert) .bkg{fill:#ad7d2a}
 .seedartwork.fortune.reveal.flip:has(g.on):not(.invert) .art g.on:nth-child(4n of .on) .fx{fill:#6b4d30}
-.seedartwork.fortune.invert.flip .wrap,.seedartwork.fortune.invert.flip .backdrop{filter:hue-rotate(60deg)saturate(0.25)invert(1)}
+/* .seedartwork.fortune.invert.flip .wrap,.seedartwork.fortune.invert.flip .backdrop{filter:hue-rotate(60deg)saturate(0.25)invert(1)} */
 .seedartwork.fortune .backdrop{fill:#e9cb4e}
 .seedartwork.fortune .bkg,.seedartwork.fortune .art,.seedartwork.fortune g.pattern path,.seedartwork.fortune g.orientation path{fill:#ffdc38}
 .seedartwork.fortune .art,.seedartwork.fortune .outline,.seedartwork.fortune g.pattern path,.seedartwork.fortune g.orientation path{stroke:#000}
@@ -244,8 +242,8 @@
 .seedartwork.wisdom{background:#31225b}
 .seedartwork.wisdom #ornate-frame{fill:#46258d;stroke:#FFF}
 .seedartwork.wisdom.reveal:has(g.on) #ornate-frame{fill:#332775;stroke:#6b87e7}
-.seedartwork.wisdom.invert .wrap,.seedartwork.wisdom.invert .backdrop{filter:hue-rotate(80deg)saturate(0.8)invert(0)}
-.seedartwork.wisdom.invert.flip .wrap,.seedartwork.wisdom.invert.flip .backdrop{filter:hue-rotate(100deg)saturate(0.3)invert(1)}
+/* .seedartwork.wisdom.invert .wrap,.seedartwork.wisdom.invert .backdrop{filter:hue-rotate(80deg)saturate(0.8)invert(0)}
+.seedartwork.wisdom.invert.flip .wrap,.seedartwork.wisdom.invert.flip .backdrop{filter:hue-rotate(100deg)saturate(0.3)invert(1)} */
 .seedartwork.wisdom .backdrop{fill:#31225b}
 .seedartwork.wisdom .bkg,.seedartwork.wisdom .art,.seedartwork.wisdom g.pattern path,.seedartwork.wisdom g.orientation path{fill:#46258d}
 .seedartwork.wisdom .art,.seedartwork.wisdom .outline,.seedartwork.wisdom g.pattern path,.seedartwork.wisdom g.orientation path{stroke:#FFFFFF}
@@ -272,8 +270,8 @@
 .seedartwork.transformation{background:#2692a1}
 .seedartwork.transformation #ornate-frame{fill:#2da7c5;stroke:#FFF}
 .seedartwork.transformation.reveal:has(g.on) #ornate-frame{fill:#FFF;stroke:#014746}
-.seedartwork.transformation.invert .wrap,.seedartwork.transformation.invert .backdrop{filter:hue-rotate(220deg)saturate(1)invert(0)}
-.seedartwork.transformation.invert.flip .wrap,.seedartwork.transformation.invert.flip .backdrop{filter:hue-rotate(270deg)saturate(1)invert(1)}
+/* .seedartwork.transformation.invert .wrap,.seedartwork.transformation.invert .backdrop{filter:hue-rotate(220deg)saturate(1)invert(0)}
+.seedartwork.transformation.invert.flip .wrap,.seedartwork.transformation.invert.flip .backdrop{filter:hue-rotate(270deg)saturate(1)invert(1)} */
 .seedartwork.transformation .backdrop{fill:#2692a1}
 .seedartwork.transformation .bkg,.seedartwork.transformation .art,.seedartwork.transformation g.pattern path,.seedartwork.transformation g.orientation path{fill:#2da7c5}
 .seedartwork.transformation .art,.seedartwork.transformation .outline,.seedartwork.transformation g.pattern path,.seedartwork.transformation g.orientation path{stroke:#FFFFFF}
@@ -300,9 +298,9 @@
 .seedartwork.resilience.reveal:has(g.on) #ornate-frame{fill:#d1d5f3;stroke:#78788b}
 .seedartwork.resilience .backdrop{fill:#909399}
 .seedartwork.resilience .bkg,.seedartwork.resilience .art,.seedartwork.resilience g.pattern path,.seedartwork.resilience g.orientation path{fill:#acafb7}
-.seedartwork.resilience.invert .wrap,.seedartwork.resilience.invert .backdrop{filter:hue-rotate(140deg)saturate(1)invert(0)}
+/* .seedartwork.resilience.invert .wrap,.seedartwork.resilience.invert .backdrop{filter:hue-rotate(140deg)saturate(1)invert(0)}
 .seedartwork.resilience.flip .wrap,.seedartwork.resilience.flip .backdrop{filter:hue-rotate(180deg)saturate(1)invert(0.9)}
-.seedartwork.resilience.invert.flip .wrap,.seedartwork.resilience.invert.flip .backdrop{filter:hue-rotate(-15deg)saturate(1.2)invert(0.9)}
+.seedartwork.resilience.invert.flip .wrap,.seedartwork.resilience.invert.flip .backdrop{filter:hue-rotate(-15deg)saturate(1.2)invert(0.9)} */
 .seedartwork.resilience .art,.seedartwork.resilience .outline,.seedartwork.resilience g.pattern path,.seedartwork.resilience g.orientation path{stroke:#000000}
 .seedartwork.resilience g.pattern path.on{fill:#000}
 .seedartwork.resilience text{fill:#000000;stroke:#FFFFFF00}
@@ -317,14 +315,14 @@
 .seedartwork.resilience.reveal g.pattern path.on{fill:#78788b}
 .seedartwork.resilience.reveal:has(g.on) #seednumber,.seedartwork.resilience.reveal:has(g.on) #layercount{fill:#78788b;filter:blur(0.5px)}
 .seedartwork.resilience.reveal:has(g.on) #signature path{stroke:#78788b}
-.seedartwork.resilience.reveal.flip:has(g.on) .art g.on:nth-last-child(3n of .on) .fx{fill:#4d5171}
+.seedartwork.resilience.reveal.invert:has(g.on) .art g.on:nth-last-child(3n of .on) .fx{fill:#4d5171}
 
 /* ETERNITY */
 .seedartwork.eternity{background:#121212}
 .seedartwork.eternity #ornate-frame{fill:#000;stroke:#fff}
 .seedartwork.eternity.reveal:has(g.on) #ornate-frame{fill:#140a26;stroke:#7a5ffb}
-.seedartwork.eternity.invert .wrap{filter:hue-rotate(270deg)saturate(1)invert(0)}
-.seedartwork.eternity.invert.flip .wrap,.seedartwork.eternity.invert.flip .backdrop{filter:hue-rotate(280deg)saturate(1)invert(0.9)}
+/* .seedartwork.eternity.invert .wrap{filter:hue-rotate(270deg)saturate(1)invert(0)}
+.seedartwork.eternity.invert.flip .wrap,.seedartwork.eternity.invert.flip .backdrop{filter:hue-rotate(280deg)saturate(1)invert(0.9)} */
 .seedartwork.eternity .backdrop{fill:#121212}
 .seedartwork.eternity .bkg,.seedartwork.eternity .art,.seedartwork.eternity g.pattern path,.seedartwork.eternity g.orientation path{fill:#000000}
 .seedartwork.eternity .art,.seedartwork.eternity .outline,.seedartwork.eternity g.pattern path,.seedartwork.eternity g.orientation path{stroke:#FFFFFF}
@@ -350,8 +348,8 @@
 .seedartwork.discovery{background:#c5baa8}
 .seedartwork.discovery #ornate-frame{fill:#e9dfc5;stroke:#593f2a}
 .seedartwork.discovery.reveal:has(g.on) #ornate-frame{fill:#d9c6a0;stroke:#85744e}
-.seedartwork.discovery.invert .wrap,.seedartwork.discovery.invert .backdrop{filter:hue-rotate(210deg)saturate(1)invert(0)}
-.seedartwork.discovery.invert.flip .wrap,.seedartwork.discovery.invert.flip .backdrop{filter:hue-rotate(210deg)saturate(1)invert(1)}
+/* .seedartwork.discovery.invert .wrap,.seedartwork.discovery.invert .backdrop{filter:hue-rotate(210deg)saturate(1)invert(0)}
+.seedartwork.discovery.invert.flip .wrap,.seedartwork.discovery.invert.flip .backdrop{filter:hue-rotate(210deg)saturate(1)invert(1)} */
 .seedartwork.discovery .backdrop{fill:#c5baa8}
 .seedartwork.discovery .bkg{fill:#e9dfc5}
 .seedartwork.discovery .art,.seedartwork.discovery g.pattern path{fill:#f3dc9f}
@@ -386,32 +384,32 @@
 @keyframes rotateClockwise{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 @keyframes rotateCounter{from{transform:rotate(360deg)}to{transform:rotate(0deg)}}
 .seedartwork.spin .art g.on{animation:rotateClockwise 300s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(odd of .on){animation:rotateClockwise 300s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(even of .on){animation:rotateCounter 300s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(3n of .on){animation:rotateCounter 150s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(3n-1 of .on){animation:rotateClockwise 200s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(4n of .on){animation:rotateClockwise 150s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(4n+1 of .on){animation:rotateCounter 200s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(5n of .on){animation:rotateClockwise 120s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(5n+6 of .on){animation:rotateClockwise 240s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(6n of .on){animation:rotateCounter 240s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(7n of .on){animation:rotateCounter 400s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(8n of .on){animation:rotateClockwise 100s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(8n-3 of .on){animation:rotateClockwise 120s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(9n of .on){animation:rotateCounter 100s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(10n of .on){animation:rotateClockwise 150s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(10n+1 of .on){animation:rotateCounter 240s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(11n of .on){animation:rotateClockwise 120s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(12n of .on){animation:rotateClockwise 240s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(12n-5 of .on){animation:rotateCounter 100s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(13n of .on){animation:rotateCounter 120s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(14n of .on){animation:rotateClockwise 200s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(18n of .on){animation:rotateCounter 75s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(18n-3 of .on){animation:rotateClockwise 100s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(19n of .on){animation:rotateClockwise 75s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(20n of .on){animation:rotateClockwise 400s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(10n+19 of .on){animation:rotateClockwise 600s linear infinite}
-.seedartwork.spin .art g.on:nth-last-child(10n-3 of .on){animation:rotateCounter 200s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(odd of .on){animation:rotateClockwise 600s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(even of .on){animation:rotateCounter 600s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(3n of .on){animation:rotateCounter 300s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(3n-1 of .on){animation:rotateClockwise 400s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(4n of .on){animation:rotateClockwise 300s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(4n+1 of .on){animation:rotateCounter 400s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(5n of .on){animation:rotateClockwise 240s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(5n+6 of .on){animation:rotateClockwise 480s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(6n of .on){animation:rotateCounter 480s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(7n of .on){animation:rotateCounter 800s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(8n of .on){animation:rotateClockwise 200s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(8n-3 of .on){animation:rotateClockwise 240s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(9n of .on){animation:rotateCounter 200s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(10n of .on){animation:rotateClockwise 300s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(10n+1 of .on){animation:rotateCounter 480s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(11n of .on){animation:rotateClockwise 240s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(12n of .on){animation:rotateClockwise 480s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(12n-5 of .on){animation:rotateCounter 200s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(13n of .on){animation:rotateCounter 240s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(14n of .on){animation:rotateClockwise 400s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(18n of .on){animation:rotateCounter 150s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(18n-3 of .on){animation:rotateClockwise 200s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(19n of .on){animation:rotateClockwise 150s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(20n of .on){animation:rotateClockwise 800s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(10n+19 of .on){animation:rotateClockwise 1200s linear infinite}
+.seedartwork.spin .art g.on:nth-last-child(10n-3 of .on){animation:rotateCounter 400s linear infinite}
 
 @keyframes float1{from{transform:translate(0,0)rotate(0deg)}30%{transform:translate(5px,6px)rotate(-0.3deg)}50%{transform:translate(0,-5px)rotate(0.1deg)}70%{transform:translate(8px,0px)rotate(0.2deg)}to{transform:translate(0,0)rotate(0deg)}}
 @keyframes float2{from{transform:translate(0,0)rotate(0deg)}20%{transform:translate(-3px,7px)rotate(0.2deg)}45%{transform:translate(0,4px)rotate(-0.1deg)}75%{transform:translate(5px,0px)rotate(-0.2deg)}to{transform:translate(0,0)rotate(0deg)}}
@@ -444,60 +442,28 @@
 @keyframes focusDrift{from{filter:blur(1.15px)}26%{filter:blur(1.15px)}34%{filter:blur(2.2px)}70%{filter:blur(17px)}89%{filter:blur(36px)}to{filter:blur(1.15px)}}
 
 .seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(1n of .on) .fx,.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-9 of .on) .fx{filter:none;animation:focusDrift 42s linear infinite;animation-duration:0s;filter:none;animation-delay:-15s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-8 of .on) .fx{filter:none;animation-delay:-2s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-7 of .on) .fx{filter:none;animation-delay:-4s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-6 of .on) .fx{filter:none;animation-delay:-6s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-5 of .on) .fx{filter:none;animation-delay:-8s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-4 of .on) .fx{filter:none;animation-delay:-10s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-3 of .on) .fx{filter:none;animation-delay:-12s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-2 of .on) .fx{filter:none;animation-delay:-14s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-1 of .on) .fx{filter:none;animation-delay:-16s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n of .on) .fx{filter:none;animation-delay:-18s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+1 of .on) .fx{filter:none;animation-delay:-20s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+2 of .on) .fx{filter:none;animation-delay:-22s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+3 of .on) .fx{filter:none;animation-delay:-24s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+4 of .on) .fx{filter:none;animation-delay:-26s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+5 of .on) .fx{filter:none;animation-delay:-28s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+6 of .on) .fx{filter:none;animation-delay:-30s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+7 of .on) .fx{filter:none;animation-delay:-32s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+8 of .on) .fx{filter:none;animation-delay:-34s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+9 of .on) .fx{filter:none;animation-delay:-36s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+9 of .on) .fx{filter:none;animation-delay:-38s;animation-duration:42s}
-.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+10 of .on) .fx{filter:none;animation-delay:-40s;animation-duration:42s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-8 of .on) .fx{filter:none;animation-delay:-4s;animation-duration:32s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-7 of .on) .fx{filter:none;animation-delay:-8s;animation-duration:34s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-6 of .on) .fx{filter:none;animation-delay:-12s;animation-duration:36s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-5 of .on) .fx{filter:none;animation-delay:-16s;animation-duration:38s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-4 of .on) .fx{filter:none;animation-delay:-20s;animation-duration:40s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-3 of .on) .fx{filter:none;animation-delay:-24s;animation-duration:42s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-2 of .on) .fx{filter:none;animation-delay:-28s;animation-duration:44s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-1 of .on) .fx{filter:none;animation-delay:-32s;animation-duration:46s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n of .on) .fx{filter:none;animation-delay:-36s;animation-duration:48s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+1 of .on) .fx{filter:none;animation-delay:-40s;animation-duration:50s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+2 of .on) .fx{filter:none;animation-delay:-44s;animation-duration:52s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+3 of .on) .fx{filter:none;animation-delay:-48s;animation-duration:54s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+4 of .on) .fx{filter:none;animation-delay:-52s;animation-duration:56s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+5 of .on) .fx{filter:none;animation-delay:-56s;animation-duration:58s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+6 of .on) .fx{filter:none;animation-delay:-60s;animation-duration:60s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+7 of .on) .fx{filter:none;animation-delay:-64s;animation-duration:62s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+8 of .on) .fx{filter:none;animation-delay:-68s;animation-duration:64s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+9 of .on) .fx{filter:none;animation-delay:-72;animation-duration:66s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+9 of .on) .fx{filter:none;animation-delay:-76s;animation-duration:68s}
+.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n+10 of .on) .fx{filter:none;animation-delay:-80s;animation-duration:70s}
 
-.seedartwork.depth.deep.reveal:has(g.on) .art g.on:nth-last-child(1n of .on) .fx,.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-9 of .on) .fx{filter:none;animation:focusDrift 42s linear infinite;animation-duration:38s;filter:none;animation-delay:-10s}
-.seedartwork.depth.superdeep.reveal:has(g.on) .art g.on:nth-last-child(10n-8 of .on) .fx{filter:none;animation-delay:-12s;animation-duration:38s}
-.seedartwork.depth.superdeep.reveal:has(g.on) .art g.on:nth-last-child(10n-7 of .on) .fx{filter:none;animation-delay:-14s;animation-duration:38s}
-.seedartwork.depth.superdeep.reveal:has(g.on) .art g.on:nth-last-child(10n-6 of .on) .fx{filter:none;animation-delay:-16s;animation-duration:38s}
-.seedartwork.depth.superdeep.reveal:has(g.on) .art g.on:nth-last-child(10n-5 of .on) .fx{filter:none;animation-delay:-18s;animation-duration:38s}
-.seedartwork.depth.superdeep.reveal:has(g.on) .art g.on:nth-last-child(10n-4 of .on) .fx{filter:none;animation-delay:-20s;animation-duration:38s}
-.seedartwork.depth.superdeep.reveal:has(g.on) .art g.on:nth-last-child(10n-3 of .on) .fx{filter:none;animation-delay:-22s;animation-duration:38s}
-.seedartwork.depth.superdeep.reveal:has(g.on) .art g.on:nth-last-child(10n-2 of .on) .fx{filter:none;animation-delay:-24s;animation-duration:38s}
-.seedartwork.depth.superdeep.reveal:has(g.on) .art g.on:nth-last-child(10n-1 of .on) .fx{filter:none;animation-delay:-26s;animation-duration:38s}
-.seedartwork.depth.superdeep.reveal:has(g.on) .art g.on:nth-last-child(10n of .on) .fx{filter:none;animation-delay:-28s;animation-duration:38s}
-.seedartwork.depth.superdeep.reveal:has(g.on) .art g.on:nth-last-child(10n+1 of .on) .fx{filter:none;animation-delay:-30s;animation-duration:38s}
-.seedartwork.depth.superdeep.reveal:has(g.on) .art g.on:nth-last-child(10n+2 of .on) .fx{filter:none;animation-delay:-32s;animation-duration:38s}
-.seedartwork.depth.superdeep.reveal:has(g.on) .art g.on:nth-last-child(10n+3 of .on) .fx{filter:none;animation-delay:-34s;animation-duration:38s}
-.seedartwork.depth.superdeep.reveal:has(g.on) .art g.on:nth-last-child(10n+4 of .on) .fx{filter:none;animation-delay:-36s;animation-duration:38s}
-
-.seedartwork.depth.deep.reveal:has(g.on) .art g.on:nth-last-child(1n of .on) .fx,.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-9 of .on) .fx{filter:none;animation:focusDrift 42s linear infinite;animation-duration:35s;filter:none;animation-delay:-5s}
-.seedartwork.depth.deep.reveal:has(g.on) .art g.on:nth-last-child(10n-8 of .on) .fx{filter:none;animation-delay:-8s;animation-duration:35s}
-.seedartwork.depth.deep.reveal:has(g.on) .art g.on:nth-last-child(10n-7 of .on) .fx{filter:none;animation-delay:-11s;animation-duration:35s}
-.seedartwork.depth.deep.reveal:has(g.on) .art g.on:nth-last-child(10n-6 of .on) .fx{filter:none;animation-delay:-14s;animation-duration:35s}
-.seedartwork.depth.deep.reveal:has(g.on) .art g.on:nth-last-child(10n-5 of .on) .fx{filter:none;animation-delay:-17s;animation-duration:35s}
-.seedartwork.depth.deep.reveal:has(g.on) .art g.on:nth-last-child(10n-4 of .on) .fx{filter:none;animation-delay:-20s;animation-duration:35s}
-.seedartwork.depth.deep.reveal:has(g.on) .art g.on:nth-last-child(10n-3 of .on) .fx{filter:none;animation-delay:-23s;animation-duration:35s}
-.seedartwork.depth.deep.reveal:has(g.on) .art g.on:nth-last-child(10n-2 of .on) .fx{filter:none;animation-delay:-26s;animation-duration:35s}
-.seedartwork.depth.deep.reveal:has(g.on) .art g.on:nth-last-child(10n-1 of .on) .fx{filter:none;animation-delay:-29s;animation-duration:35s}
-.seedartwork.depth.deep.reveal:has(g.on) .art g.on:nth-last-child(10n of .on) .fx{filter:none;animation-delay:-32s;animation-duration:35s}
-
-.seedartwork.depth.shallow.reveal:has(g.on) .art g.on:nth-last-child(1n of .on) .fx,.seedartwork.depth.shallow.reveal:has(g.on) .art g.on:nth-last-child(10n-9 of .on) .fx{filter:none;animation:focusDrift 42s linear infinite;animation-duration:42s;filter:none;animation-delay:0s}
-.seedartwork.depth.shallow.reveal:has(g.on) .art g.on:nth-last-child(10n-8 of .on) .fx{filter:none;animation-delay:-14s;animation-duration:42s}
-.seedartwork.depth.shallow.reveal:has(g.on) .art g.on:nth-last-child(10n-7 of .on) .fx{filter:none;animation-delay:-28s;animation-duration:42s}
-.seedartwork.depth.shallow.reveal:has(g.on) .art g.on:nth-last-child(10n-6 of .on) .fx{filter:none;animation-delay:-42s;animation-duration:42s}
-
-
-
+.seedartwork.depth.deep.reveal:has(g.on) .art g.on:nth-last-child(1n of .on) .fx{filter:none;animation:focusDrift 42s linear infinite;animation-duration:38s;filter:none;animation-delay:-10s}
 
 
 
@@ -517,23 +483,23 @@ html,body{color:#FFFFFF00}
         .seedartwork.cmyk,.seedartwork{background:#f7f7f7}
         .seedartwork.cmyk .bkg,.artwork.cmyk .art{fill:#FFFFFF}
         .seedartwork.cmyk .art,.artwork.cmyk .outline{stroke:#000000}
-        .seedartwork.cmyk text{fill:#000000}.seedartwork.cmyk.reveal:has(g.on) #ornate-frame{fill:#FFFF00;stroke:#00FFFF;mix-blend-mode:difference}
-        .seedartwork.cmyk.reveal:has(g.on){background:#f7f7f7;animation-duration:18s}
-        .seedartwork.cmyk.reveal:has(g.on) .bkg{fill:#FFFFFF}
-        .seedartwork.cmyk.reveal:has(g.on) .art g.on .fx{fill:#00FFFF;stroke:#FF00FF;mix-blend-mode:multiply}
-        .seedartwork.cmyk.reveal:has(g.on) #ornate-frame{fill:#FFFF00;stroke:#00FFFF;mix-blend-mode:difference}
-        .seedartwork.cmyk.reveal:has(g.on) .art g.on:nth-last-child(even of .on) .fx{fill:#FF00FF;stroke:#FFFF00}
-        .seedartwork.cmyk.reveal:has(g.on) .art g.on:nth-last-child(3n of .on) .fx{fill:#FFFF00;stroke:#00FFFF}
-        .seedartwork.cmyk.reveal:has(g.on) .art g.on:nth-last-child(4n of .on) .fx{fill:#FFFFFF;stroke:#000000;mix-blend-mode:normal}
-        .seedartwork.cmyk.reveal:has(g.on) .art g.on:nth-last-child(5n of .on) .fx{fill:#FFFFFF00;stroke:#000000}
-        .seedartwork.cmyk.reveal:has(g.on) .outline{stroke:#000000}
-        .seedartwork.cmyk.reveal:has(g.on) text{fill:#000000;filter:blur(1.25px)drop-shadow(1px 2px 5px #00000033)}
-        .seedartwork.cmyk.reveal:has(g.on) #signature path{stroke:#FF00FF;filter:drop-shadow(1px 3px 5px #00000033);mix-blend-mode:difference}
-        .seedartwork.cmyk.reveal g.pattern path.on{fill:#000000}
-        .seedartwork.cmyk.reveal g.pattern path,.seedartwork.cmyk.reveal:has(.on) g.orientation path,.seedartwork.cmyk.reveal:has(g.on) text.char{fill:#FFFFFF}
+        .seedartwork.cmyk text{fill:#000000}.seedartwork.cmyk:has(g.on) #ornate-frame{fill:#FFFF00;stroke:#00FFFF;mix-blend-mode:difference}
+        .seedartwork.cmyk:has(g.on){background:#f7f7f7;animation-duration:18s}
+        .seedartwork.cmyk:has(g.on) .bkg{fill:#FFFFFF}
+        .seedartwork.cmyk:has(g.on) .art g.on .fx{fill:#00FFFF;stroke:#FF00FF;mix-blend-mode:multiply}
+        .seedartwork.cmyk:has(g.on) #ornate-frame{fill:#FFFF00!important;stroke:#00FFFF!important;mix-blend-mode:difference!important}
+        .seedartwork.cmyk:has(g.on) .art g.on:nth-last-child(even of .on) .fx{fill:#FF00FF!important;stroke:#FFFF00!important}
+        .seedartwork.cmyk:has(g.on) .art g.on:nth-last-child(3n of .on) .fx{fill:#FFFF00!important;stroke:#00FFFF!important}
+        .seedartwork.cmyk:has(g.on) .art g.on:nth-last-child(4n of .on) .fx{fill:#FFFFFF!important;stroke:#000000!important;mix-blend-mode:normal}
+        .seedartwork.cmyk:has(g.on) .art g.on:nth-last-child(5n of .on) .fx{fill:#FFFFFF00;stroke:#000000}
+        .seedartwork.cmyk:has(g.on) .outline{stroke:#000000}
+        .seedartwork.cmyk:has(g.on) text{fill:#000000;filter:blur(1.25px)drop-shadow(1px 2px 5px #00000033)}
+        .seedartwork.cmyk:has(g.on) #signature path{stroke:#FF00FF!important;filter:drop-shadow(1px 3px 5px #00000033);mix-blend-mode:difference}
+        .seedartwork.cmyk g.pattern path.on{fill:#000000}
+        .seedartwork.cmyk g.pattern path,.seedartwork.cmyk:has(.on) g.orientation path,.seedartwork.cmyk:has(g.on) text.char{fill:#FFFFFF}
         .seedartwork.cmyk g.pattern path.on,.seedartwork.cmyk:has(g.on) #layercount{fill:white}
-        .seedartwork.cmyk.reveal:has(g.on) .art g.on,.seedartwork.cmyk.reveal:has(g.on) .outline,.seedartwork.cmyk.reveal g.pattern:has(.on) path,.seedartwork.cmyk.reveal:has(.on) g.orientation path{stroke:#000000}
-        .seedartwork.cmyk.reveal:has(g.on) #seednumber,.seedartwork.cmyk.reveal:has(g.on) #layercount{fill:#000000;filter:blur(0.5px)drop-shadow(1px 2px 5px #00000033)}
+        .seedartwork.cmyk:has(g.on) .art g.on,.seedartwork.cmyk:has(g.on) .outline,.seedartwork.cmyk g.pattern:has(.on) path,.seedartwork.cmyk:has(.on) g.orientation path{stroke:#000000}
+        .seedartwork.cmyk:has(g.on) #seednumber,.seedartwork.cmyk:has(g.on) #layercount{fill:#000000;filter:blur(0.5px)drop-shadow(1px 2px 5px #00000033)}
         .rgblens{transition:all 2s ease-in-out}
         .seedartwork.cmyk.red .rgblens{display:block;fill:#ff0000;mix-blend-mode:multiply}
         .seedartwork.cmyk.green .rgblens{display:block;fill:#00ff00;mix-blend-mode:multiply}
@@ -559,15 +525,7 @@ html,body{color:#FFFFFF00}
                 transform: scale(1);
             }
         }
-        @container(max-height:582px){
-            .seedartwork,.seedartwork .wrap, .seedartwork .bkg, .seedartwork .backdrop, .seedartwork .outline, .seedartwork text, .seedartwork .art g .fx, .seedartwork .art g.on, .seedartwork .art #ornate-frame{transition:none}
-            .seedartwork.reveal:has(g.on) .art g.on .fx *{
-                animation:none
-            }
-            .seedartwork .art{
-                stroke-width:8px;
-            }
-        }
+        
         .seedartwork.reveal.unleash:has(g.on) .art g.on .fx *,
         .seedartwork.reveal.depth:has(g.on) .art g.on .fx *,
         .seedartwork.reveal.spin:has(g.on) .art g.on .fx *{
@@ -583,24 +541,7 @@ html,body{color:#FFFFFF00}
 
 
 
-
-
-
-
-
-
-
-        
-
-
-/*====================== AMMENDMANT ========================*/
-
-
-
-
-
-
-
+/*====================== AMMENDMANT 2 ========================*/
 
 
 
@@ -689,3 +630,126 @@ html,body{color:#FFFFFF00}
 .seedartwork.prime #signature{transform:translate(-105px,139px)scale(0.8)!important}
 .seedartwork.squareFrame #signature{transform: translate(-5px, 0)}
 .seedartwork.squareFrame.prime #signature{transform:translate(134px,139px)scale(0.8)!important}
+
+.seedartwork.grayscale {
+
+}
+
+.seedartwork.grayscale .art, .seedartwork.grayscale .outline, .seedartwork.grayscale .outline-square, .seedartwork.grayscale .bkg, .seedartwork.grayscale.reveal:has(g.on) #seednumber,
+.seedartwork.grayscale.reveal:has(g.on) .outline,
+.seedartwork.grayscale.reveal:has(g.on) .ornate-frame {
+  filter: grayscale(1) contrast(1.1);
+}
+
+.seedartwork.flip g.on .fx * {
+  opacity:0.97;
+  fill-opacity: 0.3;
+  mix-blend-mode: color;
+}
+.seedartwork.flip g.on:nth-child(2n of .on) .fx * {
+  opacity:0.97;
+  fill-opacity: 0.3;
+  mix-blend-mode: normal;
+}
+.seedartwork.flip g.on:nth-child(4n of .on) .fx * {
+  opacity:0.9;
+  fill-opacity: 0.3;
+  mix-blend-mode: normal;
+}
+.seedartwork.flip g.on:nth-child(5n of .on) .fx * {
+  opacity:0.9;
+  fill-opacity: 0.3;
+  mix-blend-mode: normal;
+}
+
+.seedartwork.hyper g.on {
+  mix-blend-mode: hard-light;
+  opacity: 0.9;
+}
+.seedartwork.hyper g.on:nth-child(2n of .on) {
+  mix-blend-mode: difference;
+}
+.seedartwork.hyper g.on:nth-child(3n of .on) {
+  mix-blend-mode: normal;
+  opacity: 0.9;
+}
+.seedartwork.hyper:has(g.on) .art g.on .fx * {
+  animation: none;
+}
+
+
+
+.seedartwork.creation.hyper.reveal:has(g.on) .art g.on .fx *,
+.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+  filter: drop-shadow(0px 0px 25px #d2e6a6);
+}
+.seedartwork.creation.hyper.reveal:has(g.on) .art g.on:nth-child(2n of .on) .fx * {
+  filter: drop-shadow(0px 0px 25px #7dacb4);
+}
+.seedartwork.creation.hyper.reveal:has(g.on) .art g.on:nth-child(3n of .on) .fx *, {
+  filter: drop-shadow(0px 0px 25px #80aeb6);
+}
+.seedartwork.destruction.hyper.reveal:has(g.on) .art g.on .fx *,
+.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+  filter: drop-shadow(0px 0px 25px #ff3842);
+}
+.seedartwork.perception.hyper:has(g.on) .art g.on .fx *,
+.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+  filter: drop-shadow(0px 0px 25px rgba(88, 255, 124, 0.5));
+}
+.seedartwork.protection.hyper:has(g.on) .art g.on .fx *,
+.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+  filter: drop-shadow(0px 0px 25px rgba(180, 200, 212, 0.5));
+}
+.seedartwork.protection.hyper:has(g.on) .art g.on:nth-child(even of .on) .fx * {
+  filter: drop-shadow(0px 0px 25px rgba(83, 249, 252, 0.5));
+}
+.seedartwork.protection.hyper:has(g.on) .art g.on:nth-child(5n of .on) .fx * {
+  filter: drop-shadow(0px 0px 25px rgba(126, 198, 243, 0.5));
+}
+.seedartwork.passion.hyper:has(g.on) .art g.on .fx *,
+.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+  filter: drop-shadow(0px 0px 25px rgba(254, 214, 101, 0.5));
+}
+.seedartwork.passion.hyper:has(g.on) .art g.on:nth-child(4n of .on) .fx * {
+  filter: drop-shadow(0px 0px 25px rgba(101, 254, 249, 0.5));
+}
+.seedartwork.fortune.hyper:has(g.on) .art g.on .fx *,
+.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+  filter: drop-shadow(0px 0px 25px rgba(255, 204, 63, 0.5));
+}
+.seedartwork.wisdom.hyper:has(g.on) .art g.on .fx *,
+.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+  filter: drop-shadow(0px 0px 25px rgba(132, 123, 255, 0.5));
+}
+.seedartwork.resilience.hyper:has(g.on) .art g.on .fx *,
+.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+  filter: drop-shadow(0px 0px 25px rgba(150, 150, 150, 0.5));
+}
+.seedartwork.transformation.hyper:has(g.on) .art g.on .fx *,
+.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+  filter: drop-shadow(0px 0px 25px rgba(140, 255, 253, 0.5));
+}
+.seedartwork.transformation.hyper:has(g.on) .art g.on:nth-child(even of .on) .fx * {
+  filter: drop-shadow(0px 0px 25px rgba(186, 220, 220, 0.5));
+}
+.seedartwork.transformation.hyper:has(g.on) .art g.on:nth-child(4n of .on) .fx * {
+  filter: drop-shadow(0px 0px 25px rgba(143, 255, 253, 0.5));
+}
+.seedartwork.eternity.hyper.reveal:has(g.on) .art g.on .fx *,
+.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+  filter: drop-shadow(0px 0px 25px hsl(250, 100%, 61%));
+  stroke: #7a5ffb;
+}
+.seedartwork.discovery.hyper:has(g.on) .art g.on .fx *,
+.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+  filter: drop-shadow(0px 0px 25px rgba(255, 255, 255, 0.5));
+}
+
+
+
+.seedartwork.depth:has(g.on):not(.reveal) .art g.on {}
+
+.seedartwork.cmyk:has(g.on):not(.reveal) .art g.on .fx {
+  
+}

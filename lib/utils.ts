@@ -50,7 +50,7 @@ export function clearSelection() {
 
 // Seed number to bits
 export function seedToBits(seed: bigint): boolean[] {
-  return seed.toString(2).padStart(100, '0').split('').map(bit => bit === '1');
+  return seed.toString(2).padStart(100, '0').split('').reverse().map(bit => bit === '1');
 }
 
 // Hide mouse cursor after 5 seconds of inactivity and disable interactions
@@ -98,4 +98,9 @@ export function hideMouseCursor(element: HTMLElement) {
     document.body.classList.remove('cursor-hidden');
     element.style.cursor = 'auto';
   };
+}
+
+// Generate a Claim ID
+export function generateClaimId() {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }

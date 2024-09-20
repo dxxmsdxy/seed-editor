@@ -1,24 +1,30 @@
 "use client";
+import { RootState } from '@/store';
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useArtwork } from "@/context";
 import Image from "next/image";
-import { useAppDispatch } from '@/app/hooks';
+import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { setShowInscribeModal } from '@/store/slices/modalSlice';
 import { QueueItem } from '@/store/slices/queueSlice';
+import { selectOTCAddress } from '@/store/slices/otcSlice';
 
 interface InscribeModalProps {
   show: boolean;
   queueItems: QueueItem[];
+  isOTC: boolean;
 }
 
-const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems }) => {
+const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems, isOTC }) => {
   const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(false);
   const [loadingIndex, setLoadingIndex] = useState(0);
   const { getArtworkUrls } = useArtwork();
   const router = useRouter();
   const [itemsWithUrls, setItemsWithUrls] = useState<QueueItem[]>([]);
+  const otcAddress = useAppSelector((state: RootState) => state.otc.address);
+  
+  const purchaseSeeds = () => {}
 
   useEffect(() => {
     const generateLocalUrls = async () => {
@@ -39,7 +45,35 @@ const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems }) => {
     }
   }, [show, queueItems, getArtworkUrls]);
 
-  const purchaseSeeds = async () => {
+  
+  
+  if (isOTC) {
+    /* // Handle OTC transaction
+    const response = await fetch('/api/otc', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        address: otcAddress,
+        newSeed: queueItems[0].newSeed,
+        newMod: queueItems[0].newMod,
+        newAttunement: queueItems[0].newAttunement,
+      }),
+    });
+    if (response.ok) {
+      // Handle successful OTC inscription
+      // show a success message or redirect user
+    } else {
+      // Handle error
+    } */
+  } else {
+    // Existing logic for non-OTC inscriptions
+  }
+
+  
+  
+  /* const purchaseSeeds = async () => {
     setLoading(true);
 
     let wal = wallets;
@@ -99,7 +133,7 @@ const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems }) => {
     setLoadingIndex(0);
     dispatch(setShowInscribeModal(false));
     router.push("/collection?tab=mine");
-  };
+  }; */
 
   return (
     <section

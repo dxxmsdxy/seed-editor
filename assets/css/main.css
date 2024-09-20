@@ -12,6 +12,11 @@ body {
   cursor: none;
 }
 
+.cursor-hidden .toggle-details-button,
+.cursor-hidden .play-button {
+  opacity: 0 !important;
+}
+
 
 article,
 aside,
@@ -2390,6 +2395,24 @@ a {
   background-color: #f5f5f5;
 }
 
+.mod-button {
+  position: relative;
+}
+
+.mod-button span {
+  display: block;
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 10px;
+  height: 10px;
+  background-color: #000;
+  border-radius: 10px;
+  opacity: 0;
+}
+
+body:has(.has-config).mod-button span
+
 .ui-button.advanced {
   width: 100%;
 }
@@ -2868,6 +2891,11 @@ body:has(.theme-bkg) {
   display: block;
 }
 
+.display-settings-wrap.disabled {
+  opacity:0.4;
+  pointer-events: none;
+}
+
 .attunement-selector,
 .page-selector {
   border: 2px solid #000;
@@ -3042,7 +3070,7 @@ body:has(.theme-bkg) {
 }
 
 .mod-label {
-  right: 104%;
+  right: 100%;
 }
 
 .mod-reset {
@@ -5034,6 +5062,10 @@ body:has(.editor.unsaved-changes) .seed-details-header span {
 .overlay-description {
   opacity: 0.4;
 }
+.overlay-description span {
+  font-size: 0.9em;
+  margin-right:3px;
+}
 
 .details-actions-container,
 .metadata-list-container {
@@ -5058,6 +5090,15 @@ body:has(.editor.unsaved-changes) .seed-details-header span {
 
 body:has(.seed-details.focused) .app-pane.right .details-actions-container {
   pointer-events: auto;
+}
+
+body:has(.seed-details.focused) .editor-inner:not(:hover) .app-pane.right .seed-details {
+  color:#000;
+}
+
+body:has(.seed-details.focused) .editor-inner:not(:hover) .app-pane.right .details-actions-list li,
+body:has(.seed-details.focused) .editor-inner:not(:hover) .app-pane.right .metadata-list-container {
+  border-color: #00000044;
 }
 
 .details-actions-container:last-child,
@@ -5166,6 +5207,8 @@ body:has(.seed-details.focused) .slider-ui,
 body:has(.seed-details.focused) .attunement-label,
 body:has(.seed-details.focused) .page-label,
 body:has(.seed-details.focused) .attunement-selector,
+body:has(.seed-details.focused) .app-pane.right .details-actions-list li,
+body:has(.seed-details.focused) .app-pane.right .seed-details,
 body:has(.seed-details.focused) .attune-nav:has(*) {
   transition: border-color 0.4s, color 0.4s, background-color 0.4s, opacity 0.4s;
 }
@@ -5378,16 +5421,34 @@ body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting svg .cl
 body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting svg .cls-x,
 body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting svg .cls-y
 
-body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected {
-  background-color: #fff;
-}
-
 body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-1,
 body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-2 {
   stroke: #fff;
 }
 body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-0 {
   fill: #fff;
+}
+
+body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected {
+  background-color: #fff;
+  stroke: #000;
+}
+
+
+
+body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting:active svg .cls-1,body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-1 {
+  stroke: #000;
+}
+body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting:active svg .cls-0,body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-0 {
+  fill: #000;
+}
+
+
+body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-y {
+  stroke: #ffffff;
+}
+body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-x {
+  stroke: #000
 }
 
 body:has(.seed-details.focused) .editor-inner:hover .slider-ui {
@@ -5529,9 +5590,7 @@ body:has(.seed-details.focused) .seed-indicator{
   font-size: 25px;
   line-height: 17px;
 }
-.label {
-    line-height: 17px;
-}
+
 
 .list {
   grid-column-gap: 40px;
@@ -6472,6 +6531,7 @@ body:has(.seed-details.focused) .seed-indicator{
 
   .ui-button.randomize,
   .ui-button.advanced.shrink {
+    position: relative;
     padding-top: 10px;
     padding-bottom: 10px;
     font-size: 19px;

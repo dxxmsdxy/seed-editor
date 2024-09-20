@@ -77,10 +77,9 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
   // Handle display settings slider interaction
   const handleSliderChange = (mod: string, value: number, isSliding: boolean) => {
     if (!isLocked) {
-      if (isSliding) {
-      } else {
-        // Update mod when sliding stops
-        dispatch(updateSliderValue({ name: mod, value }));
+      dispatch(updateSliderValue({ name: mod, value }));
+      if (!isSliding) {
+        // Additional actions when sliding stops, if needed
       }
     }
   };
@@ -90,7 +89,6 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
     return icons.map((Icon, index) => (
       <a
         key={index}
-        href="#" 
         className={`btn-display-setting ${displaySettings & (1 << index) ? 'selected' : ''} ui-element`}
         onMouseDown={(e) => {
           e.preventDefault();
@@ -120,25 +118,7 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
     dispatch(toggleSpinAnimationPause());
   };
   
-  // Updating attunement from the SVG's attunement attribute
-  useEffect(() => {
-    const updateAttunementFromSVG = () => {
-      if (!isAttunementOverridden) {
-        const artworkSVG = document.querySelector('.seedartwork') as HTMLElement;
-        if (artworkSVG) {
-          const svgAttunement = parseInt(artworkSVG.getAttribute('data-attunement') || '0', 10);
-          const svgSeed = artworkSVG.getAttribute('data-seed') || '0';
-          if (svgSeed === editorSeed && svgAttunement !== editorAttunement) {
-            debouncedUpdateAttunement(svgAttunement);
-            prevAttunementRef.current = svgAttunement;
-          }
-        }
-      }
-    };
-
-    updateAttunementFromSVG();
-    // Might add an event listener here for dynamic changes
-  }, [dispatch, editorSeed, editorAttunement, isAttunementOverridden, debouncedUpdateAttunement]);
+  
 
   useEffect(() => {
     const attunementSelector = document.querySelector('.attunement-selector');
@@ -179,7 +159,7 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
         <div className="attunement-label-container ui-element" onClick={handleResetAttunement}>
           <div className="attunement-label ui-element">
             <span className="attunement-name">
-              { showAttunementName ? attunementNames[editorAttunement] + ":" : "Attunement:"}
+              { attunementNames[editorAttunement] + ":"}
             </span>
             <span
               className="attunement-input ui-element"
@@ -234,15 +214,17 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
       <RangeSlider name="color" value={modValues.color} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
       <RangeSlider name="depth" value={modValues.depth} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
       <RangeSlider name="spin" value={modValues.spin} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
-      <RangeSlider name="tint" value={modValues.tint} onChange={handleSliderChange} min={0} max={9} step={1} defaultValue={0} disabled={isLocked} />
+      <RangeSlider name="tint" value={modValues.tint} onChange={handleSliderChange} min={0} max={99} step={1} defaultValue={0} disabled={isLocked} />
       <RangeSlider 
         name="tint%" 
         value={modValues.tintPercent} 
         onChange={handleSliderChange} 
         min={0} 
-        max={100} 
+        max={100}
+        step={10} 
         disabled={isLocked || modValues.tint === 0}
         defaultValue={100}
+        displayValue={(value) => `${value}%`}
       />
 
       {/* Mod number display */}
@@ -258,26 +240,33 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
             contentEditable="true"
             suppressContentEditableWarning={true}
             onInput={(e) => {
-              const value = e.currentTarget.textContent;
+              const value = e.currentTarget.textContent?.replace(/^\./, '') || '';
               if (value === '') {
                 handleResetMod();
               } else {
-                dispatch(updateEditorMod({ mod: e.currentTarget.textContent || '', updateChanges: true }));
+                dispatch(updateEditorMod({ mod: value, updateChanges: true }));
                 clearSelection();
               }
             }}
             onBlur={(e) => {
               e.preventDefault();
-              if (e.currentTarget.textContent === '') {
+              const value = e.currentTarget.textContent?.replace(/^\./, '') || '';
+              if (value === '') {
                 handleResetMod();
               } else {
-                dispatch(updateEditorMod({ mod: e.currentTarget.textContent || '', updateChanges: true }));
+                dispatch(updateEditorMod({ mod: value, updateChanges: true }));
                 clearSelection();
               }
-              e.currentTarget.textContent = editorMod.toString();
+              e.currentTarget.textContent = '.' + (editorMod || '');
+            }}
+            onFocus={(e) => {
+              const textContent = e.currentTarget.textContent;
+              if (textContent && textContent.startsWith('.')) {
+                e.currentTarget.textContent = textContent.slice(1);
+              }
             }}
           >
-            {useAppSelector(state => state.seed.editorMod)}
+            .{useAppSelector(state => state.seed.editorMod)}
           </span>
           <span 
             className={`mod-reset ${shouldShowResetMod ? 'show' : ''}`} 

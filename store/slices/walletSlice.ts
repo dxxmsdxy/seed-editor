@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { initializeQueue, updateQueueOrder, selectNextUnsetQueueItemThunk } from './queueSlice';
 import {
-  toggleLayersUI, toggleDisplaySettings,
+  toggleLayersUI, toggleDisplaySettingsUI,
 } from '@/store/slices/editorSlice';
 
 
@@ -50,7 +50,7 @@ export const connectWalletAndLoadData = createAsyncThunk(
       await dispatch(initializeQueue(transformedData));
       await dispatch(updateQueueOrder());
       await dispatch(toggleLayersUI(false));
-      await dispatch(toggleDisplaySettings(false));
+      await dispatch(toggleDisplaySettingsUI(false));
       await dispatch(selectNextUnsetQueueItemThunk());
       
       return transformedData;

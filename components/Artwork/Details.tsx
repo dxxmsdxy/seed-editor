@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface SeedDetailsProps {
+interface DetailsProps {
   isFocused: boolean;
   showOverlay: boolean;
   editorSeed: string;
@@ -17,7 +17,7 @@ const getAttunementString = (attunement: number): string => {
   return `(${attunements[attunement]}) ${attunement}`;
 };
 
-const SeedDetails: React.FC<SeedDetailsProps> = ({
+const Details: React.FC<DetailsProps> = ({
   isFocused,
   showOverlay,
   editorSeed,
@@ -36,7 +36,7 @@ const SeedDetails: React.FC<SeedDetailsProps> = ({
             SEED<span>Draft</span>
           </div>
           <div className="overlay-description">
-            #{mintOrder}
+            <span>id:</span>{mintOrder}
           </div>
         </div>  
         <div className="seed-details-metadata">
@@ -85,4 +85,4 @@ const SeedDetails: React.FC<SeedDetailsProps> = ({
   );
 };
 
-export default SeedDetails;
+export default Details;

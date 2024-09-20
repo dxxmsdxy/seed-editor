@@ -216,6 +216,7 @@ export const selectAndUpdateQueueItemThunk = createAsyncThunk(
     dispatch(selectAndUpdateQueueItem(index));
     
     if (index !== state.queue.selectedIndex) {
+      dispatch(resetDisplaySettings());
       const isSet = selectedItem.isSet;
       dispatch(updateEditorState({
         seed: isSet ? selectedItem.newSeed || selectedItem.seed : selectedItem.seed || '0',

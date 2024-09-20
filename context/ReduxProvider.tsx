@@ -7,6 +7,7 @@ import seedReducer from '@/store/slices/editorSlice';
 import queueReducer from '@/store/slices/queueSlice';
 import modalReducer from '@/store/slices/modalSlice';
 import walletReducer from '@/store/slices/walletSlice';
+import otcReducer from '@/store/slices/otcSlice';
 
 const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ const store = configureStore({
     queue: queueReducer,
     modal: modalReducer,
     wallet: walletReducer,
+    otc: otcReducer,
   },
 });
 

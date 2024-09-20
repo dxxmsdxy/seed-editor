@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useAppSelector } from '@/app/hooks';
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
 import { connectWalletAndLoadData, disconnectWalletAndClearQueue } from '@/store/slices/walletSlice';
@@ -7,7 +8,7 @@ import { initializeQueue } from '@/store/slices/queueSlice';
 import { MenuDesktop } from "./MenuDesktop";
 import { MenuMobileContent, MenuMobileTrigger } from "./MenuMobile";
 import { DropdownMenu } from "@/components/UI/dropdownMenu";
-
+import { selectOTCMode } from "@/store/slices/otcSlice";
 
 
 
@@ -18,6 +19,8 @@ export const Navbar = () => {
   const { connected, loading, error } = useSelector((state) => state.wallet);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(null);
+
+  const isOTC = useAppSelector(selectOTCMode);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -85,16 +88,18 @@ export const Navbar = () => {
               />
             )}
             <div className="navbar-connect">
-              {loading ? (
-                <span>Loading...</span>
-              ) : (
-                <Link
-                  href="#"
-                  onClick={connected ? handleDisconnect : handleConnect}
-                  className={`ui-button ${connected ? 'disconnect' : 'connect'}`}
-                >
-                  {connected ? 'D/C' : 'Connect'}
-                </Link>
+              {!isOTC && (
+                loading ? (
+                  <span>Loading...</span>
+                ) : (
+                  <Link
+                    href="#"
+                    onClick={connected ? handleDisconnect : handleConnect}
+                    className={`ui-button ${connected ? 'disconnect' : 'connect'}`}
+                  >
+                    {connected ? 'D/C' : 'Connect'}
+                  </Link>
+                )
               )}
             </div>
           </div>
