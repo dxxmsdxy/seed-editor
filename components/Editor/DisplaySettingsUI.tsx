@@ -76,7 +76,7 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
         
         // Update the editorMod to set the tint segment to '00'
         const currentMod = editorMod || '000000000000000';
-        const updatedMod = '00' + currentMod.slice(2);
+        const updatedMod = currentMod.slice(0, 9) + '00' + currentMod.slice(11);
         dispatch(updateEditorMod({ mod: updatedMod, updateChanges: true }));
       } else {
         dispatch(updateSliderValue({ name: mod, value }));
@@ -242,7 +242,7 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
         onChange={handleSliderChange} 
         min={0} 
         max={100}
-        step={1} 
+        step={10} 
         disabled={isLocked || modValues.tint === 0}
         defaultValue={100}
         displayValue={(value) => `${value}%`}

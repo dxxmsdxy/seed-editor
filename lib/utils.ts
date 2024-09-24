@@ -21,9 +21,6 @@ export const bitsToSeed = (bitsArray: number[]) => {
   return seed;
 };
 
-// Convert a string to a BigInt
-const stringToBigInt = (str) => BigInt(str.replace(/[^0-9]/g, '') || 0);
-
 // Select all input contents
 export function selectElementContents(element: HTMLElement) {
   console.log('Selecting contents of:', element);
@@ -52,7 +49,6 @@ export function clearSelection() {
 export function seedToBits(seed: bigint): boolean[] {
   return seed.toString(2).padStart(100, '0').split('').reverse().map(bit => bit === '1');
 }
-
 
 // Sanitize seed number
 export function sanitizeSeed(seed: string): string {
@@ -126,6 +122,9 @@ export function hideMouseCursor(element: HTMLElement) {
     element.style.cursor = 'auto';
   };
 }
+
+// Convert a string to a BigInt, exclude non-integers
+const stringToBigInt = (str) => BigInt(str.replace(/[^0-9]/g, '') || 0);
 
 // Generate a Claim ID
 export function generateClaimId() {

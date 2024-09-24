@@ -153,6 +153,8 @@ export function applyModValueToElements(elements: NodeListOf<Element> | HTMLColl
 
   if (modType === 'depth') {
     applyDepthMod(elementsArray, modValue);
+  } else if (modType === 'spin') {
+    applySpinMod(elementsArray, modValue);
   } else {
     let delay = -(normalizedPosition * duration);
 
@@ -190,6 +192,44 @@ export function applyModValueToElements(elements: NodeListOf<Element> | HTMLColl
       }
     });
   }
+}
+
+function applySpinMod(elements: Element[], spinModValue: number): void {
+  const normalizedPosition = spinModValue / MAX_MOD_VALUE;
+  const elementCount = elements.length;
+  const curveAdjustment = Math.min(elementCount / 25, 1);
+  const adjustedT = (t: number) => Math.pow(t, 1 / (1 + curveAdjustment));
+
+  elements.forEach((element, index) => {
+    let originalDelay: number;
+    let originalDuration: number;
+
+    if (element.hasAttribute('data-original-delay') && element.hasAttribute('data-original-duration')) {
+      originalDelay = parseFloat(element.getAttribute('data-original-delay') || '0');
+      originalDuration = parseFloat(element.getAttribute('data-original-duration') || TOTAL_ANIMATION_DURATION.toString());
+    } else {
+      originalDelay = parseFloat(window.getComputedStyle(element).animationDelay) || 0;
+      originalDuration = parseFloat(window.getComputedStyle(element).animationDuration) || TOTAL_ANIMATION_DURATION;
+      element.setAttribute('data-original-delay', originalDelay.toString());
+      element.setAttribute('data-original-duration', originalDuration.toString());
+    }
+
+    const elementT = adjustedT((index + 1) / elementCount);
+    
+    // Adjust duration multiplier to range from 0.1 (10x shorter) to 10 (10x longer)
+    const durationMultiplier = Math.pow(15, 1 - 2 * normalizedPosition * elementT);
+    const adjustedDuration = originalDuration * durationMultiplier;
+
+    // Adjust delay to maintain relative positions
+    const adjustedDelay = -(normalizedPosition * TOTAL_ANIMATION_DURATION * elementT) - originalDelay;
+
+    // Only update if there's a significant change
+    if (Math.abs(parseFloat((element as HTMLElement).style.animationDuration) - adjustedDuration) > 0.01 ||
+        Math.abs(parseFloat((element as HTMLElement).style.animationDelay) - adjustedDelay) > 0.01) {
+      (element as HTMLElement).style.animationDuration = `${adjustedDuration.toFixed(2)}s`;
+      (element as HTMLElement).style.animationDelay = `${adjustedDelay.toFixed(2)}s`;
+    }
+  });
 }
 
 function applyDepthMod(elements: Element[], depthModValue: number): void {
@@ -233,11 +273,6 @@ function applyDepthMod(elements: Element[], depthModValue: number): void {
     applyDropShadowFilter(svg, depthModValue);
   }
 }
-
-
-
-
-
 
 function applyDropShadowFilter(svg: SVGSVGElement, depthModValue: number) {
   const minShadow = { x: 0, y: 0, blur: 1, alpha: 0.01 };
@@ -295,36 +330,19 @@ export function flipLayers(svg: SVGSVGElement, shouldFlip: boolean): void {
   const artGroup = svg.querySelector('.art');
   if (!artGroup) return;
 
-  // Select both .lr and .sub elements
   const layers = Array.from(artGroup.querySelectorAll('.lr, .sub'));
-  
-  // Find the last non-.lr and non-.sub element
   const lastNonLayerElement = artGroup.querySelector('#slot');
   
-  // Sort layers based on their original index
-  const sortedLayers = layers.sort((a, b) => {
-    const aIndex = parseInt(a.getAttribute('data-original-index') || '0', 10);
-    const bIndex = parseInt(b.getAttribute('data-original-index') || '0', 10);
-    return aIndex - bIndex;
+  // Always reverse the current order of layers
+  const reversedLayers = layers.reverse();
+
+  reversedLayers.forEach(layer => {
+    if (lastNonLayerElement) {
+      artGroup.insertBefore(layer, lastNonLayerElement);
+    } else {
+      artGroup.appendChild(layer);
+    }
   });
-
-  const currentlyFlipped = artGroup.getAttribute('data-flipped') === 'true';
-
-  if (shouldFlip !== currentlyFlipped) {
-    // Reverse the order of layers
-    const newOrder = shouldFlip ? sortedLayers.reverse() : sortedLayers;
-    newOrder.forEach(layer => {
-      if (lastNonLayerElement) {
-        artGroup.insertBefore(layer, lastNonLayerElement);
-      } else {
-        artGroup.appendChild(layer);
-      }
-    });
-  }
-
-  // Update the data-flipped attribute and class
-  artGroup.setAttribute('data-flipped', shouldFlip.toString());
-  svg.classList.toggle('flip', shouldFlip);
 }
 
 
@@ -369,13 +387,6 @@ export function resetLayers(svg: SVGSVGElement | null): void {
   const depthFilterStyle = svg.querySelector('style.depth-filter');
   if (depthFilterStyle) {
     depthFilterStyle.remove();
-  }
-
-  // Reset flip
-  const artGroup = svg.querySelector('.art');
-  if (artGroup) {
-    flipLayers(svg, false);
-    artGroup.setAttribute('data-flipped', 'false');
   }
 
 }

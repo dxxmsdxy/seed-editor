@@ -600,7 +600,7 @@ const calculateModNumber = (state: EditorState): string => {
     tintPercentValue = Math.ceil(9 * (tintPercent / 100)).toString();
   }
 
-  return `${tintValue}${tintPercentValue}${spinValue}${depthValue}${colorValue}${displaySettingsValue}`;
+  return `${colorValue}${spinValue}${depthValue}${tintValue}${tintPercentValue}${displaySettingsValue}`;
 };
 
 
@@ -644,11 +644,11 @@ export const selectShouldShowResetMod = createSelector(
 export function parseModValues(mod: string) {
   const safeMod = sanitizeMod(mod);
   return {
+    color: parseInt(safeMod.slice(0, 3)),
     spin: parseInt(safeMod.slice(3, 6)),
     depth: parseInt(safeMod.slice(6, 9)),
-    color: parseInt(safeMod.slice(9, 12)),
-    tint: parseInt(safeMod.slice(0, 2)),
-    tintPercent: parseInt(safeMod.slice(2, 3)),
+    tint: parseInt(safeMod.slice(9, 11)),
+    tintPercent: parseInt(safeMod.slice(11, 12)),
   };
 }
 

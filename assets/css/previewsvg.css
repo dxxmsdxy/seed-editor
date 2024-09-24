@@ -442,7 +442,7 @@
 .seedartwork.float .art > g:nth-of-type(20n){animation-duration:24s}
 .seedartwork.float .art > g:nth-of-type(10n+19){animation-duration:60s}
 
-.seedartwork.depth:not(.reveal) .bkg{filter:drop-shadow(3px 5px 10px rgb(0 0 0/.1))brightness(0.7)}
+.seedartwork.depth:not(.reveal) .bkg{filter:drop-shadow(3px 5px 10px rgb(0 0 0/.1))brightness(0.85)}
 .seedartwork.depth:has(g.on):not(.reveal) .art g.on,.seedartwork.depth:has(g.on):not(.reveal) #ornate-frame{filter:drop-shadow(0px 4px 15px rgb(0 0 0/.5))}
 .seedartwork.depth.reveal:has(g.on) .outline,.seedartwork.depth.reveal:has(g.on) text{filter:blur(1.4px)}
 @keyframes focusDrift{from{filter:blur(1.15px)}26%{filter:blur(1.15px)}34%{filter:blur(2.2px)}70%{filter:blur(17px)}89%{filter:blur(40px)}to{filter:blur(1.15px)}}
@@ -652,12 +652,12 @@ html,body{color:#FFFFFF00}
 .seedartwork.flip g.on .fx * {
   opacity:0.97;
   fill-opacity: 0.3;
-  mix-blend-mode: color;
+  mix-blend-mode: normal;
 }
 .seedartwork.flip g.on:nth-child(2n of .on) .fx * {
   opacity:0.97;
   fill-opacity: 0.3;
-  mix-blend-mode: normal;
+  mix-blend-mode: hue;
 }
 .seedartwork.flip g.on:nth-child(4n of .on) .fx * {
   opacity:0.9;

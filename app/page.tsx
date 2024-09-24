@@ -159,7 +159,7 @@ export default function Home() {
     const isNonDefaultMod = editorMod !== '000000000000000';
     const isNonDefaultAttunement = editorAttunement !== calculateMostFrequentNumeral(BigInt(editorSeed));
     
-    return isNonZeroSeed && (isNonDefaultMod || isNonDefaultAttunement);
+    return isNonZeroSeed || isNonDefaultMod || isNonDefaultAttunement;
   }, [editorSeed, editorMod, editorAttunement]);
 
   const handleResetEditorAttunement = useCallback(() => {
@@ -466,15 +466,15 @@ export default function Home() {
       }
     }
   }, [editorAttunement]); */
-
+ 
   // Hide cursor after inactivity
-  useEffect(() => {
+  /* useEffect(() => {
     const sleeptarget = document.querySelector('body');
     if (sleeptarget) {
       const cleanup = hideMouseCursor(sleeptarget);
       return cleanup;
     }
-  }, []);
+  }, []); */
 
 
   const [isArtworkReady, setIsArtworkReady] = useState(false);
@@ -483,7 +483,7 @@ export default function Home() {
   useEffect(() => {
     const checkArtworkReady = () => {
       const artwork = document.querySelector('.seedartwork');
-      if (artwork) {
+      if (artwork?.getAttribute('data-original-delay')) {
         setIsArtworkReady(true);
       } else {
         setTimeout(checkArtworkReady, 100); // Check every 100ms

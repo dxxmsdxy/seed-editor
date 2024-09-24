@@ -1,16 +1,16 @@
 [
     {
       "id": "0",
-      "seed": "963168326452244818139313119364",
-      "modNumber": "000782713422052",
-      "attunementNumber": null,
+      "seed": "320747369877323939084281905792",
+      "modNumber": "236000730000082",
+      "attunementNumber": 5,
       "locked": false
     },
     {
       "id": "1",
       "seed": "697059680550489421729237092",
-      "modNumber": "000000837630040",
-      "attunementNumber": 4,
+      "modNumber": "513771789000020",
+      "attunementNumber": 2,
       "locked": false
     },
     {
