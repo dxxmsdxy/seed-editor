@@ -1,13 +1,12 @@
-import React, { useEffect, useCallback } from 'react';
-import { applyModValueToElements, resetLayers } from '@/lib/utils/artwork/updateSVGWithMod';
-import { clearShouldResetLayers, updateEditorState } from '@/store/slices/editorSlice';
-import { attunementNames, updateThemeColor } from '@/lib/utils/artwork/helpers';
+import React, { useEffect, useRef, useCallback } from 'react';
+import { useAppSelector } from '@/app/hooks';
+import { applyModValueToElements, resetLayers, flipLayers } from '@/lib/utils/artwork/updateSVGWithMod';
+import { clearShouldResetLayers, parseModValues } from '@/store/slices/editorSlice';
+import { attunementNames, updateThemeColor, checkPalindrome } from '@/lib/utils/artwork/helpers';
 
 interface ArtworkHandlingProps {
     svgRef: React.RefObject<SVGSVGElement>;
     isFlippedRef: React.MutableRefObject<boolean>;
-    mod: string;
-    modValues: any;
     editorSeed: string;
     editorMod: string;
     editorAttunement: number;
@@ -21,13 +20,11 @@ interface ArtworkHandlingProps {
     urlMod: string | null;
     urlAttunement: string | null;
     urlParamsProcessed: boolean;
+    displaySettings: number;
 }
 
 export const ArtworkHandling: React.FC<ArtworkHandlingProps> = ({
     svgRef,
-    isFlippedRef,
-    mod,
-    modValues,
     editorSeed,
     editorMod,
     editorAttunement,
@@ -39,8 +36,28 @@ export const ArtworkHandling: React.FC<ArtworkHandlingProps> = ({
     dispatch,
     urlSeed,
     urlMod,
-    urlAttunement
+    urlAttunement,
+    displaySettings,
 }) => {
+
+    const prevEditorModRef = useRef(editorMod);
+    const modValues = useAppSelector(state => parseModValues(state.seed.editorMod));
+
+    // Memoize the reset function with useCallback
+    const resetLayersCallback = useCallback(() => {
+        if (svgRef.current) {
+            resetLayers(svgRef.current);
+            
+            // Apply mod values after resetting
+            const layers = svgRef.current.querySelectorAll('.lr');
+            const modValues = parseModValues(editorMod);
+            applyModValueToElements(layers, modValues.color, 'color');
+            applyModValueToElements(layers, modValues.spin, 'spin');
+            applyModValueToElements(layers, modValues.depth, 'depth');
+
+            dispatch(clearShouldResetLayers());
+        }
+    }, [svgRef, editorMod, dispatch]);
 
     useEffect(() => {
         if (!svgRef.current) return;
@@ -48,28 +65,24 @@ export const ArtworkHandling: React.FC<ArtworkHandlingProps> = ({
         const svg = svgRef.current;
         const artGroup = svg.querySelector('.art');
         if (!artGroup) return;
-
-        
         
         const updateSVGClasses = () => {
+
             // Always ensure these classes are present
-            svg.classList.add('seedartwork', 'pauseColor');
+            svg.classList.add('seedartwork', 'pauseColor', 'pauseDepth');
         
-            // Apply paused state based on Redux state
-            svg.classList.toggle('pauseColor', isColorAnimationPaused);
-            svg.classList.toggle('pauseDepth', isDepthAnimationPaused);
-            svg.classList.toggle('pauseSpin', isSpinAnimationPaused);
-        
-            // Handle spin and depth classes
-            svg.classList.toggle('spin', parseInt(mod.slice(3, 6), 10) > 0);
-            svg.classList.toggle('depth', parseInt(mod.slice(6, 9), 10) > 0);    
-    
             // Update display settings
-            const displaySettings = parseInt(mod.slice(12), 10);
-            const displayClasses = ['reveal', 'grayscale', 'flip', 'invert', 'hyper', 'cmyk', 'red', 'green', 'blue'];
+            const displayClasses = ['reveal', 'flip', 'invert', 'removebkg', 'hyper', 'grayscale', 'cmyk', 'red', 'green', 'blue'];
             displayClasses.forEach((className, index) => {
-                const isActive = index === 0 ? (displaySettings & (1 << 0)) === 0 : (displaySettings & (1 << index)) !== 0;
-                svg.classList.toggle(className, isActive);
+                if (index === 0) {
+                    // Invert the behavior for the 'reveal' class
+                    svg.classList.toggle(className, (displaySettings & (1 << index)) === 0);
+                } else if (index === 1) {
+                    // Apply layer flipping
+                   
+                } else {
+                    svg.classList.toggle(className, (displaySettings & (1 << index)) !== 0);
+                }
             });
 
             // Ensure only one of red, green, or blue is active
@@ -81,29 +94,89 @@ export const ArtworkHandling: React.FC<ArtworkHandlingProps> = ({
                 });
             }
 
+            // Check for palindrome
+            const isPalindrome = checkPalindrome(BigInt(editorSeed));
+            const isSingleDigit = editorSeed.length === 1;
+            
+            if (isPalindrome && !isSingleDigit) {
+                svg.classList.add('palindrome');
+            } else {
+                svg.classList.remove('palindrome');
+            }
+
+            // Prepare attunement for change
+            attunementNames.forEach(name => {
+                svg.classList.remove(name);
+            });
+          
+            // Add the current attunement class
             if (editorAttunement >= 0 && editorAttunement < attunementNames.length) {
+                svg.classList.add(attunementNames[editorAttunement]);
                 updateThemeColor(attunementNames[editorAttunement]);
             }
-        };
 
-        const updateAnimations = () => {
-            const colorElements = svg.querySelectorAll('.lr.on');
-            const depthElements = svg.querySelectorAll('.lr .fx');
-            const spinElements = svg.querySelectorAll('.spin');
-
-            applyModValueToElements(colorElements, modValues.color, 'color');
-            applyModValueToElements(depthElements, modValues.depth, 'depth');
-            applyModValueToElements(spinElements, modValues.spin, 'spin');
+            if (svgRef.current) {
+                const artwork = svgRef.current;
+                
+                // Apply color mod
+                const colorElements = document.querySelectorAll('.seedartwork,.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline,.sub,.sub path,.sub polygon,.sub circle,.sub ellipse,.sub line,.sub rect,.sub polyline,.sub .fx');
+                applyModValueToElements(colorElements, modValues.color, 'color');
+            
+                // Apply spin mod
+                const spinElements = artwork.querySelectorAll('.lr.on, .sub.on');
+                applyModValueToElements(spinElements, modValues.spin, 'spin');
+            
+                // Apply depth mod
+                const depthElements = artwork.querySelectorAll('.lr.on .fx');
+                applyModValueToElements(depthElements, modValues.depth, 'depth');
+            
+                // Apply tint
+                const rgblens = document.querySelector('.rgblens') as HTMLElement;
+                if (rgblens) {
+                    if (modValues.tint === 0) {
+                        rgblens.style.backgroundColor = 'transparent';
+                        rgblens.style.opacity = '0';
+                    } else {
+                        const hue = (modValues.tint - 1) * (360 / 98);
+                        rgblens.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
+                        
+                        // Special case: if tintPercent is 0, set opacity to 1
+                        if (modValues.tintPercent === 0) {
+                            rgblens.style.opacity = '1';
+                        } else {
+                            rgblens.style.opacity = (modValues.tintPercent / 10).toString();
+                        }
+                    }
+                }
+                // Handle spin and depth classes
+                if (modValues.spin > 0) {
+                    svg.classList.add('spin');
+                } else {
+                    svg.classList.remove('spin');
+                }
+            
+                if (modValues.depth > 0) {
+                    svg.classList.add('depth');
+                } else {
+                    svg.classList.remove('depth');
+                }
+                // Apply paused state based on Redux state
+                svg.classList.toggle('pauseColor', isColorAnimationPaused);
+                svg.classList.toggle('pauseDepth', isDepthAnimationPaused);
+                svg.classList.toggle('pauseSpin', isSpinAnimationPaused);
+            }
         };
-        updateSVGClasses();
-        updateAnimations();
         
+        updateSVGClasses();
 
-    }, [mod, modValues, isColorAnimationPaused, isDepthAnimationPaused, isSpinAnimationPaused, editorSeed, editorMod, editorAttunement, urlSeed, urlMod, urlAttunement, dispatch]);
+    }, [editorMod, editorSeed, modValues, isColorAnimationPaused, isDepthAnimationPaused, isSpinAnimationPaused, urlSeed, urlMod, urlAttunement ]);
+
 
     useEffect(() => {
         if (!svgRef.current) return;
         const svg = svgRef.current;
+
+        const safeEditorMod = editorMod || '000000000000000';
 
         // Reset all display settings when queue item changes
         const displayClasses = ['reveal', 'grayscale', 'flip', 'invert', 'hyper', 'cmyk', 'red', 'green', 'blue'];
@@ -112,28 +185,28 @@ export const ArtworkHandling: React.FC<ArtworkHandlingProps> = ({
         });
 
         // Re-apply current display settings
-        const displaySettings = parseInt(mod.slice(12), 10);
+        const displaySettings = parseInt(safeEditorMod.slice(12), 10);
         displayClasses.forEach((className, index) => {
-        const isActive = index === 0 ? (displaySettings & (1 << 0)) === 0 : (displaySettings & (1 << index)) !== 0;
-        if (isActive) svg.classList.add(className);
+            const isActive = index === 0 ? (displaySettings & (1 << 0)) === 0 : (displaySettings & (1 << index)) !== 0;
+            if (isActive) svg.classList.add(className);
         });
-    }, [selectedQueueItem, mod]);
+    }, [selectedQueueItem, editorMod]);
 
     // Reset the animation delays to initial
     useEffect(() => {
         if (shouldResetLayers && svgRef.current) {
-            resetLayers(svgRef.current);
+            resetLayersCallback();
             
             // Apply mod values after resetting
             const layers = svgRef.current.querySelectorAll('.lr');
+            const modValues = parseModValues(editorMod);
             applyModValueToElements(layers, modValues.color, 'color');
             applyModValueToElements(layers, modValues.spin, 'spin');
             applyModValueToElements(layers, modValues.depth, 'depth');
 
             dispatch(clearShouldResetLayers());
         }
-    }, [shouldResetLayers, modValues, dispatch]);
+    }, [shouldResetLayers, resetLayersCallback, editorMod, dispatch]);
 
     return null;
-
 };

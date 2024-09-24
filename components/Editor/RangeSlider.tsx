@@ -43,22 +43,24 @@ const RangeSlider: React.FC<RangeSliderProps> = React.memo(({
     setDisplayedValue(value);
   }, [value]);
 
+  const debouncedOnChange = useCallback(
+    debounce((name: string, value: number) => {
+      onChange(name, value, false);
+    }, 50),
+    [onChange]
+  );
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = parseInt(e.target.value);
-    onChange(name, newValue, true);
+    setLocalValue(newValue);
+    setDisplayedValue(newValue);
   };
 
   const handleSlideEnd = () => {
     setIsActive(false);
     onChange(name, localValue, false);
+    debouncedOnChange.flush();
   };
-
-  const debouncedOnChange = useCallback(
-    debounce((newValue: number) => {
-      onChange(name, newValue, false);
-    }, 100),
-    [name, onChange]
-  );
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (disabled) return;
@@ -74,15 +76,9 @@ const RangeSlider: React.FC<RangeSliderProps> = React.memo(({
 
     setLocalValue(newValue);
     setDisplayedValue(newValue);
-    setIsActive(true);
-    onChange(name, newValue, true);
-    debouncedOnChange(newValue);
-  }, [localValue, max, min, step, disabled, name, onChange, debouncedOnChange]);
+    debouncedOnChange(name, newValue);
+  }, [localValue, max, min, step, disabled, name, debouncedOnChange]);
 
-  const handleKeyUp = useCallback(() => {
-    setIsActive(false);
-    debouncedOnChange.flush();
-  }, [debouncedOnChange]);
 
   
   // STRUCTURE -------------------------------------
@@ -99,19 +95,13 @@ const RangeSlider: React.FC<RangeSliderProps> = React.memo(({
             min={min}
             max={max}
             step={step}
-            onChange={(e) => {
-              const newValue = parseInt(e.target.value);
-              setLocalValue(newValue);
-              setDisplayedValue(newValue);
-              onChange(name, newValue, true);
-            }}
+            onChange={handleChange}
             disabled={disabled}
             onMouseDown={() => setIsActive(true)}
             onMouseUp={handleSlideEnd}
             onTouchStart={() => setIsActive(true)}
             onTouchEnd={handleSlideEnd}
             onKeyDown={handleKeyDown}
-            onKeyUp={handleKeyUp}
           />
           <span className="range-slider__value">
             {displayValue(displayedValue)}

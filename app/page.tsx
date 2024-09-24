@@ -15,7 +15,7 @@ import InscribeModal from "@/components/Editor/InscribeModal";
 import DiagnosticsPanel from "@/components/Editor/DiagnosticsPanel";
 import { selectOTCMode } from '@/store/slices/otcSlice';
 
-import { updateEditorState, updateEditorSeed, updateEditorMod, updateHasEditorChanges, resetEditorState, resetEditorMod, resetEditorAttunement, toggleBit, randomizeBits, undo, redo, selectLayersUIToggled, selectDisplaySettingsToggled, toggleLayersUI, toggleDisplaySettingsUI, checkEditorMatchesSelectedItem, toggleDepthAnimationPause, toggleSpinAnimationPause, overrideEditorAttunement, setUrlParams } from '@/store/slices/editorSlice';
+import { updateEditorState, updateEditorSeed, updateEditorMod, updateHasEditorChanges, resetEditorState, resetEditorMod, resetEditorAttunement, toggleBit, randomizeBits, undo, redo, selectLayersUIToggled, selectDisplaySettingsToggled, toggleLayersUI, toggleDisplaySettingsUI, checkEditorMatchesSelectedItem, toggleDepthAnimationPause, toggleSpinAnimationPause, overrideEditorAttunement, setUrlParams,parseModValues } from '@/store/slices/editorSlice';
 import { initializeQueue, getSetQueueItems, setSelectedIndex, updateQueueItem } from '@/store/slices/queueSlice';
 import { setShowInscribeModal } from '@/store/slices/modalSlice';
 import { selectElementContents, clearSelection, hideMouseCursor } from '@/lib/utils';
@@ -29,6 +29,8 @@ import { attunementNames, updateThemeColor, calculateMostFrequentNumeral } from 
 
 export default function Home() {
   const dispatch = useAppDispatch();
+  const artRef = useRef<SVGSVGElement | null>(null);
+  const editorState = useSelector((state: RootState) => state.seed);
   const urlSeed = useAppSelector(state => state.seed.urlSeed);
   const urlMod = useAppSelector(state => state.seed.urlMod);
   const urlAttunement = useAppSelector(state => state.seed.urlAttunement);
@@ -45,13 +47,11 @@ export default function Home() {
   const walletConnected = useSelector((state: RootState) => state.wallet.connected);
   const layersUIToggled = useSelector(selectLayersUIToggled);
   const displaySettingsToggled = useSelector(selectDisplaySettingsToggled);
-  const modValues = useAppSelector(selectModValues);
+  const modValues = useAppSelector(state => parseModValues(state.seed.editorMod));
   
   const isOTC = useAppSelector(selectOTCMode);
   const searchParams = useSearchParams();
-  const claimId = searchParams.get('claim');
-  
-
+  const claimId = searchParams.get('claim') ?? '';
 
 
   // REFS -------------------------------------------
@@ -333,13 +333,26 @@ export default function Home() {
     }
   }, [hasEditorChanges]);
   
-  // Hide Display Settings when the seed is "0"
+  
+
   useEffect(() => {
-    const selectedItem = queueItems[selectedQueueIndex];
-    if (editorSeed === '0' || selectedQueueIndex !== null && selectedItem.newSeed === '0') {
-      dispatch(toggleDisplaySettingsUI(false));
+    const editorElement = document.querySelector('.editor');
+    if (editorElement) {
+      // Check for mod changes
+      if (editorMod && editorMod !== "000000000000000") {
+        editorElement.classList.add('changed-mod');
+      } else {
+        editorElement.classList.remove('changed-mod');
+      }
+
+      // Check for attunement override
+      if (isAttunementOverridden) {
+        editorElement.classList.add('changed-attunement');
+      } else {
+        editorElement.classList.remove('changed-attunement');
+      }
     }
-  }, [queueItems, selectedQueueIndex, seed, modNumber, editorSeed, editorMod]);
+  }, [editorMod, isAttunementOverridden]);
 
   // Update the editor state to reflect current queue item
   useEffect(() => {
@@ -373,35 +386,36 @@ export default function Home() {
     }
   }, [selectedQueueIndex, queueItems, hasEditorChanges, dispatch]);
 
-  // Update artwork preview based on mod value
+  /* // Update artwork preview based on mod value
   const memoizedApplyModValueToElements = useCallback(applyModValueToElements, []);
-  const memoizedResetLayers = useCallback(resetLayers, []);
+  const memoizedResetLayers = useCallback(resetLayers, []); */
 
-  useEffect(() => {
-  const artwork = document.querySelector('.seedartwork') as SVGSVGElement;
-  if (artwork) {
-    memoizedResetLayers(artwork);
+  /* useEffect(() => {
+    const artwork = document.querySelector('.seedartwork') as SVGSVGElement;
+    if (artwork) {
+      //memoizedResetLayers(artwork);
 
-    // Update attunement class
-    attunementNames.forEach(name => {
-      artwork.classList.remove(name);
-    });
-    if (editorAttunement >= 0 && editorAttunement < attunementNames.length) {
-      artwork.classList.add(attunementNames[editorAttunement]);
-      updateThemeColor(attunementNames[editorAttunement]);
+      // Update attunement class
+      attunementNames.forEach(name => {
+        artwork.classList.remove(name);
+      });
+      if (editorAttunement >= 0 && editorAttunement < attunementNames.length) {
+        artwork.classList.add(attunementNames[editorAttunement]);
+        updateThemeColor(attunementNames[editorAttunement]);
+      }
+
+      const layers = document.querySelectorAll('.seedartwork,.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline');
+      memoizedApplyModValueToElements(layers, modValues.color, 'color');
+
+      //const spinTargets = artwork.querySelectorAll('.lr.on');
+      //memoizedApplyModValueToElements(spinTargets, modValues.spin, 'spin');
+
+      //const depthTargets = artwork.querySelectorAll('.lr.on .fx');
+      //memoizedApplyModValueToElements(depthTargets, modValues.depth, 'depth');
+  
+
     }
-
-    const layers = document.querySelectorAll('.seedartwork,.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline');
-    memoizedApplyModValueToElements(layers, modValues.color, 'color');
-
-    const spinTargets = artwork.querySelectorAll('.lr.on');
-    memoizedApplyModValueToElements(spinTargets, modValues.spin, 'spin');
-
-    const depthTargets = artwork.querySelectorAll('.lr.on .fx');
-    memoizedApplyModValueToElements(depthTargets, modValues.depth, 'depth');
-
-    }
-  }, [modValues, memoizedApplyModValueToElements, editorMod, editorAttunement, selectedQueueIndex]);
+  }, [modValues, memoizedApplyModValueToElements, editorMod, editorAttunement, selectedQueueIndex]); */
 
   // Keyboard shortcuts for Undo/Redo
   useEffect(() => {
@@ -412,24 +426,17 @@ export default function Home() {
       } else if (event.ctrlKey && event.key === 'Z' && event.shiftKey) {
         event.preventDefault();
         dispatch(redo());
+      } else if (event.key === 'r' && !event.ctrlKey || event.key === 'R'  && !event.ctrlKey) {
+        event.preventDefault();
+        handleRandomizeBits();
       }
     };
   
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [dispatch]);
+  }, [dispatch, handleRandomizeBits]);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'r' && !event.ctrlKey || event.key === 'R'  && !event.ctrlKey) {
-        event.preventDefault();
-        handleRandomizeBits();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleRandomizeBits]);
+  
 
   // Reset editor state when wallet is disconnected
   useEffect(() => {
@@ -444,7 +451,7 @@ export default function Home() {
     }
   }, [walletConnected, dispatch]);
 
-  // Listen for and apply Editor attunement changes
+  /* // Listen for and apply Editor attunement changes
   useEffect(() => {
     const artwork = document.querySelector('.seedartwork') as SVGSVGElement;
     if (artwork) {
@@ -458,11 +465,11 @@ export default function Home() {
         artwork.classList.add(attunementNames[editorAttunement]);
       }
     }
-  }, [editorAttunement]);
+  }, [editorAttunement]); */
 
   // Hide cursor after inactivity
   useEffect(() => {
-    const sleeptarget = document.querySelector('.body');
+    const sleeptarget = document.querySelector('body');
     if (sleeptarget) {
       const cleanup = hideMouseCursor(sleeptarget);
       return cleanup;
@@ -544,10 +551,6 @@ export default function Home() {
       );
     
   }, [shouldUpdateURL, editorSeed, editorMod, editorAttunement, isAttunementOverridden]);
-
-  // Ref for the SVG element
-  const artRef = useRef<SVGSVGElement | null>(null);
-  const editorState = useSelector((state: RootState) => state.seed);
 
   useEffect(() => {
     if (claimId && isOTC) {

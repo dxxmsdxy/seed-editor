@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit';
-import { calculateMostFrequentNumeral } from '@/lib/utils/artwork/helpers';
-import { seedToBits } from "@/lib/utils";
+import { calculateMostFrequentNumeral, checkPalindrome } from '@/lib/utils/artwork/helpers';
+import { seedToBits, sanitizeSeed, sanitizeMod, sanitizeAttunement } from "@/lib/utils";
 import { RootState } from '@/store';
 
 
@@ -19,16 +19,12 @@ interface EditorState {
   newMod: string | null;
   newAttunement: number | null;
   editorSeed: string | null;
-  editorMod: string | null;
+  editorMod: string;
   editorAttunement: number | null;
   isAttunementOverridden: boolean;
   shouldResetLayers: boolean;
   hasEditorChanges: boolean;
   displaySettings: number;
-  colorValue: number;  // Color value
-  depthValue: number;  // Depth value
-  spinValue: number;  // Spin value
-  tintValue: number;  // Tint value
   tintPercentValue: number;  // Tint percent value
   actualTintPercentValue: number;
   layersUIToggled: boolean;
@@ -139,6 +135,7 @@ const editorSlice = createSlice({
     
       state.shouldResetLayers = true;
       state.isAttunementOverridden = sanitizedAttunement !== calculateMostFrequentNumeral(BigInt(sanitizedSeed));
+      checkPalindrome(BigInt(sanitizedSeed));
     },
 
     setShouldResetLayers: (state, action: PayloadAction<boolean>) => {
@@ -152,18 +149,21 @@ const editorSlice = createSlice({
     // Reset the editor to initial state
     resetEditorState: (state, action: PayloadAction<{ selectedItem?: QueueItem | null } | undefined>) => {
       const selectedItem = action.payload?.selectedItem;
-      const newSeed = selectedItem ? selectedItem.seed : '0';
+      const sanitizedSeed = sanitizeSeed(selectedItem ? selectedItem.seed : '0');
+      const sanitizedMod = sanitizeMod(selectedItem ? selectedItem.modNumber || "000000000000000" : "000000000000000");
+      const sanitizedAttunement = sanitizeAttunement(selectedItem ? selectedItem.attunementNumber || 0 : 0);
       const newState = {
-        editorSeed: selectedItem ? selectedItem.seed : '0',
-        editorMod: selectedItem ? selectedItem.modNumber || "000000000000000" : "000000000000000",
-        editorAttunement: selectedItem ? selectedItem.attunementNumber || 0 : 0,
-        bitsArray: seedToBits(BigInt(newSeed)),
+        editorSeed: sanitizedSeed,
+        editorMod: sanitizedMod,
+        editorAttunement: sanitizedAttunement,
+        bitsArray: seedToBits(BigInt(sanitizedSeed)),
         hasEditorChanges: false,
         actualTintPercentValue: 100,
         isOverlayToggled: false,
         isAttunementOverridden: false, // Reset the override flag
         // Preserve focus state
         isArtworkFocused: state.isArtworkFocused,
+        modValues: parseModValues(sanitizedMod),
       };
       
       // Only push to history if the current state is not '0'
@@ -176,6 +176,7 @@ const editorSlice = createSlice({
       if (selectedItem) {
         state.bitsArray = seedToBits(BigInt(selectedItem.seed));
       }
+      checkPalindrome(BigInt(sanitizedSeed));
     },
 
     // Update the hasEditorChanges state
@@ -206,14 +207,16 @@ const editorSlice = createSlice({
 
     //  Update editor mod number
     updateEditorMod: (state, action: PayloadAction<{ mod: string; updateChanges?: boolean }>) => {
+      let sanitizedMod;
       if (action.payload.mod === undefined) {
-        console.error('Received undefined mod value');
-        return;
+        sanitizedMod = "000000000000000"
+      } else {
+        sanitizedMod = sanitizeMod(action.payload.mod);
       }
-      const sanitizedMod = sanitizeMod(action.payload.mod);
       const newState = {
         editorMod: sanitizedMod,
         hasEditorChanges: action.payload.updateChanges ?? state.hasEditorChanges,
+        modValues: parseModValues(sanitizedMod),
       };
       pushToHistory(state, newState);
       Object.assign(state, newState);
@@ -268,8 +271,10 @@ const editorSlice = createSlice({
           tintPercent: 100,
         },
         hasEditorChanges: false,
+        displaySettings: 0,
       };
       Object.assign(state, newState);
+      state.shouldResetLayers = true;
     },
 
     // Reset the Editor's attunement number
@@ -353,18 +358,17 @@ const editorSlice = createSlice({
     },
 
     // Update display setting
-    // Update display setting
     updateDisplaySetting: (state, action: PayloadAction<number>) => {
       const index = action.payload;
       
-      if (index >= 6 && index <= 8) {
-        // For buttons 6-8, we'll use a special logic
+      if (index >= 7 && index <= 9) {
+        // For buttons 7-9, we'll use a special logic
         if (state.displaySettings & (1 << index)) {
           // If the clicked button is already on, turn it off
           state.displaySettings &= ~(1 << index);
         } else {
           // If the clicked button is off, turn it on and turn off the others
-          state.displaySettings &= ~(0b111 << 6); // Turn off bits 6, 7, and 8
+          state.displaySettings &= ~(0b111 << 7); // Turn off bits 6, 7, and 8
           state.displaySettings |= (1 << index);  // Turn on the clicked button
         }
       } else {
@@ -372,7 +376,9 @@ const editorSlice = createSlice({
         state.displaySettings ^= (1 << index);
       }
 
-      state.editorMod = calculateModNumber(state);
+      // Update the editorMod based on the new display settings
+      const displaySettingsValue = state.displaySettings.toString().padStart(3, '0');
+      state.editorMod = state.editorMod.slice(0, 12) + displaySettingsValue;
       state.hasEditorChanges = true;
       pushToHistory(state, { editorMod: state.editorMod });
     },
@@ -389,10 +395,25 @@ const editorSlice = createSlice({
       state.displaySettings = displaySettingsValue;
     },
 
+
     // Update slider value
     updateSliderValue: (state, action: PayloadAction<{ name: string; value: number }>) => {
       const { name, value } = action.payload;
       state.modValues[name] = value;
+
+      // Special handling for tint and tint%
+      if (name === 'tint') {
+        if (value === 0) {
+          state.modValues.tintPercent = 0;
+        } else if (state.modValues.tintPercent === 0) {
+          state.modValues.tintPercent = 100;
+        }
+      } else if (name === 'tintPercent') {
+        if (state.modValues.tint === 0) {
+          state.modValues.tintPercent = 0;
+        }
+      }
+
       state.editorMod = calculateModNumber(state);
       state.hasEditorChanges = true;
       pushToHistory(state, { editorMod: state.editorMod });
@@ -546,36 +567,6 @@ const pushToHistory = (state: EditorState, newState: Partial<EditorState>, force
   }
 };
 
-// Sanitize seed number
-function sanitizeSeed(seed: string): string {
-  return seed.replace(/\D/g, '').replace(/^0+/, '') || '0';
-}
-
-// Sanitize mod number
-function sanitizeMod(mod: string): string {
-  if (mod === undefined) {
-    return '000000000000000';
-  }
-  const sanitized = mod.replace(/\D/g, '').slice(0, 15);
-  return sanitized.padStart(15, '0');
-}
-
-// Sanitize attunement number
-function sanitizeAttunement(attunement: number): number {
-  return Math.max(0, Math.min(9, Math.floor(attunement)));
-}
-
-// Parsing individual mod values
-function parseModValues(mod: string) {
-  return {
-    tint: parseInt(mod.slice(0, 1)),
-    tintPercent: parseInt(mod.slice(1, 3)),
-    spin: parseInt(mod.slice(3, 6)),
-    depth: parseInt(mod.slice(6, 9)),
-    color: parseInt(mod.slice(9, 12)),
-  };
-}
-
 // Shuffle an array of bits
 const shuffleArray = (array: number[]) => {
   const shuffledArray = array.slice();
@@ -598,9 +589,16 @@ const calculateModNumber = (state: EditorState): string => {
   const colorValue = color.toString().padStart(3, '0');
   const depthValue = depth.toString().padStart(3, '0');
   const spinValue = spin.toString().padStart(3, '0');
-  const tintValue = tint.toString();
-  const tintPercentValue = tint === 0 ? "00" : 
-    (tintPercent === 100 ? "99" : tintPercent.toString().padStart(2, '0'));
+  const tintValue = tint.toString().padStart(2, '0');
+  
+  let tintPercentValue: string;
+  if (tint === 0) {
+    tintPercentValue = "0";
+  } else if (tintPercent === 100) {
+    tintPercentValue = "0";
+  } else {
+    tintPercentValue = Math.ceil(9 * (tintPercent / 100)).toString();
+  }
 
   return `${tintValue}${tintPercentValue}${spinValue}${depthValue}${colorValue}${displaySettingsValue}`;
 };
@@ -641,6 +639,18 @@ export const selectShouldShowResetMod = createSelector(
     return editorMod !== itemMod;
   }
 );
+
+// Parsing individual mod values
+export function parseModValues(mod: string) {
+  const safeMod = sanitizeMod(mod);
+  return {
+    spin: parseInt(safeMod.slice(3, 6)),
+    depth: parseInt(safeMod.slice(6, 9)),
+    color: parseInt(safeMod.slice(9, 12)),
+    tint: parseInt(safeMod.slice(0, 2)),
+    tintPercent: parseInt(safeMod.slice(2, 3)),
+  };
+}
 
 
 // EXPORTS -----------------------------------------

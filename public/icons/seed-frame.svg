@@ -752,15 +752,41 @@ let holdTimer;
 function updateSVGWithSeed(seed){
   const lrElements=Array.from(document.querySelectorAll('.lr'));
   lrElements.forEach(element=>{element.classList.remove('on')});
+  const subLrElements=Array.from(document.querySelectorAll('.sub'));
+  subLrElements.forEach(element=>{element.classList.remove('on')});
+  const lrIndicators=Array.from(document.querySelectorAll('.pattern path'));
+  lrIndicators.forEach(element=>{element.classList.remove('on')});
 
   function setLayersVisibility(seed){
-    for(let i=0;i<lrElements.length;i++){
-      const isVisible=(seed & BigInt(1)<<BigInt(i))!==0n;
-      lrElements[i].classList.toggle('on',isVisible);
+    const minLength = Math.min(lrElements.length, lrIndicators.length);
+    lrCount=0;
+    artwork.classList.remove('type');
+    for (let i = 0; i < minLength; i++) {
+      const isVisible = (seed & BigInt(1) << BigInt(i)) !== 0n;
+      lrElements[i].classList.toggle('on', isVisible);
+      lrIndicators[i].classList.toggle('on', isVisible);
+      if(isVisible){lrCount=lrCount+1}
+    }
+    if(lrCount>=3&&lrCount<=20){
+      artwork.classList.add('type')
     }
   }
   setLayersVisibility(seed);
   textElement.textContent=seed.toString();
+}
+
+// ADDRESS SUB-LAYERS
+if (document.getElementById('sphere-1').classList.contains('on')) {
+  document.getElementById('sphere-2').classList.add('on');
+}
+if (document.getElementById('sphere-3').classList.contains('on')) {
+  document.getElementById('sphere-4').classList.add('on');
+  document.getElementById('sphere-5').classList.add('on');
+  document.getElementById('sphere-6').classList.add('on');
+}
+if (document.getElementById('sphere-7').classList.contains('on')) {
+  document.getElementById('sphere-8').classList.add('on');
+  document.getElementById('sphere-9').classList.add('on');
 }
 
 function mutationCallback(mutationsList,observer){

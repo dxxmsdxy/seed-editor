@@ -32,33 +32,25 @@ export function updateSVGWithSeed(
   }
 
   // ADDRESS SUB-LAYERS
-  Array.from(context.querySelectorAll(".sphere-1")).forEach((element) => {
-    if (element.classList.contains("on")) {
-      Array.from(context.querySelectorAll(".sphere-2")).forEach((el) => {
-        el.classList.add("on");
-      });
-    }
-  });
-
-  Array.from(context.querySelectorAll(".sphere-3")).forEach((element) => {
-    if (element.classList.contains("on")) {
-      ["sphere-4", "sphere-5", "sphere-6"].forEach((className) => {
-        Array.from(context.querySelectorAll(className)).forEach((el) => {
-          el.classList.add("on");
+  const toggleSubLayers = (parentClass, childClasses) => {
+    Array.from(context.querySelectorAll(`.${parentClass}`)).forEach((element) => {
+      const isOn = element.classList.contains("on");
+      childClasses.forEach((className) => {
+        Array.from(context.querySelectorAll(`.${className}`)).forEach((el) => {
+          el.classList.toggle("on", isOn);
         });
       });
-    }
-  });
-
-  Array.from(context.querySelectorAll(".sphere-7")).forEach((element) => {
-    if (element.classList.contains("on")) {
-      ["sphere-8", "sphere-9"].forEach((className) => {
-        Array.from(context.querySelectorAll(className)).forEach((el) => {
-          el.classList.add("on");
-        });
-      });
-    }
-  });
+    });
+  };
+  
+  // For sphere-1 and sphere-2
+  toggleSubLayers("sphere-1", ["sphere-2"]);
+  
+  // For sphere-3 and its sub-layers
+  toggleSubLayers("sphere-3", ["sphere-4", "sphere-5", "sphere-6"]);
+  
+  // For sphere-7 and its sub-layers
+  toggleSubLayers("sphere-7", ["sphere-8", "sphere-9"]);
 
   if (lrCount < 5) {
     artwork.classList.add("shallow");

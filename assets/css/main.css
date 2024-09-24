@@ -2409,9 +2409,13 @@ a {
   background-color: #000;
   border-radius: 10px;
   opacity: 0;
+  transition: opacity 0.3s;
 }
 
-body:has(.has-config).mod-button span
+body:has(.changed-mod) .mod-button span,
+body:has(.changed-attunement) .mod-button span {
+  opacity: 1;
+}
 
 .ui-button.advanced {
   width: 100%;
@@ -3121,7 +3125,7 @@ body:has(.theme-bkg) {
   grid-row-gap: 0vw;
   border: 1px solid #000;
   grid-template-rows: auto;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
   margin-bottom: 25px;
   overflow: hidden;
 }
@@ -5443,7 +5447,6 @@ body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting:active 
   fill: #000;
 }
 
-
 body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-y {
   stroke: #ffffff;
 }
@@ -5501,6 +5504,7 @@ body:has(.seed-details.focused) .seed-indicator{
   color: #fff;
 }
 */
+
 
 @media screen and (max-width: 991px) {
   .svg-container:hover,
@@ -5574,6 +5578,68 @@ body:has(.seed-details.focused) .seed-indicator{
 
 .overlay{display:none}
 *:has(.pauseRGB) .rgblens,*:has(.pauseRGB) .overlay{animation-play-state:paused!important}
+
+
+.seedartwork #char,.seedartwork g.pattern,.seedartwork g.orientation{display:block;opacity:0;pointer-events:none;transition:none}
+
+
+.mod-controls:has(.btn-display-setting:nth-child(3).selected) #icon-cmyk rect:nth-child(1),
+.mod-controls:has(.btn-display-setting:nth-child(3).selected) #icon-cmyk rect:nth-child(2),
+.mod-controls:has(.btn-display-setting:nth-child(3).selected) #icon-cmyk rect:nth-child(3){
+  
+}
+
+.mod-controls:has(.btn-display-setting:nth-child(3).selected) #icon-red rect.cls-1 {
+  fill: #00ffff3a !important;
+}
+
+.mod-controls:has(.btn-display-setting:nth-child(3).selected) #icon-green rect.cls-1 {
+  fill: #ff00ff3a !important;
+}
+
+.mod-controls:has(.btn-display-setting:nth-child(3).selected) #icon-blue rect.cls-1 {
+  fill: #ffff003a !important;
+}
+
+.mod-controls #icon-red rect.cls-1,
+.mod-controls #icon-green rect.cls-1,
+.mod-controls #icon-blue rect.cls-1 {
+  transition:fill 0.3s
+}
+
+.attunement-reset, .mod-reset {
+  font-size:13px;
+}
+
+.attunement-selector .attunement-label {
+  position: relative;
+}
+.attunement-selector .attunement-reset {
+  position: absolute;
+  left: 100%;
+}
+
+.attunement-selector.default .attunement-reset {
+  opacity: 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

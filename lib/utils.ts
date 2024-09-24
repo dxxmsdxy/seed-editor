@@ -53,6 +53,27 @@ export function seedToBits(seed: bigint): boolean[] {
   return seed.toString(2).padStart(100, '0').split('').reverse().map(bit => bit === '1');
 }
 
+
+// Sanitize seed number
+export function sanitizeSeed(seed: string): string {
+  return seed.replace(/\D/g, '').replace(/^0+/, '') || '0';
+}
+
+// Sanitize mod number
+export function sanitizeMod(mod: string): string {
+  if (mod === undefined) {
+    return '000000000000000';
+  }
+  const sanitized = mod.replace(/\D/g, '').slice(0, 15);
+  return sanitized.padStart(15, '0');
+}
+
+// Sanitize attunement number
+export function sanitizeAttunement(attunement: number): number {
+  return Math.max(0, Math.min(9, Math.floor(attunement)));
+}
+
+
 // Hide mouse cursor after 5 seconds of inactivity and disable interactions
 export function hideMouseCursor(element: HTMLElement) {
   let timeout: NodeJS.Timeout;
@@ -61,6 +82,12 @@ export function hideMouseCursor(element: HTMLElement) {
   const hideCursor = () => {
     document.body.classList.add('cursor-hidden');
     isHidden = true;
+  };
+
+  const resetTimer = () => {
+    clearTimeout(timer);
+    showCursor();
+    timer = setTimeout(hideCursor, timeout);
   };
 
   const showCursor = () => {

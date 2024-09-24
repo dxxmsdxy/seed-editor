@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useArtworkHotkeys } from "@/hooks";
 import { RootState } from '@/store';
-import { selectShouldResetLayers, updateEditorState, clearUrlParams } from '@/store/slices/editorSlice';
+import { selectShouldResetLayers, updateEditorState, clearUrlParams, selectDisplaySettings } from '@/store/slices/editorSlice';
 import { ArtworkHandling } from './ArtworkHandling';
 
 
@@ -31,25 +31,19 @@ const Artwork: React.FC<ArtworkProps> = ({
 }) => {
   useArtworkHotkeys(BigInt(seed));
   const dispatch = useDispatch();
+  const currentDate = new Date();
   const urlSeed = useSelector((state: RootState) => state.seed.urlSeed);
   const urlMod = useSelector((state: RootState) => state.seed.urlMod);
   const urlAttunement = useSelector((state: RootState) => state.seed.urlAttunement);
-
-  const svgRef = useRef<SVGSVGElement>(null);
-  const currentDate = new Date();
-  const isFlippedRef = useRef(false);
   const shouldResetLayers = useSelector(selectShouldResetLayers);
-
-  const modValues = useSelector((state: RootState) => state.seed.modValues);
-  const selectedQueueItem = useSelector((state: RootState) => 
-    state.queue.selectedIndex !== null ? state.queue.items[state.queue.selectedIndex] : null
-  );
-
+  const displaySettings = useSelector(selectDisplaySettings);
   const {
     isColorAnimationPaused,
     isDepthAnimationPaused,
     isSpinAnimationPaused
   } = useSelector((state: RootState) => state.seed);
+
+  const svgRef = useRef<SVGSVGElement>(null);
 
   const [urlParamsProcessed, setUrlParamsProcessed] = useState(false);
   useEffect(() => {
@@ -67,21 +61,19 @@ const Artwork: React.FC<ArtworkProps> = ({
     <>
       <ArtworkHandling
         svgRef={svgRef}
-        isFlippedRef={isFlippedRef}
-        mod={mod}
-        modValues={modValues}
         editorSeed={editorSeed}
         editorMod={editorMod}
         editorAttunement={editorAttunement}
         isColorAnimationPaused={isColorAnimationPaused}
         isDepthAnimationPaused={isDepthAnimationPaused}
         isSpinAnimationPaused={isSpinAnimationPaused}
-        selectedQueueItem={selectedQueueItem}
+        selectedQueueItem={null}
         shouldResetLayers={shouldResetLayers}
         urlSeed={urlSeed ?? ''}
         urlMod={urlMod ?? ''}
         urlAttunement={urlAttunement ?? ''}
         urlParamsProcessed={urlParamsProcessed}
+        displaySettings={displaySettings}
         dispatch={dispatch}
       />
         <svg
@@ -787,13 +779,13 @@ const Artwork: React.FC<ArtworkProps> = ({
                 </g>
                 <g id="frame-left">
                   <path d="M70.6 70.1h40.7v1779.8H70.6z"/>
-                  <g>
+                  <g class="cap">
                     <path d="M70.6 70.1h162.7v162.7H70.6z"/>
                     <path d="m70.6 70.1 162.7 162.7"/>
                     <path d="M233.3 70.1 70.6 232.8"/>
                     <path d="M111.3 110.8h81.3v81.3h-81.3z"/>
                   </g>
-                  <g>
+                  <g class="cap">
                     <path d="M70.6 1687.2h162.7v162.7H70.6z"/>
                     <path d="m70.6 1687.2 162.7 162.7"/>
                     <path d="M233.3 1687.2 70.6 1849.9"/>
@@ -802,13 +794,13 @@ const Artwork: React.FC<ArtworkProps> = ({
                 </g>
                 <g id="frame-right">
                   <path d="M1329.8 70.1h40.7v1779.8h-40.7z"/>
-                  <g>
+                  <g class="cap">
                     <path d="M1207.8 70.1h162.7v162.7h-162.7z"/>
                     <path d="m1207.8 70.1 162.7 162.7"/>
                     <path d="m1370.5 70.1-162.7 162.7"/>
                     <path d="M1248.5 110.8h81.3v81.3h-81.3z"/>
                   </g>
-                  <g>
+                  <g class="cap">
                     <path d="M1207.8 1687.2h162.7v162.7h-162.7z"/>
                     <path d="m1207.8 1687.2 162.7 162.7"/>
                     <path d="m1370.5 1687.2-162.7 162.7"/>

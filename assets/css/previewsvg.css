@@ -38,7 +38,13 @@
 .seedartwork g.pattern path.on{fill:#000}
 .seedartwork #layercount{font-size:60px}
 .seedartwork #ornate-frame{display:block;opacity:0;pointer-events:none;fill:#fff;transition:opacity 0.7s linear}
-.seedartwork.prime #ornate-frame{opacity:1;pointer-events:auto}
+.seedartwork.palindrome #ornate-frame{opacity:1;pointer-events:auto;fill-opacity:0.85;}
+.seedartwork #ornate-frame g g{opacity: 0}
+.seedartwork.palindrome #ornate-frame g g{
+  opacity: 0;
+  fill-opacity: 1;
+}
+.seedartwork.prime #ornate-frame g g{opacity: 1}
 
 @container(max-aspect-ratio:13.4/18){.seedartwork .wrap{transform:scale(0.92);background:#fff}.seedartwork .backdrop{transform:scale(1,2)}}
 /*@container(max-height:720px){.seedartwork.reveal:has(g.on) .art g.on .fx *{animation:none;filter:blur(0.3px)}}*/
@@ -439,7 +445,7 @@
 .seedartwork.depth:not(.reveal) .bkg{filter:drop-shadow(3px 5px 10px rgb(0 0 0/.1))brightness(0.7)}
 .seedartwork.depth:has(g.on):not(.reveal) .art g.on,.seedartwork.depth:has(g.on):not(.reveal) #ornate-frame{filter:drop-shadow(0px 4px 15px rgb(0 0 0/.5))}
 .seedartwork.depth.reveal:has(g.on) .outline,.seedartwork.depth.reveal:has(g.on) text{filter:blur(1.4px)}
-@keyframes focusDrift{from{filter:blur(1.15px)}26%{filter:blur(1.15px)}34%{filter:blur(2.2px)}70%{filter:blur(17px)}89%{filter:blur(36px)}to{filter:blur(1.15px)}}
+@keyframes focusDrift{from{filter:blur(1.15px)}26%{filter:blur(1.15px)}34%{filter:blur(2.2px)}70%{filter:blur(17px)}89%{filter:blur(40px)}to{filter:blur(1.15px)}}
 
 .seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(1n of .on) .fx,.seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-9 of .on) .fx{filter:none;animation:focusDrift 42s linear infinite;animation-duration:0s;filter:none;animation-delay:-15s}
 .seedartwork.depth.reveal:has(g.on) .art g.on:nth-last-child(10n-8 of .on) .fx{filter:none;animation-delay:-4s;animation-duration:32s}
@@ -578,6 +584,8 @@ html,body{color:#FFFFFF00}
 }
 .seedartwork.removebkg .bkg,.seedartwork.removebkg .bkg.square{visibility:hidden}
 
+.seedartwork.removebkg.grayscale .bkg,.seedartwork.removebkg.grayscale .bkg.square{visibility:visible;opacity:0.85}
+
 .seedartwork.squareFrame .art {clip-path:url('#artClipSquare')}
 .seedartwork.squareFrame .outline {display:none}
 .seedartwork.squareFrame .outline.square {display:block}
@@ -680,7 +688,7 @@ html,body{color:#FFFFFF00}
 
 
 .seedartwork.creation.hyper.reveal:has(g.on) .art g.on .fx *,
-.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+.seedartwork.creation.hyper.reveal:has(g.on) .outline {
   filter: drop-shadow(0px 0px 25px #d2e6a6);
 }
 .seedartwork.creation.hyper.reveal:has(g.on) .art g.on:nth-child(2n of .on) .fx * {
@@ -690,15 +698,15 @@ html,body{color:#FFFFFF00}
   filter: drop-shadow(0px 0px 25px #80aeb6);
 }
 .seedartwork.destruction.hyper.reveal:has(g.on) .art g.on .fx *,
-.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+.seedartwork.destruction.hyper.reveal:has(g.on) .outline {
   filter: drop-shadow(0px 0px 25px #ff3842);
 }
 .seedartwork.perception.hyper:has(g.on) .art g.on .fx *,
-.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+.seedartwork.perception.hyper.reveal:has(g.on) .outline {
   filter: drop-shadow(0px 0px 25px rgba(88, 255, 124, 0.5));
 }
 .seedartwork.protection.hyper:has(g.on) .art g.on .fx *,
-.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+.seedartwork.protection.hyper.reveal:has(g.on) .outline {
   filter: drop-shadow(0px 0px 25px rgba(180, 200, 212, 0.5));
 }
 .seedartwork.protection.hyper:has(g.on) .art g.on:nth-child(even of .on) .fx * {
@@ -708,26 +716,26 @@ html,body{color:#FFFFFF00}
   filter: drop-shadow(0px 0px 25px rgba(126, 198, 243, 0.5));
 }
 .seedartwork.passion.hyper:has(g.on) .art g.on .fx *,
-.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+.seedartwork.passion.hyper.reveal:has(g.on) .outline {
   filter: drop-shadow(0px 0px 25px rgba(254, 214, 101, 0.5));
 }
 .seedartwork.passion.hyper:has(g.on) .art g.on:nth-child(4n of .on) .fx * {
   filter: drop-shadow(0px 0px 25px rgba(101, 254, 249, 0.5));
 }
 .seedartwork.fortune.hyper:has(g.on) .art g.on .fx *,
-.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+.seedartwork.fortune.hyper.reveal:has(g.on) .outline {
   filter: drop-shadow(0px 0px 25px rgba(255, 204, 63, 0.5));
 }
 .seedartwork.wisdom.hyper:has(g.on) .art g.on .fx *,
-.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+.seedartwork.wisdom.hyper.reveal:has(g.on) .outline {
   filter: drop-shadow(0px 0px 25px rgba(132, 123, 255, 0.5));
 }
 .seedartwork.resilience.hyper:has(g.on) .art g.on .fx *,
-.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+.seedartwork.resilience.hyper.reveal:has(g.on) .outline {
   filter: drop-shadow(0px 0px 25px rgba(150, 150, 150, 0.5));
 }
 .seedartwork.transformation.hyper:has(g.on) .art g.on .fx *,
-.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
+.seedartwork.transformation.hyper.reveal:has(g.on) .outline {
   filter: drop-shadow(0px 0px 25px rgba(140, 255, 253, 0.5));
 }
 .seedartwork.transformation.hyper:has(g.on) .art g.on:nth-child(even of .on) .fx * {
@@ -742,14 +750,23 @@ html,body{color:#FFFFFF00}
   stroke: #7a5ffb;
 }
 .seedartwork.discovery.hyper:has(g.on) .art g.on .fx *,
-.seedartwork.eternity.hyper.reveal:has(g.on) .outline {
-  filter: drop-shadow(0px 0px 25px rgba(255, 255, 255, 0.5));
+.seedartwork.discovery.hyper.reveal:has(g.on) .outline {
+  filter: drop-shadow(0px 0px 25px rgba(255, 200, 117, 0.5));
 }
 
+.seedartwork.grayscale.hyper.reveal:has(g.on) .outline {
+  filter: drop-shadow(0px 0px 25px rgba(255, 200, 117, 0.5))grayscale(1) contrast(1.1);
+}
 
 
 .seedartwork.depth:has(g.on):not(.reveal) .art g.on {}
 
 .seedartwork.cmyk:has(g.on):not(.reveal) .art g.on .fx {
   
+}
+
+
+.seedartwork:has(.sphere-1.on) .sphere-2 {
+  display:block;
+  opacity: 1;
 }

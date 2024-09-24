@@ -149,6 +149,8 @@ export function applyModValueToElements(elements: NodeListOf<Element> | HTMLColl
   const computedStyle = window.getComputedStyle(firstElement);
   const duration = parseFloat(computedStyle.animationDuration) || TOTAL_ANIMATION_DURATION;
 
+  
+
   if (modType === 'depth') {
     applyDepthMod(elementsArray, modValue);
   } else {
@@ -238,7 +240,7 @@ function applyDepthMod(elements: Element[], depthModValue: number): void {
 
 
 function applyDropShadowFilter(svg: SVGSVGElement, depthModValue: number) {
-  const minShadow = { x: 0, y: 0, blur: 1, alpha: 0.1 };
+  const minShadow = { x: 0, y: 0, blur: 1, alpha: 0.01 };
   const maxShadow = { x: 0, y: 4, blur: 999, alpha: 1 };
 
   const elements = svg.querySelectorAll('g.on .fx');
@@ -287,6 +289,47 @@ function applyDropShadowFilter(svg: SVGSVGElement, depthModValue: number) {
 
 
 
+
+
+export function flipLayers(svg: SVGSVGElement, shouldFlip: boolean): void {
+  const artGroup = svg.querySelector('.art');
+  if (!artGroup) return;
+
+  // Select both .lr and .sub elements
+  const layers = Array.from(artGroup.querySelectorAll('.lr, .sub'));
+  
+  // Find the last non-.lr and non-.sub element
+  const lastNonLayerElement = artGroup.querySelector('#slot');
+  
+  // Sort layers based on their original index
+  const sortedLayers = layers.sort((a, b) => {
+    const aIndex = parseInt(a.getAttribute('data-original-index') || '0', 10);
+    const bIndex = parseInt(b.getAttribute('data-original-index') || '0', 10);
+    return aIndex - bIndex;
+  });
+
+  const currentlyFlipped = artGroup.getAttribute('data-flipped') === 'true';
+
+  if (shouldFlip !== currentlyFlipped) {
+    // Reverse the order of layers
+    const newOrder = shouldFlip ? sortedLayers.reverse() : sortedLayers;
+    newOrder.forEach(layer => {
+      if (lastNonLayerElement) {
+        artGroup.insertBefore(layer, lastNonLayerElement);
+      } else {
+        artGroup.appendChild(layer);
+      }
+    });
+  }
+
+  // Update the data-flipped attribute and class
+  artGroup.setAttribute('data-flipped', shouldFlip.toString());
+  svg.classList.toggle('flip', shouldFlip);
+}
+
+
+
+
 export function resetLayers(svg: SVGSVGElement | null): void {
   if (!svg) return;
 
@@ -299,16 +342,27 @@ export function resetLayers(svg: SVGSVGElement | null): void {
     '.lr line',
     '.lr rect',
     '.lr polyline',
-    '.lr .fx'
+    '.lr .fx',
+    '.sub',
+    '.sub path',
+    '.sub polygon',
+    '.sub circle',
+    '.sub ellipse',
+    '.sub line',
+    '.sub rect',
+    '.sub polyline',
+    '.sub .fx'
   ];
 
   const elements = svg.querySelectorAll(selectors.join(', '));
   elements.forEach(element => {
     const originalDelay = element.getAttribute('data-original-delay');
+    const originalDuration = element.getAttribute('data-original-duration');
     if (originalDelay) {
       (element as HTMLElement).style.animationDelay = `${originalDelay}s`;
-    } else {
-      (element as HTMLElement).style.animationDelay = '0s';
+    }
+    if (originalDuration) {
+      (element as HTMLElement).style.animationDuration = `${originalDuration}s`;
     }
   });
   // Remove the depth filter style
@@ -316,4 +370,12 @@ export function resetLayers(svg: SVGSVGElement | null): void {
   if (depthFilterStyle) {
     depthFilterStyle.remove();
   }
+
+  // Reset flip
+  const artGroup = svg.querySelector('.art');
+  if (artGroup) {
+    flipLayers(svg, false);
+    artGroup.setAttribute('data-flipped', 'false');
+  }
+
 }

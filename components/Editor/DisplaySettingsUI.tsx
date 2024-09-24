@@ -9,7 +9,6 @@ import debounce from 'lodash/debounce';
 
 
 
-
 //================================================//
 
 const iconContext = require.context('@/public/icons/settings', false, /seeds-editor-icons_.*\.svg$/);
@@ -59,25 +58,36 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
     [dispatch]
   );
 
-  // Debounced function for updating the attunement
-  const debouncedUpdateAttunement = useCallback(
-    debounce((attunement: number) => {
-      dispatch(updateEditorAttunement({ attunementNumber: attunement, updateChanges: false }));
-    }, 100),
-    [dispatch]
-  );
-
   // Handle display settings toggle button interaction
   const handleDisplaySettingToggle = useCallback((index: number) => {
     if (!isLocked) {
+      const newDisplaySettings = displaySettings ^ (1 << index);
       dispatch(updateDisplaySetting(index));
     }
-  }, [isLocked, dispatch]);
+  }, [isLocked, dispatch, displaySettings]);
 
   // Handle display settings slider interaction
   const handleSliderChange = (mod: string, value: number, isSliding: boolean) => {
     if (!isLocked) {
-      dispatch(updateSliderValue({ name: mod, value }));
+      if (mod === 'tintPercent' && value === 0) {
+        // If tintPercent is set to 0, set tint to 0 and update the mod
+        dispatch(updateSliderValue({ name: 'tint', value: 0 }));
+        dispatch(updateSliderValue({ name: 'tintPercent', value: 0 }));
+        
+        // Update the editorMod to set the tint segment to '00'
+        const currentMod = editorMod || '000000000000000';
+        const updatedMod = '00' + currentMod.slice(2);
+        dispatch(updateEditorMod({ mod: updatedMod, updateChanges: true }));
+      } else {
+        dispatch(updateSliderValue({ name: mod, value }));
+        
+        if (mod === 'tint' && value === 0) {
+          // If tint is set to 0, reset tintPercent to 100
+          dispatch(updateSliderValue({ name: 'tint', value: 0 }));
+          dispatch(updateSliderValue({ name: 'tintPercent', value: 100 }));
+        }
+      }
+  
       if (!isSliding) {
         // Additional actions when sliding stops, if needed
       }
@@ -117,8 +127,6 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
   const handleToggleSpinAnimation = () => {
     dispatch(toggleSpinAnimationPause());
   };
-  
-  
 
   useEffect(() => {
     const attunementSelector = document.querySelector('.attunement-selector');
@@ -145,6 +153,14 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
   useEffect(() => {
     dispatch(updateDisplaySettingsFromMod(editorMod ?? "000000000000000"));
   }, [editorMod, dispatch]);
+
+  // Update the Mod Input element with the editor mod state
+  useEffect(() => {
+    const modInput = document.querySelector('.mod-input') as HTMLElement;
+    if (modInput) {
+      modInput.textContent = '.' + (editorMod || '');
+    }
+  }, [editorMod]);
 
 
   // STRUCTURE ---------------------------------------
@@ -198,6 +214,11 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
             >
               {editorAttunement}
             </span>
+            <span 
+              className={`attunement-reset`}
+            >
+              Reset
+            </span>
           </div>
         </div>
         <div className="attune-nav next ui-element" onClick={() => !isLocked && handleAttunementChange((editorAttunement + 1) % 10)}>
@@ -212,16 +233,16 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
 
       {/* Sliders */}
       <RangeSlider name="color" value={modValues.color} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
-      <RangeSlider name="depth" value={modValues.depth} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
       <RangeSlider name="spin" value={modValues.spin} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
+      <RangeSlider name="depth" value={modValues.depth} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
       <RangeSlider name="tint" value={modValues.tint} onChange={handleSliderChange} min={0} max={99} step={1} defaultValue={0} disabled={isLocked} />
       <RangeSlider 
-        name="tint%" 
-        value={modValues.tintPercent} 
+        name="tintPercent" 
+        value={modValues.tintPercent}
         onChange={handleSliderChange} 
         min={0} 
         max={100}
-        step={10} 
+        step={1} 
         disabled={isLocked || modValues.tint === 0}
         defaultValue={100}
         displayValue={(value) => `${value}%`}
