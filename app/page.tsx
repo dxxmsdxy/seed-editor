@@ -15,13 +15,12 @@ import InscribeModal from "@/components/Editor/InscribeModal";
 import DiagnosticsPanel from "@/components/Editor/DiagnosticsPanel";
 import { selectOTCMode } from '@/store/slices/otcSlice';
 
-import { updateEditorState, updateEditorSeed, updateEditorMod, updateHasEditorChanges, resetEditorState, resetEditorMod, resetEditorAttunement, toggleBit, randomizeBits, undo, redo, selectLayersUIToggled, selectDisplaySettingsToggled, toggleLayersUI, toggleDisplaySettingsUI, checkEditorMatchesSelectedItem, toggleDepthAnimationPause, toggleSpinAnimationPause, overrideEditorAttunement, setUrlParams,parseModValues } from '@/store/slices/editorSlice';
+import { updateEditorState, updateEditorSeed, updateEditorMod, updateHasEditorChanges, resetEditorState, resetEditorMod, resetEditorAttunement, toggleBit, randomizeBits, undo, redo, selectLayersUIToggled, selectDisplaySettingsToggled, toggleLayersUI, toggleDisplaySettingsUI, checkEditorMatchesSelectedItem, toggleDepthAnimationPause, toggleSpinAnimationPause, overrideEditorAttunement, setUrlParams, parseModValues } from '@/store/slices/editorSlice';
 import { initializeQueue, getSetQueueItems, setSelectedIndex, updateQueueItem } from '@/store/slices/queueSlice';
 import { setShowInscribeModal } from '@/store/slices/modalSlice';
-import { selectElementContents, clearSelection, hideMouseCursor } from '@/lib/utils';
-import { selectModValues } from '@/store/slices/editorSlice';
 import { applyModValueToElements, resetLayers } from '@/lib/utils/artwork/updateSVGWithMod';
-import { attunementNames, updateThemeColor, calculateMostFrequentNumeral } from '@/lib/utils/artwork/helpers';
+import { selectElementContents, clearSelection, hideMouseCursor } from '@/lib/utils';
+import { calculateMostFrequentNumeral } from '@/lib/utils/artwork/helpers';
 
 
 
@@ -47,19 +46,14 @@ export default function Home() {
   const walletConnected = useSelector((state: RootState) => state.wallet.connected);
   const layersUIToggled = useSelector(selectLayersUIToggled);
   const displaySettingsToggled = useSelector(selectDisplaySettingsToggled);
-  const modValues = useAppSelector(state => parseModValues(state.seed.editorMod));
-  
-  const isOTC = useAppSelector(selectOTCMode);
-  const searchParams = useSearchParams();
-  const claimId = searchParams.get('claim') ?? '';
 
 
   // REFS -------------------------------------------
 
   const inputRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
-  const svgOverlayRef = useRef<HTMLDivElement>(null);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
+
 
   // CHECKS -----------------------------------------
 
@@ -69,15 +63,12 @@ export default function Home() {
   const isSpinAnimationPaused = useAppSelector((state: RootState) => state.seed.isSpinAnimationPaused);
 
 
+  // CALLBACKS --------------------------------------
+
   const isSelectedItemLocked = useCallback(() => {
     if (selectedQueueIndex === null || selectedQueueIndex >= queueItems.length) return false;
     return queueItems[selectedQueueIndex].locked;
   }, [selectedQueueIndex, queueItems]);
-
-
-  // CALLBACKS --------------------------------------
-
-  // Editor initialization --------------------------
 
   // React to user interaction with the Editor UI
   const handleEditorInteraction = useCallback(() => {
@@ -86,21 +77,8 @@ export default function Home() {
     }
   }, [selectedQueueIndex, seed]);
 
-  // Add event listeners to editor elements
-  useEffect(() => {
-    const editorElements = document.querySelectorAll('.editor .app-pane *');
-    editorElements.forEach(element => {
-      element.addEventListener('click', handleEditorInteraction);
-    });
 
-    return () => {
-      editorElements.forEach(element => {
-        element.removeEventListener('click', handleEditorInteraction);
-      });
-    };
-  }, [handleEditorInteraction]);
-
-  // Editor logic ---------------------------------
+  // EDITOR LOGIC ---------------------------------
 
   // Update the Editor's seed number via the seed input
   const handleSeedInputChange = useCallback((updatedSeed: string) => {
@@ -137,13 +115,13 @@ export default function Home() {
     }
   }, [dispatch, isSelectedItemLocked, queueItems, selectedQueueIndex, editorMod, editorAttunement]);
 
-
-
   // Reset the Editor's seed number
   const handleResetEditorSeed = useCallback(() => {
     if (isSelectedItemLocked()) return;
     dispatch(resetEditorState());
   }, [dispatch]);
+
+  // Reset the Editor's mod number
   const handleResetEditorMod = useCallback(() => {
     if (isSelectedItemLocked()) return;
     dispatch(resetEditorMod());
@@ -152,6 +130,12 @@ export default function Home() {
       dispatch(checkEditorMatchesSelectedItem(selectedItem));
     }
   }, [dispatch, selectedQueueIndex, queueItems, isSelectedItemLocked]);
+
+  // Reset the Editor's attunement number
+  const handleResetEditorAttunement = useCallback(() => {
+    if (isSelectedItemLocked()) return;
+    dispatch(resetEditorAttunement());
+  }, [dispatch, isSelectedItemLocked]);
 
   // Enable the Editor's seed reset button
   const enableSeedResetButton = useCallback(() => {
@@ -162,11 +146,6 @@ export default function Home() {
     return isNonZeroSeed || isNonDefaultMod || isNonDefaultAttunement;
   }, [editorSeed, editorMod, editorAttunement]);
 
-  const handleResetEditorAttunement = useCallback(() => {
-    if (isSelectedItemLocked()) return;
-    dispatch(resetEditorAttunement());
-  }, [dispatch, isSelectedItemLocked]);
-
   // Randomize the Editor's seed number
   const handleRandomizeBits = () => {
     if (!isSelectedItemLocked()) {
@@ -174,22 +153,45 @@ export default function Home() {
     }
   };
 
-  // Toggle individual bits in the seed number
+  // Toggle individual bits in the Editor's seed number
   const handleToggleBit = (index: number) => {
     if (!isSelectedItemLocked()) {
       dispatch(toggleBit(index));
     }
   };
 
-  // Artwork Preview logic --------------------------
+  // Set the selected queue item with the Editor's state
+  const handleSetQueueItem = useCallback(() => {
+    if (selectedQueueIndex !== null && hasEditorChanges) {
+      dispatch(updateQueueItem({
+        index: selectedQueueIndex,
+        item: {
+          newSeed: editorSeed,
+          newMod: editorMod,
+          newAttunement: editorAttunement,
+        },
+        isExplicitSet: true,
+      }));
+      dispatch(updateHasEditorChanges(false));
+      dispatch(toggleLayersUI(false));
+      dispatch(toggleDisplaySettingsUI(false));
+      
+      // Update the editor state to reflect the new queue item
+      dispatch(updateEditorState({
+        seed: editorSeed,
+        mod: editorMod,
+        attunement: editorAttunement,
+      }));
+    }
+  }, [selectedQueueIndex, hasEditorChanges, editorSeed, editorMod, editorAttunement, dispatch]);
 
-  // Apply display style to artwork preview
-  const debouncedApplyModValueToElements = useCallback(
-    debounce((elements, modValue, modType) => {
-      applyModValueToElements(elements, modValue, modType);
-    }, 50),
-    []
-  );
+
+  // ADDITIONAL FUNCTIONALITY ----------------------
+
+  // Toggle the SVG Details overlay element
+  const toggleArtworkOverlay = useCallback(() => {
+    setisOverlayToggled(prev => !prev);
+  }, []);
 
   // Handle SVG overlay mouse interactions
   const handleSvgOverlayInteraction = useCallback(() => {
@@ -223,45 +225,38 @@ export default function Home() {
       onDoubleClick: handleClick,
     };
   }, []);
-
-  // Toggle the SVG Overlay element
-  const toggleArtworkOverlay = useCallback(() => {
-    setisOverlayToggled(prev => !prev);
-  }, []);
-
+  
+  // Toggle the SVG preview's play state
   const togglePlay = useCallback(() => {
     dispatch(toggleSpinAnimationPause());
     dispatch(toggleDepthAnimationPause());
-  }, []);
-
-  // Queue logic ---------------------------------
-
-  // Set the selected queue item with the Editor's state
-  const handleSetQueueItem = useCallback(() => {
-    if (selectedQueueIndex !== null && hasEditorChanges) {
-      dispatch(updateQueueItem({
-        index: selectedQueueIndex,
-        item: {
-          newSeed: editorSeed,
-          newMod: editorMod,
-          newAttunement: editorAttunement,
-        },
-        isExplicitSet: true,
-      }));
-      dispatch(updateHasEditorChanges(false));
-      dispatch(toggleLayersUI(false));
-      dispatch(toggleDisplaySettingsUI(false));
-      
-      // Update the editor state to reflect the new queue item
-      dispatch(updateEditorState({
-        seed: editorSeed,
-        mod: editorMod,
-        attunement: editorAttunement,
-      }));
+  
+    const isNowPaused = !isSpinAnimationPaused;
+  
+    if (isNowPaused) {
+      // Reset animations to their positions based on editorMod
+      const artwork = document.querySelector('.seedartwork') as SVGSVGElement;
+      if (artwork) {
+        resetLayers(artwork);
+  
+        const modValues = parseModValues(editorMod);
+  
+        // Apply color mod
+        const colorElements = artwork.querySelectorAll('.seedartwork,.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline,.sub,.sub path,.sub polygon,.sub circle,.sub ellipse,.sub line,.sub rect,.sub polyline,.sub .fx');
+        applyModValueToElements(colorElements, modValues.color, 'color');
+  
+        // Apply spin mod
+        const spinElements = artwork.querySelectorAll('.lr.on, .sub.on');
+        applyModValueToElements(spinElements, modValues.spin, 'spin');
+  
+        // Apply depth mod
+        const depthElements = artwork.querySelectorAll('.lr.on .fx');
+        applyModValueToElements(depthElements, modValues.depth, 'depth');
+      }
     }
-  }, [selectedQueueIndex, hasEditorChanges, editorSeed, editorMod, editorAttunement, dispatch]);
+  }, [dispatch, isSpinAnimationPaused, editorMod]);
 
-  // New function to handle the special copy
+  // Handle the special Ctrl + Shift + Copy functionality
   const handleSpecialCopy = useCallback((event: React.KeyboardEvent<HTMLSpanElement>) => {
     if (event.ctrlKey && event.shiftKey && event.key === 'C') {
       event.preventDefault();
@@ -283,33 +278,26 @@ export default function Home() {
   }, [editorSeed, editorMod, editorAttunement]);
 
 
-
   // EFFECTS ----------------------------------------
 
-   // Handle clicks anywhere in the document
-   useEffect(() => {
-    const handleDocumentClick = (event: MouseEvent) => {
-      const editorElement = editorRef.current;
-      const svgOverlay = svgOverlayRef.current;
+  // Add event listeners to editor elements
+  useEffect(() => {
+    const editorElements = document.querySelectorAll('.editor .app-pane *');
+    editorElements.forEach(element => {
+      element.addEventListener('click', handleEditorInteraction);
+    });
 
-      if (!editorElement || !svgOverlay) {return}
-
-      if (!editorElement.contains(event.target as Node)) {
-        setIsArtworkFocused(false);
-        dispatch(toggleLayersUI(false));
-        dispatch(toggleDisplaySettingsUI(false));
-      }
+    return () => {
+      editorElements.forEach(element => {
+        element.removeEventListener('click', handleEditorInteraction);
+      });
     };
-
-    document.addEventListener('mousedown', handleDocumentClick);
-    return () => document.removeEventListener('mousedown', handleDocumentClick);
-  }, [dispatch]);
+  }, [handleEditorInteraction]);
 
   // Double-click listener
   useEffect(() => {
     const handleDoubleClickOutside = (event: MouseEvent) => {
       const editorWrapper = document.querySelector('.editor-inner');
-      const Details = document.querySelector('.seed-details');
       if (editorWrapper && (!editorWrapper.contains(event.target as Node) || event.target === editorWrapper)) {
         dispatch(setSelectedIndex(null));
         dispatch(resetEditorState());
@@ -321,23 +309,18 @@ export default function Home() {
     return () => document.removeEventListener('dblclick', handleDoubleClickOutside);
   }, [setisOverlayToggled, dispatch]);
 
-  // Toggle changes flag on Editor element
+  // Toggle changes flags on Editor element
   useEffect(() => {
     const editorElement = document.querySelector('.editor');
     if (editorElement) {
+
+      // Check for unsaved changes
       if (hasEditorChanges) {
         editorElement.classList.add('unsaved-changes');
       } else {
         editorElement.classList.remove('unsaved-changes');
       }
-    }
-  }, [hasEditorChanges]);
-  
-  
 
-  useEffect(() => {
-    const editorElement = document.querySelector('.editor');
-    if (editorElement) {
       // Check for mod changes
       if (editorMod && editorMod !== "000000000000000") {
         editorElement.classList.add('changed-mod');
@@ -352,7 +335,7 @@ export default function Home() {
         editorElement.classList.remove('changed-attunement');
       }
     }
-  }, [editorMod, isAttunementOverridden]);
+  }, [hasEditorChanges, editorMod, isAttunementOverridden]);
 
   // Update the editor state to reflect current queue item
   useEffect(() => {
@@ -417,16 +400,21 @@ export default function Home() {
     }
   }, [modValues, memoizedApplyModValueToElements, editorMod, editorAttunement, selectedQueueIndex]); */
 
-  // Keyboard shortcuts for Undo/Redo
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Undo change
       if (event.ctrlKey && event.key === 'z' && !event.shiftKey) {
         event.preventDefault();
         dispatch(undo());
-      } else if (event.ctrlKey && event.key === 'Z' && event.shiftKey) {
+      }
+      // Redo change
+      else if (event.ctrlKey && event.key === 'Z' && event.shiftKey) {
         event.preventDefault();
         dispatch(redo());
-      } else if (event.key === 'r' && !event.ctrlKey || event.key === 'R'  && !event.ctrlKey) {
+      }
+      // Randomize seed
+      else if (event.key === 'r' && !event.ctrlKey || event.key === 'R'  && !event.ctrlKey) {
         event.preventDefault();
         handleRandomizeBits();
       }
@@ -435,8 +423,6 @@ export default function Home() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [dispatch, handleRandomizeBits]);
-
-  
 
   // Reset editor state when wallet is disconnected
   useEffect(() => {
@@ -477,13 +463,17 @@ export default function Home() {
   }, []); */
 
 
+
+  // INITIALIZE EDITOR WITH URL PARAMETERS
+
   const [isArtworkReady, setIsArtworkReady] = useState(false);
   const [urlParamsProcessed, setUrlParamsProcessed] = useState(false);
 
+  // Check if artwork preview is ready
   useEffect(() => {
     const checkArtworkReady = () => {
       const artwork = document.querySelector('.seedartwork');
-      if (artwork?.getAttribute('data-original-delay')) {
+      if (artwork) {
         setIsArtworkReady(true);
       } else {
         setTimeout(checkArtworkReady, 100); // Check every 100ms
@@ -492,6 +482,7 @@ export default function Home() {
     checkArtworkReady();
   }, []);
 
+  // When artwork is ready, initialize it with URL parameters
   useEffect(() => {
     if (!isArtworkReady) return;
   
@@ -524,6 +515,7 @@ export default function Home() {
     }
   }, [isArtworkReady, dispatch]);
 
+  // Update browser URL with Editor seed/mod/attunement
   const updateBrowserURL = (seed: string, mod: string, attunement: number, isAttunementOverridden: boolean) => {
     let params = seed;
   
@@ -541,18 +533,31 @@ export default function Home() {
     const newUrl = `${window.location.pathname}?seed=${params}`;
     history.replaceState(null, '', newUrl);
   };
+
+  // Update Browser URL state (might need depricated)
   const shouldUpdateURL = useAppSelector(state => state.seed.shouldUpdateURL);
   useEffect(() => {
       updateBrowserURL(
-        editorSeed, 
+        editorSeed,
         editorMod || "000000000000000", 
         editorAttunement || 0, 
-        isAttunementOverridden
+        isAttunementOverridden 
       );
     
   }, [shouldUpdateURL, editorSeed, editorMod, editorAttunement, isAttunementOverridden]);
 
-  useEffect(() => {
+
+
+
+  // WIP --------------------------------------
+  
+  // WIP claim functionality
+
+  const isOTC = useAppSelector(selectOTCMode);
+  const searchParams = useSearchParams();
+  const claimId = searchParams.get('claim') ?? '';
+
+  /* useEffect(() => {
     if (claimId && isOTC) {
       // Fetch OTC inscription data using the claimId
       // API CALL GOES HERE
@@ -563,7 +568,7 @@ export default function Home() {
         attunement: 0,
       }));
     }
-  }, [claimId, isOTC, dispatch]);
+  }, [claimId, isOTC, dispatch]); */
 
 
 

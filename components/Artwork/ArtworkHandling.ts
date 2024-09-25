@@ -71,7 +71,7 @@ export const ArtworkHandling: React.FC<ArtworkHandlingProps> = ({
             svg.classList.add('seedartwork', 'pauseColor', 'pauseDepth');
         
             // Update display settings
-            const displayClasses = ['reveal', 'flip', 'invert', 'removebkg', 'hyper', 'grayscale', 'cmyk', 'red', 'green', 'blue'];
+            const displayClasses = ['reveal', 'flip', 'invert', 'removebkg', 'hyper', 'grayscale', 'cmyk', 'accent-1', 'accent-2', 'accent-3'];
             displayClasses.forEach((className, index) => {
                 const isActive = index === 0 ? (displaySettings & (1 << 0)) === 0 : (displaySettings & (1 << index)) !== 0;
                 svg.classList.toggle(className, isActive);
@@ -87,13 +87,13 @@ export const ArtworkHandling: React.FC<ArtworkHandlingProps> = ({
             });
 
             // Ensure only one of red, green, or blue is active
-            const colorClasses = ['red', 'green', 'blue'];
+            /* const colorClasses = ['red', 'green', 'blue'];
             const activeColorClass = colorClasses.find(color => svg.classList.contains(color));
             if (activeColorClass) {
                 colorClasses.forEach(color => {
                 if (color !== activeColorClass) svg.classList.remove(color);
                 });
-            }
+            } */
 
             // Check for palindrome
             const isPalindrome = checkPalindrome(BigInt(editorSeed));
@@ -166,7 +166,7 @@ export const ArtworkHandling: React.FC<ArtworkHandlingProps> = ({
         
         updateSVGClasses();
 
-    }, [displaySettings, editorMod, editorSeed, modValues, isColorAnimationPaused, isDepthAnimationPaused, isSpinAnimationPaused]);
+    }, [displaySettings, modValues]);
 
 
     // Reset the animation delays to initial

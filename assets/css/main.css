@@ -3933,14 +3933,15 @@ input::-moz-focus-outer {
 
 .reset-editor {
   position: fixed;
-  top: 99px;
+  top: 0;
   right: 0;
-  bottom: 35px;
-  width: 7vw;
+  bottom: 0;
+  width: 10vw;
   background-color: #00000014;
   cursor: pointer;
   transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
   opacity: 0;
+  pointer-events: auto;
 }
 
 .reset-editor:hover {
@@ -3950,6 +3951,7 @@ input::-moz-focus-outer {
 .reset-editor.hidden {
   opacity: 0;
   pointer-events: none;
+  transition: none;
   transform:translateX(5vw);
 }
 
@@ -5102,6 +5104,19 @@ body:has(.editor.unsaved-changes) .seed-details-header span {
   border-bottom: 2px solid #ffffff1d;
 }
 
+.app-pane,
+.queue-container {
+  transition: transform 0.8s, opacity 0.8s, width 2s;
+}
+
+.app-pane.right {
+  height: 100%;
+}
+
+body:has(.seed-details.focused) .app-pane {
+  transition: transform 0.8s, opacity 0.8s, width 0.3s ease-out;
+}
+
 body:has(.seed-details.focused) .app-pane.right .details-actions-container {
   pointer-events: auto;
 }
@@ -5250,13 +5265,6 @@ body:has(.seed-details.focused) .attunement-input::selection {
   pointer-events: auto;
 }
 
-.app-pane,
-.queue-container {
-  transition: transform 0.8s, opacity 0.8s;
-}
-.app-pane.right {
-  height: 100%;
-}
 
 body:has(.seed-details.focused) .app-pane {
   width: 25vw;

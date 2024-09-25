@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
-import { useSelector, useDispatch } from 'react-redux';
-import { updateDisplaySetting, updateEditorMod, resetEditorMod, updateEditorAttunement, overrideEditorAttunement, resetAttunementOverride, selectModValues, selectShouldShowResetMod, resetEditorAttunement, selectDisplaySettings, toggleColorAnimationPause, toggleDepthAnimationPause, toggleSpinAnimationPause, updateSliderValue, selectAttunement, updateDisplaySettingsFromMod } from '@/store/slices/editorSlice';
+import { useSelector } from 'react-redux';
+import { updateDisplaySetting, updateEditorMod, resetEditorMod, updateEditorAttunement, selectModValues, selectShouldShowResetMod, resetEditorAttunement, selectDisplaySettings, toggleColorAnimationPause, toggleDepthAnimationPause, toggleSpinAnimationPause, updateSliderValue, selectAttunement, updateDisplaySettingsFromMod } from '@/store/slices/editorSlice';
 import { selectElementContents, clearSelection } from '@/lib/utils';
 import { attunementNames } from '@/lib/utils/artwork/helpers';
 import RangeSlider from './RangeSlider';
@@ -19,14 +19,11 @@ const icons = iconContext.keys().map(iconContext);
 const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
   
   const dispatch = useAppDispatch();
-  const editorSeed = useAppSelector((state) => state.seed.editorSeed);
   const editorMod = useAppSelector((state) => state.seed.editorMod);
   const editorAttunement = useAppSelector((state) => state.seed.editorAttunement);
-  const prevAttunementRef = useRef(editorAttunement);
   const isAttunementOverridden = useAppSelector((state) => state.seed.isAttunementOverridden);
   const modValues = useAppSelector(selectModValues);
   const displaySettings = useAppSelector(selectDisplaySettings);
-  const attunement = useSelector(selectAttunement);
   const [showAttunementName, setShowAttunementName] = useState(false);
   const shouldShowResetMod = useAppSelector(selectShouldShowResetMod);
 
@@ -49,6 +46,14 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
       setShowAttunementName(false);
     }
   }, [isLocked, dispatch]);
+
+  // Prevent strange behavior
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLSpanElement>) => {
+    if (e.ctrlKey && (e.key === 'z' || e.key === 'Z')) {
+      e.preventDefault();
+      // You may want to dispatch undo/redo actions here if needed
+    }
+  };
 
   // Debounced function to update editor mod value
   const debouncedUpdateEditorMod = useCallback(
@@ -286,6 +291,7 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
                 e.currentTarget.textContent = textContent.slice(1);
               }
             }}
+            onKeyDown={handleKeyDown}
           >
             .{useAppSelector(state => state.seed.editorMod)}
           </span>

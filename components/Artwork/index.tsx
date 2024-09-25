@@ -92,6 +92,7 @@ const Artwork: React.FC<ArtworkProps> = ({
         tabIndex={0}
         data-mod={editorMod}
         data-attunement={editorAttunement}
+        preserveAspectRatio="true"
       >
         <desc id="seedsDesc">
           SEEDS. Interpretable artwork. Code &amp; art by dxxmsdxy. Inscribed{" "}

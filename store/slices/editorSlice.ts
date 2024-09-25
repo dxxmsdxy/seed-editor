@@ -259,22 +259,29 @@ const editorSlice = createSlice({
 
     // Reset the Editor's seed number
     resetEditorMod: (state, action: PayloadAction<void>) => {
-      let modToResetTo: string = "000000000000000";
-    
-      const newState = {
-        editorMod: modToResetTo,
-        modValues: {
-          color: 0,
-          depth: 0,
-          spin: 0,
-          tint: 0,
-          tintPercent: 100,
-        },
-        hasEditorChanges: false,
-        displaySettings: 0,
+      state.modValues = {
+        color: 0,
+        depth: 0,
+        spin: 0,
+        tint: 0,
+        tintPercent: 100,
       };
-      Object.assign(state, newState);
+      state.editorMod = "000000000000000";
+      state.displaySettings = 0;
       state.shouldResetLayers = true;
+    },
+
+    checkEditorModMatchesSelectedItem: (state, action: PayloadAction<QueueItem>) => {
+      const selectedItem = action.payload;
+      if (!selectedItem) {
+        state.hasEditorChanges = false;
+        return;
+      }
+    
+      const editorModMatchesItem =
+        state.editorMod === (selectedItem.isSet ? (selectedItem.newMod || selectedItem.modNumber || "000000000000000") : (selectedItem.modNumber || "000000000000000"));
+    
+      state.hasEditorChanges = !editorModMatchesItem;
     },
 
     // Reset the Editor's attunement number
@@ -361,7 +368,7 @@ const editorSlice = createSlice({
     updateDisplaySetting: (state, action: PayloadAction<number>) => {
       const index = action.payload;
       
-      if (index >= 7 && index <= 9) {
+      /* if (index >= 7 && index <= 9) {
         // For buttons 7-9, we'll use a special logic
         if (state.displaySettings & (1 << index)) {
           // If the clicked button is already on, turn it off
@@ -371,10 +378,10 @@ const editorSlice = createSlice({
           state.displaySettings &= ~(0b111 << 7); // Turn off bits 6, 7, and 8
           state.displaySettings |= (1 << index);  // Turn on the clicked button
         }
-      } else {
+      } else { */
         // For other buttons, toggle as before
         state.displaySettings ^= (1 << index);
-      }
+      /* } */
 
       // Update the editorMod based on the new display settings
       const displaySettingsValue = state.displaySettings.toString().padStart(3, '0');
@@ -400,23 +407,43 @@ const editorSlice = createSlice({
     updateSliderValue: (state, action: PayloadAction<{ name: string; value: number }>) => {
       const { name, value } = action.payload;
       state.modValues[name] = value;
-
-      // Special handling for tint and tint%
-      if (name === 'tint') {
-        if (value === 0) {
-          state.modValues.tintPercent = 0;
-        } else if (state.modValues.tintPercent === 0) {
-          state.modValues.tintPercent = 100;
-        }
-      } else if (name === 'tintPercent') {
-        if (state.modValues.tint === 0) {
-          state.modValues.tintPercent = 0;
-        }
+    
+      // Update only the relevant part of the editorMod
+      let updatedMod = state.editorMod;
+      switch (name) {
+        case 'color':
+          updatedMod = value.toString().padStart(3, '0') + updatedMod.slice(3);
+          break;
+        case 'spin':
+          updatedMod = updatedMod.slice(0, 3) + value.toString().padStart(3, '0') + updatedMod.slice(6);
+          break;
+        case 'depth':
+          updatedMod = updatedMod.slice(0, 6) + value.toString().padStart(3, '0') + updatedMod.slice(9);
+          break;
+        case 'tint':
+          updatedMod = updatedMod.slice(0, 9) + value.toString().padStart(2, '0') + updatedMod.slice(11);
+          // Update tintPercent if tint is 0
+          if (value === 0) {
+            state.modValues.tintPercent = 0;
+            updatedMod = updatedMod.slice(0, 11) + '0' + updatedMod.slice(12);
+          } else if (state.modValues.tintPercent === 0) {
+            state.modValues.tintPercent = 100;
+            updatedMod = updatedMod.slice(0, 11) + '0' + updatedMod.slice(12);
+          }
+          break;
+        case 'tintPercent':
+          if (state.modValues.tint === 0) {
+            updatedMod = updatedMod.slice(0, 11) + '0' + updatedMod.slice(12);
+          } else {
+            const tintPercentValue = value === 100 ? '0' : Math.ceil(9 * (value / 100)).toString();
+            updatedMod = updatedMod.slice(0, 11) + tintPercentValue + updatedMod.slice(12);
+          }
+          break;
       }
-
-      state.editorMod = calculateModNumber(state);
+    
+      state.editorMod = updatedMod;
       state.hasEditorChanges = true;
-      pushToHistory(state, { editorMod: state.editorMod });
+      pushToHistory(state, { editorMod: updatedMod });
     },
 
     // Addresses the Tint% conversion
