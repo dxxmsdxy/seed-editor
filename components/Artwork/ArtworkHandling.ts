@@ -68,7 +68,7 @@ export const ArtworkHandling: React.FC<ArtworkHandlingProps> = ({
         const updateSVGClasses = () => {
 
             // Always ensure these classes are present
-            svg.classList.add('seedartwork', 'pauseColor', 'pauseDepth');
+            svg.classList.add('seedartwork', 'pauseColor', 'pauseDepth', 'spin');
         
             // Update display settings
             const displayClasses = ['reveal', 'flip', 'invert', 'removebkg', 'hyper', 'grayscale', 'cmyk', 'accent-1', 'accent-2', 'accent-3'];
@@ -150,9 +150,7 @@ export const ArtworkHandling: React.FC<ArtworkHandlingProps> = ({
                     }
                 }
 
-                // Handle spin and depth classes
-                if (modValues.spin > 0) { svg.classList.add('spin') }
-                else { svg.classList.remove('spin') }
+                
             
                 if (modValues.depth > 0) { svg.classList.add('depth') }
                 else { svg.classList.remove('depth') }

@@ -2195,6 +2195,10 @@ body {
   opacity: 0.85;
 }
 
+/* .seedartwork.removebkg .art {
+  clip-path: none;
+} */
+
 .seedartwork.squareFrame .art {
   clip-path: url("#artClipSquare");
 }
@@ -2537,6 +2541,9 @@ body {
 .seedartwork.destruction.reveal.accent-1:has(g.on):not(.cmyk) .outline {
   stroke: #d6406b;
 }
+.seedartwork.destruction.reveal.accent-1:has(g.on):not(.cmyk) #seednumber {
+  fill: #d6406b;
+}
 .seedartwork.destruction.reveal.accent-2:has(g.on):not(.cmyk) .art g.on:nth-last-child(4n of .on) .fx {
   fill: #ffa2a2;
   stroke: #d64040;
@@ -2545,11 +2552,15 @@ body {
 .seedartwork.destruction.reveal.accent-3:has(g.on):not(.cmyk) .bkg {
   fill: #2b051c;
 }
+.seedartwork.destruction.reveal.accent-3:has(g.on):not(.cmyk) #seednumber {
+  fill: #d6406b;
+}
 
 .seedartwork.perception.accent-1:has(g.on):not(.cmyk) .art g.on:nth-last-child(even of .on) .fx {
   fill: #33a072;
 }
-.seedartwork.perception.accent-2:has(g.on):not(.cmyk) .art g.on:nth-last-child(4n of .on) .fx {
+.seedartwork.perception.accent-2:has(g.on):not(.cmyk) .art g.on:nth-last-child(4n of .on) .fx,
+.seedartwork.perception.accent-3:has(g.on):not(.cmyk) #seednumber {
   fill: #0c3a2c;
 }
 .seedartwork.perception.accent-3:has(g.on):not(.cmyk) .art g.on:nth-last-child(3n of .on) .fx {
@@ -2577,8 +2588,9 @@ body {
 .seedartwork.protection.accent-1:has(g.on):not(.cmyk) .art g.on:nth-last-child(even of .on) .fx {
   fill: #1600bf;
 }
-.seedartwork.protection.accent-2:has(g.on):not(.cmyk) .art g.on:nth-last-child(4n of .on) .fx {
-  fill: #3a20ff;
+.seedartwork.protection.accent-2:has(g.on):not(.cmyk) .art g.on:nth-last-child(4n of .on) .fx,
+.seedartwork.protection.accent-2:has(g.on):not(.cmyk) #seednumber {
+  fill: #3256f3;
 }
 .seedartwork.protection.accent-3:has(g.on):not(.cmyk) .art g.on:nth-last-child(3n of .on) .fx {
   fill: #0d0070;
@@ -2589,14 +2601,18 @@ body {
 .seedartwork.protection.reveal.accent-1:has(g.on):not(.cmyk) .art g.on:nth-last-child(even of .on) .fx {
   stroke: #5fb8ffbb;
   fill: #526ec9;
+  mix-blend-mode: overlay;
 }
 .seedartwork.protection.reveal.accent-2:has(g.on):not(.cmyk) .art g.on:nth-last-child(4n of .on) .fx,
 .seedartwork.protection.reveal.accent-2:has(g.on):not(.cmyk) .bkg {
   stroke: #2379a3;
-  fill: #0f1b60f5;
+  fill: #1e2e8bf5;
 }
 .seedartwork.protection.reveal.accent-2:has(g.on):not(.cmyk) .outline {
   stroke: #acfbff;
+}
+.seedartwork.protection.reveal.accent-2:has(g.on):not(.cmyk) #seednumber {
+  fill: #9cbdebaa;
 }
 .seedartwork.protection.reveal.accent-3:has(g.on):not(.cmyk) .art g.on:nth-last-child(3n of .on) .fx {
   fill: #d1e4ff;
@@ -2649,11 +2665,11 @@ body {
   fill: #ffe46b;
 }
 .seedartwork.fortune.reveal.accent-1:has(g.on):not(.cmyk) .art g.on:nth-last-child(even of .on) .fx {
-  fill: #bea06e;
-  stroke: #ffde91;
+  fill: #b19158;
+  stroke: #fbcc67;
 }
 .seedartwork.fortune.reveal.accent-1:has(g.on):not(.cmyk) .outline {
-  stroke: #f1e789;
+  stroke: #fbcc67;
 }
 .seedartwork.fortune.reveal.accent-2:has(g.on):not(.cmyk) .art g.on:nth-last-child(4n of .on) .fx,
 .seedartwork.fortune.reveal.accent-2:has(g.on):not(.cmyk) .bkg {
@@ -2662,19 +2678,22 @@ body {
   stroke: #ad7d2a;
 }
 .seedartwork.fortune.reveal.accent-3:has(g.on):not(.cmyk) .art g.on:nth-last-child(3n of .on) .fx {
-  fill: #55693a;
+  fill: #4a5b35;
   stroke: #263e14;
   filter: none;
 }
+.seedartwork.fortune.reveal.accent-2:has(g.on):not(.cmyk) #seednumber {
+  fill: #f5e126;
+}
 
 .seedartwork.wisdom.accent-1:has(g.on):not(.cmyk) .art g.on:nth-last-child(even of .on) .fx {
-  fill: #5222ba;
+  fill: #592eb7;
 }
 .seedartwork.wisdom.accent-2:has(g.on):not(.cmyk) .art g.on:nth-last-child(4n of .on) .fx {
   fill: #2f0e77;
 }
 .seedartwork.wisdom.accent-3:has(g.on):not(.cmyk) .art g.on:nth-last-child(3n of .on) .fx {
-  fill: #925fff;
+  fill: #8a65db;
 }
 .seedartwork.wisdom.reveal.accent-1:has(g.on):not(.cmyk) .art g.on .fx {
   stroke: #775fff;

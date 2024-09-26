@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { useSelector } from 'react-redux';
-import { updateDisplaySetting, updateEditorMod, resetEditorMod, updateEditorAttunement, selectModValues, selectShouldShowResetMod, resetEditorAttunement, selectDisplaySettings, toggleColorAnimationPause, toggleDepthAnimationPause, toggleSpinAnimationPause, updateSliderValue, selectAttunement, updateDisplaySettingsFromMod } from '@/store/slices/editorSlice';
+import { updateDisplaySetting, updateEditorMod, resetEditorMod, updateEditorAttunement, selectModValues, selectShouldShowResetMod, resetEditorAttunement, selectDisplaySettings, toggleColorAnimationPause, toggleDepthAnimationPause, toggleSpinAnimationPause, updateSliderValue, selectAttunement, updateDisplaySettingsFromMod, updateTintPercentModSegment } from '@/store/slices/editorSlice';
 import { selectElementContents, clearSelection } from '@/lib/utils';
 import { attunementNames } from '@/lib/utils/artwork/helpers';
 import RangeSlider from './RangeSlider';
@@ -74,23 +74,27 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
   // Handle display settings slider interaction
   const handleSliderChange = (mod: string, value: number, isSliding: boolean) => {
     if (!isLocked) {
-      if (mod === 'tintPercent' && value === 0) {
-        // If tintPercent is set to 0, set tint to 0 and update the mod
-        dispatch(updateSliderValue({ name: 'tint', value: 0 }));
-        dispatch(updateSliderValue({ name: 'tintPercent', value: 0 }));
-        
-        // Update the editorMod to set the tint segment to '00'
-        const currentMod = editorMod || '000000000000000';
-        const updatedMod = currentMod.slice(0, 9) + '00' + currentMod.slice(11);
-        dispatch(updateEditorMod({ mod: updatedMod, updateChanges: true }));
-      } else {
-        dispatch(updateSliderValue({ name: mod, value }));
-        
-        if (mod === 'tint' && value === 0) {
-          // If tint is set to 0, reset tintPercent to 100
+      if (mod === 'tint') {
+        if (value === 0) {
+          // If tint is set to 0, set tintPercent mod segment to 0 but keep slider position
           dispatch(updateSliderValue({ name: 'tint', value: 0 }));
-          dispatch(updateSliderValue({ name: 'tintPercent', value: 100 }));
+          dispatch(updateTintPercentModSegment(0));
+        } else {
+          // If tint is non-zero, restore tintPercent mod segment based on slider position
+          dispatch(updateSliderValue({ name: 'tint', value }));
+          dispatch(updateTintPercentModSegment(modValues.tintPercent));
         }
+      } else if (mod === 'tintPercent') {
+        if (modValues.tint === 0) {
+          // If tint is 0, only update the slider position, not the mod
+          dispatch(updateSliderValue({ name: 'tintPercent', value, updateMod: false }));
+        } else {
+          // If tint is non-zero, update both slider and mod
+          dispatch(updateSliderValue({ name: 'tintPercent', value }));
+        }
+      } else {
+        // For other sliders, update as normal
+        dispatch(updateSliderValue({ name: mod, value }));
       }
   
       if (!isSliding) {
@@ -230,77 +234,81 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
           &gt;
         </div>
       </div>
+      <div className="mod-container">
+        {/* Display setting icons */}
+        <div className="mod-controls ui-element">
+          {renderDisplaySettingIcons()}
+        </div>
+        <div className="mod-sliders">
+          {/* Sliders */}
+          <RangeSlider name="color" value={modValues.color} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
+          <RangeSlider name="spin" value={modValues.spin} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
+          <RangeSlider name="depth" value={modValues.depth} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
+          <RangeSlider name="tint" value={modValues.tint} onChange={handleSliderChange} min={0} max={99} step={1} defaultValue={0} disabled={isLocked} />
+          <RangeSlider 
+            name="tintPercent" 
+            value={modValues.tintPercent}
+            onChange={handleSliderChange} 
+            min={10} 
+            max={100}
+            step={10} 
+            disabled={isLocked || modValues.tint === 0}
+            defaultValue={100}
+            displayValue={(value) => `${value}%`}
+            checkDefault={modValues.tint === 0}
+            label="tint%"
+          />
 
-      {/* Display setting icons */}
-      <div className="mod-controls ui-element">
-        {renderDisplaySettingIcons()}
-      </div>
-
-      {/* Sliders */}
-      <RangeSlider name="color" value={modValues.color} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
-      <RangeSlider name="spin" value={modValues.spin} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
-      <RangeSlider name="depth" value={modValues.depth} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
-      <RangeSlider name="tint" value={modValues.tint} onChange={handleSliderChange} min={0} max={99} step={1} defaultValue={0} disabled={isLocked} />
-      <RangeSlider 
-        name="tintPercent" 
-        value={modValues.tintPercent}
-        onChange={handleSliderChange} 
-        min={0} 
-        max={100}
-        step={10} 
-        disabled={isLocked || modValues.tint === 0}
-        defaultValue={100}
-        displayValue={(value) => `${value}%`}
-      />
-
-      {/* Mod number display */}
-      <div className="mod-number-container">
-        <div className="mod-number">
-          <span className="mod-label ui-element">Mod:</span>
-          <span
-            className="mod-input ui-element"
-            onClick={(e) => {
-              e.stopPropagation();
-              selectElementContents(e.currentTarget);
-            }}
-            contentEditable="true"
-            suppressContentEditableWarning={true}
-            onInput={(e) => {
-              const value = e.currentTarget.textContent?.replace(/^\./, '') || '';
-              if (value === '') {
-                handleResetMod();
-              } else {
-                dispatch(updateEditorMod({ mod: value, updateChanges: true }));
-                clearSelection();
-              }
-            }}
-            onBlur={(e) => {
-              e.preventDefault();
-              const value = e.currentTarget.textContent?.replace(/^\./, '') || '';
-              if (value === '') {
-                handleResetMod();
-              } else {
-                dispatch(updateEditorMod({ mod: value, updateChanges: true }));
-                clearSelection();
-              }
-              e.currentTarget.textContent = '.' + (editorMod || '');
-            }}
-            onFocus={(e) => {
-              const textContent = e.currentTarget.textContent;
-              if (textContent && textContent.startsWith('.')) {
-                e.currentTarget.textContent = textContent.slice(1);
-              }
-            }}
-            onKeyDown={handleKeyDown}
-          >
-            .{useAppSelector(state => state.seed.editorMod)}
-          </span>
-          <span 
-            className={`mod-reset ${shouldShowResetMod ? 'show' : ''}`} 
-            onClick={handleResetMod}
-          >
-            Reset
-          </span>
+          {/* Mod number display */}
+          <div className="mod-number-container">
+            <div className="mod-number">
+              <span className="mod-label ui-element">Mod:</span>
+              <span
+                className="mod-input ui-element"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  selectElementContents(e.currentTarget);
+                }}
+                contentEditable="true"
+                suppressContentEditableWarning={true}
+                onInput={(e) => {
+                  const value = e.currentTarget.textContent?.replace(/^\./, '') || '';
+                  if (value === '') {
+                    handleResetMod();
+                  } else {
+                    dispatch(updateEditorMod({ mod: value, updateChanges: true }));
+                    clearSelection();
+                  }
+                }}
+                onBlur={(e) => {
+                  e.preventDefault();
+                  const value = e.currentTarget.textContent?.replace(/^\./, '') || '';
+                  if (value === '') {
+                    handleResetMod();
+                  } else {
+                    dispatch(updateEditorMod({ mod: value, updateChanges: true }));
+                    clearSelection();
+                  }
+                  e.currentTarget.textContent = '.' + (editorMod || '');
+                }}
+                onFocus={(e) => {
+                  const textContent = e.currentTarget.textContent;
+                  if (textContent && textContent.startsWith('.')) {
+                    e.currentTarget.textContent = textContent.slice(1);
+                  }
+                }}
+                onKeyDown={handleKeyDown}
+              >
+                .{useAppSelector(state => state.seed.editorMod)}
+              </span>
+              <span 
+                className={`mod-reset ${shouldShowResetMod ? 'show' : ''}`} 
+                onClick={handleResetMod}
+              >
+                Reset
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

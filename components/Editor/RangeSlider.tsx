@@ -16,6 +16,7 @@ interface RangeSliderProps {
   displayValue?: (value: number) => string;
   defaultValue?: number;
   checkDefault?: boolean;
+  label?: string;
 }
 
 
@@ -31,7 +32,8 @@ const RangeSlider: React.FC<RangeSliderProps> = React.memo(({
   disabled = false, 
   displayValue = (value) => value.toString(), 
   defaultValue = 0, 
-  checkDefault = true
+  checkDefault = true,
+  label
 }) => {
   const isDefault = checkDefault ? value === defaultValue : false;
   const [isActive, setIsActive] = useState(false);
@@ -85,7 +87,7 @@ const RangeSlider: React.FC<RangeSliderProps> = React.memo(({
 
   return (
     <div className={`setting-slider ${disabled ? 'disabled' : ''} ${isDefault && !isActive ? 'default' : ''}`}>
-      <div className="setting-label ui-element">{name}:</div>
+      <div className="setting-label ui-element">{label || name}:</div>
       <div className="range-slider-container">
         <div className="range-slider">
           <input

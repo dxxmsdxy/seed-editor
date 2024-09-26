@@ -359,6 +359,48 @@ const editorSlice = createSlice({
       Object.assign(state, newState);
     },
 
+    randomizeEditorMod: (state) => {
+      const numStates = getRandomInt(0, 10);
+      const bitStates = Array(10).fill(false).map((_, i) => i < numStates ? Math.random() < 0.5 : false);
+      
+      const shuffledIndices = [...Array(5)].map((_, i) => i).sort(() => Math.random() - 0.5);
+      
+      const modValues = {
+        color: 0,
+        spin: 0,
+        depth: 0,
+        tint: 0,
+        tintPercent: 0
+      };
+    
+      shuffledIndices.forEach((index, i) => {
+        if (bitStates[i]) {
+          switch(index) {
+            case 0: modValues.color = getRandomInt(0, 999); break;
+            case 1: modValues.spin = getRandomInt(0, 999); break;
+            case 2: modValues.depth = getRandomInt(0, 999); break;
+            case 3: modValues.tint = getRandomInt(0, 99); break;
+            case 4: modValues.tintPercent = getRandomInt(0, 9); break;
+          }
+        }
+      });
+    
+      const displaySettings = getRandomInt(0, 511); // 9 bits for display settings
+    
+      const newModString = 
+        modValues.color.toString().padStart(3, '0') +
+        modValues.spin.toString().padStart(3, '0') +
+        modValues.depth.toString().padStart(3, '0') +
+        modValues.tint.toString().padStart(2, '0') +
+        modValues.tintPercent.toString() +
+        displaySettings.toString().padStart(3, '0');
+    
+      state.editorMod = newModString;
+      state.modValues = modValues;
+      state.displaySettings = displaySettings;
+      state.hasEditorChanges = true;
+    },
+
     // Track click + hold while selecting bit buttons
     setActiveSelection: (state, action: PayloadAction<boolean>) => {
       state.activeSelection = action.payload;
@@ -402,48 +444,44 @@ const editorSlice = createSlice({
       state.displaySettings = displaySettingsValue;
     },
 
+    // Special treatment for TintPercent mod segment
+    updateTintPercentModSegment: (state, action: PayloadAction<number>) => {
+      const tintPercentValue = action.payload === 100 ? '0' : Math.ceil(9 * (action.payload / 100)).toString();
+      state.editorMod = state.editorMod.slice(0, 11) + tintPercentValue + state.editorMod.slice(12);
+    },
 
     // Update slider value
-    updateSliderValue: (state, action: PayloadAction<{ name: string; value: number }>) => {
-      const { name, value } = action.payload;
+    updateSliderValue: (state, action: PayloadAction<{ name: string; value: number; updateMod?: boolean }>) => {
+      const { name, value, updateMod = true } = action.payload;
       state.modValues[name] = value;
     
-      // Update only the relevant part of the editorMod
-      let updatedMod = state.editorMod;
-      switch (name) {
-        case 'color':
-          updatedMod = value.toString().padStart(3, '0') + updatedMod.slice(3);
-          break;
-        case 'spin':
-          updatedMod = updatedMod.slice(0, 3) + value.toString().padStart(3, '0') + updatedMod.slice(6);
-          break;
-        case 'depth':
-          updatedMod = updatedMod.slice(0, 6) + value.toString().padStart(3, '0') + updatedMod.slice(9);
-          break;
-        case 'tint':
-          updatedMod = updatedMod.slice(0, 9) + value.toString().padStart(2, '0') + updatedMod.slice(11);
-          // Update tintPercent if tint is 0
-          if (value === 0) {
-            state.modValues.tintPercent = 0;
-            updatedMod = updatedMod.slice(0, 11) + '0' + updatedMod.slice(12);
-          } else if (state.modValues.tintPercent === 0) {
-            state.modValues.tintPercent = 100;
-            updatedMod = updatedMod.slice(0, 11) + '0' + updatedMod.slice(12);
-          }
-          break;
-        case 'tintPercent':
-          if (state.modValues.tint === 0) {
-            updatedMod = updatedMod.slice(0, 11) + '0' + updatedMod.slice(12);
-          } else {
+      if (updateMod) {
+        // Update only the relevant part of the editorMod
+        let updatedMod = state.editorMod;
+        switch (name) {
+          case 'color':
+            updatedMod = value.toString().padStart(3, '0') + updatedMod.slice(3);
+            break;
+          case 'spin':
+            updatedMod = updatedMod.slice(0, 3) + value.toString().padStart(3, '0') + updatedMod.slice(6);
+            break;
+          case 'depth':
+            updatedMod = updatedMod.slice(0, 6) + value.toString().padStart(3, '0') + updatedMod.slice(9);
+            break;
+          case 'tint':
+            updatedMod = updatedMod.slice(0, 9) + value.toString().padStart(2, '0') + updatedMod.slice(11);
+            break;
+          case 'tintPercent':
             const tintPercentValue = value === 100 ? '0' : Math.ceil(9 * (value / 100)).toString();
             updatedMod = updatedMod.slice(0, 11) + tintPercentValue + updatedMod.slice(12);
-          }
-          break;
+            break;
+        }
+    
+        state.editorMod = updatedMod;
       }
     
-      state.editorMod = updatedMod;
       state.hasEditorChanges = true;
-      pushToHistory(state, { editorMod: updatedMod });
+      pushToHistory(state, { editorMod: state.editorMod });
     },
 
     // Addresses the Tint% conversion
@@ -670,12 +708,13 @@ export const selectShouldShowResetMod = createSelector(
 // Parsing individual mod values
 export function parseModValues(mod: string) {
   const safeMod = sanitizeMod(mod);
+  const tintPercentValue = parseInt(safeMod.slice(11, 12));
   return {
     color: parseInt(safeMod.slice(0, 3)),
     spin: parseInt(safeMod.slice(3, 6)),
     depth: parseInt(safeMod.slice(6, 9)),
     tint: parseInt(safeMod.slice(9, 11)),
-    tintPercent: parseInt(safeMod.slice(11, 12)),
+    tintPercent: tintPercentValue === 0 ? 100 : tintPercentValue * 10,
   };
 }
 
@@ -706,6 +745,7 @@ export const {
   setActiveSelection,
   updateDisplaySetting,
   updateSliderValue,
+  updateTintPercentModSegment,
   updateActualTintPercent,
   incrementEditorAttunementNumber,
   decrementEditorAttunementNumber,

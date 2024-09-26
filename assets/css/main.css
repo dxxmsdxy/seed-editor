@@ -8,12 +8,13 @@ body {
   margin: 0;
 }
 
-.cursor-hidden * {
-  cursor: none;
+.sleep-mode,
+.sleep-mode * {
+  cursor: none !important;
 }
 
-.cursor-hidden .toggle-details-button,
-.cursor-hidden .play-button {
+.sleep-mode .toggle-details-button,
+.sleep-mode .play-button {
   opacity: 0 !important;
 }
 
@@ -3284,6 +3285,9 @@ body:has(.mod-button.disabled) .attune-nav {
 .setting-slider.default .range-slider__value {
   opacity: 0.07;
 }
+.setting-slider.default.disabled .range-slider__value {
+  opacity: 1;
+}
 
 .setting-slider.default .range-slider__range {
   background: #00000011;
@@ -4814,7 +4818,10 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover {
 
 
 
-
+.editor, .editor-inner {pointer-events: none}
+.editor-inner > div {
+  pointer-events:auto
+}
 
 .svg-container {
   overflow: visible;
@@ -5100,8 +5107,8 @@ body:has(.editor.unsaved-changes) .seed-details-header span {
   height: 100%;
   justify-content: flex-end;
   pointer-events: none;
-  padding-bottom: 4vh;
-  border-bottom: 2px solid #ffffff1d;
+  padding-bottom: 30px;
+  border-bottom: 2px solid #ffffff07;
 }
 
 .app-pane,
@@ -5119,15 +5126,6 @@ body:has(.seed-details.focused) .app-pane {
 
 body:has(.seed-details.focused) .app-pane.right .details-actions-container {
   pointer-events: auto;
-}
-
-body:has(.seed-details.focused) .editor-inner:not(:hover) .app-pane.right .seed-details {
-  color:#000;
-}
-
-body:has(.seed-details.focused) .editor-inner:not(:hover) .app-pane.right .details-actions-list li,
-body:has(.seed-details.focused) .editor-inner:not(:hover) .app-pane.right .metadata-list-container {
-  border-color: #00000044;
 }
 
 .details-actions-container:last-child,
@@ -5186,15 +5184,6 @@ body:has(.seed-details.focused) .editor-inner:not(:hover) .app-pane.right .metad
   border-color: #fff;
 }
 
-.metadata-item {
-  justify-content: space-between;
-  padding-bottom:2px;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 13px;
-  display: flex;
-  border-bottom: 2px solid #fff;
-}
 
 .editor #seedsArtwork {
   box-shadow: 0 2px 5px 1px rgba(54, 54, 54, 0.12);
@@ -5242,12 +5231,12 @@ body:has(.seed-details.focused) .attune-nav:has(*) {
   transition: border-color 0.4s, color 0.4s, background-color 0.4s, opacity 0.4s;
 }
 
-body:has(.seed-details.focused) .cls-0,
-body:has(.seed-details.focused) .cls-1,
-body:has(.seed-details.focused) .cls-2,
-body:has(.seed-details.focused) .cls-x,
-body:has(.seed-details.focused) .cls-y {
-  transition: fill 0.4s, stroke 0.4s
+.cls-0,
+.cls-1,
+.cls-2,
+.cls-x,
+.cls-y {
+  transition: fill 0.4s, stroke 0.4s,
 }
 
 body:has(.seed-details.focused) .seed-input::selection,
@@ -5257,11 +5246,15 @@ body:has(.seed-details.focused) .attunement-input::selection {
   background-color: #fff;
 }
 
-.app-pane {
+.editor-inner .app-pane {
   pointer-events: none;
 }
 
 .app-pane > .queue-container {
+  pointer-events: none;
+}
+.app-pane > .queue-container > *,
+.app-pane > .editor-controls > * {
   pointer-events: auto;
 }
 
@@ -5291,9 +5284,6 @@ body:has(.seed-details.focused):has(.display-settings-wrap.show) .app-pane.left 
 .app-pane.right .seed-details .metadata-list {
   grid-row-gap: 15px;
 }
-.app-pane.right .seed-details .metadata-item {
-  
-}
 
 body:has(.seed-details.focused):has(.layer-grid-wrap.show) .app-pane.left,
 body:has(.seed-details.focused):has(.display-settings-wrap.show) .app-pane.left {
@@ -5320,10 +5310,6 @@ body:has(.seed-details.focused.show):has(.display-settings-wrap.show) .seed-deta
   transition: opacity 1s
 }
 
-.editor, .editor-inner {pointer-events: none}
-.editor-inner > div {
-  pointer-events:auto
-}
 
 body:has(.seed-details.focused) .nav-menu *,
 body:has(.seed-details.focused) .ui-button,
@@ -5361,7 +5347,7 @@ body:has(.seed-details.focused) .reset-seed-button {
   opacity: 1;
 }
 
-body:has(.seed-details.focused) .editor-inner:hover .mod-reset {
+body:has(.seed-details.focused):not(.sleep-mode) .mod-reset {
   color: #fff;
 }
 
@@ -5397,25 +5383,25 @@ body:has(.seed-details.focused) .basic-actions .ui-button:active {
   border-color: #000;
 }
 
-body:has(.seed-details.focused) .editor-inner:hover .ui-element,
-body:has(.seed-details.focused) .editor-inner:hover .layer-grid-wrap.show .btn-layer,
-body:has(.seed-details.focused) .editor-inner:hover .layer-grid-wrap.show .btn-layer.selected,
-body:has(.seed-details.focused) .editor-inner:hover .layer-grid-wrap.show .grid,
-body:has(.seed-details.focused) .editor-inner:hover .basic-actions .ui-button,
-body:has(.seed-details.focused) .editor-inner:hover .seed-input,
-body:has(.seed-details.focused) .editor-inner:hover .seed-label,
-body:has(.seed-details.focused) .editor-inner:hover .reset-seed-button {
+body:has(.seed-details.focused):not(.sleep-mode) .ui-element,
+body:has(.seed-details.focused):not(.sleep-mode) .layer-grid-wrap.show .btn-layer,
+body:has(.seed-details.focused):not(.sleep-mode) .layer-grid-wrap.show .btn-layer.selected,
+body:has(.seed-details.focused):not(.sleep-mode) .layer-grid-wrap.show .grid,
+body:has(.seed-details.focused):not(.sleep-mode) .basic-actions .ui-button,
+body:has(.seed-details.focused):not(.sleep-mode) .seed-input,
+body:has(.seed-details.focused):not(.sleep-mode) .seed-label,
+body:has(.seed-details.focused):not(.sleep-mode) .reset-seed-button {
   color: #fff;
   border-color: #fff;
 }
 
-body:has(.seed-details.focused) .editor-inner:hover .layer-grid-wrap.show .btn-layer:hover {
+body:has(.seed-details.focused):not(.sleep-mode) .layer-grid-wrap.show .btn-layer:hover {
   background-color: #ffffff2f;
 }
 
-body:has(.seed-details.focused) .editor-inner:hover .layer-grid-wrap.show .btn-layer.selected,
-body:has(.seed-details.focused) .editor-inner:hover .basic-actions .ui-button:active,
-body:has(.seed-details.focused) .editor-inner:hover .basic-actions .ui-button.selected {
+body:has(.seed-details.focused):not(.sleep-mode) .layer-grid-wrap.show .btn-layer.selected,
+body:has(.seed-details.focused):not(.sleep-mode) .basic-actions .ui-button:active,
+body:has(.seed-details.focused):not(.sleep-mode) .basic-actions .ui-button.selected {
   color: #000;
   background-color: #fff;
 }
@@ -5433,67 +5419,71 @@ body:has(.seed-details.focused) .app-pane.right .seed-details {
   max-height: 80vh;
 }
 
-body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting svg .cls-1,
-body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting svg .cls-2 {
+body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting svg .cls-1,
+body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting svg .cls-2 {
   stroke: #fff;
 }
-body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting svg .cls-0 {
+body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting svg .cls-0 {
   fill: #fff;
 }
-body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting svg .cls-x,
-body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting svg .cls-y
+body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting svg .cls-x,
+body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting svg .cls-y
 
-body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-1,
-body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-2 {
+body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected svg .cls-1,
+body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected svg .cls-2 {
   stroke: #fff;
 }
-body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-0 {
+body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected svg .cls-0 {
   fill: #fff;
 }
 
-body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected {
+body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected {
   background-color: #fff;
   stroke: #000;
 }
 
 
 
-body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting:active svg .cls-1,body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-1 {
+body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting:active svg .cls-1,body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected svg .cls-1 {
   stroke: #000;
 }
-body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting:active svg .cls-0,body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-0 {
+body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting:active svg .cls-0,body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected svg .cls-0 {
   fill: #000;
 }
 
-body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-y {
+body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected svg .cls-y {
   stroke: #ffffff;
 }
-body:has(.seed-details.focused) .editor-inner:hover .btn-display-setting.selected svg .cls-x {
+body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected svg .cls-x {
   stroke: #000
 }
 
-body:has(.seed-details.focused) .editor-inner:hover .slider-ui {
+body:has(.seed-details.focused):not(.sleep-mode) .slider-ui {
   background-color: #fff;
+}
+
+body:has(.seed-details.focused) .setting-slider.default .slider-ui {
+  background-color: #ffffff11;
 }
 
 .range-slider__value::after {
   transition: border 0.4s
 }
 
-body:has(.seed-details.focused) .editor-inner:hover .range-slider__range::-webkit-slider-thumb {
+body:has(.seed-details.focused):not(.sleep-mode) .range-slider__range::-webkit-slider-thumb {
   background-color: #fff;
 }
 
-body:has(.seed-details.focused) .editor-inner:hover .range-slider__value {
+body:has(.seed-details.focused):not(.sleep-mode) .range-slider__value {
   background-color: #fff;
   color: #000;
 }
 
-body:has(.seed-details.focused) .editor-inner:hover .range-slider__value::after {
+body:has(.seed-details.focused):not(.sleep-mode) .range-slider__value::after {
   border-right-color: #fff;
 }
 
-body:has(.seed-details.focused) .editor-inner:hover .range-slider__range::-moz-range-thumb {
+body:has(.seed-details.focused):not(.sleep-mode) .range-slider__range::-moz-range-thumb {
   background-color: #fff;
 }
 
@@ -5505,9 +5495,35 @@ body:has(.seed-details.focused) .queue-item {
   color: #fff;
 }
 
-body:has(.seed-details.focused) .editor-inner:hover .attunement-selector {
+body:has(.seed-details.focused):not(.sleep-mode) .attunement-selector {
   border-color: #fff;
 }
+
+
+body:has(.seed-details.focused):not(.sleep-mode) .mod-sliders {
+  border-color: #ffffff12;
+}
+
+body.sleep-mode:has(.seed-details.focused) .app-pane,
+body.sleep-mode:has(.seed-details.focused) .basic-actions,
+body.sleep-mode:has(.seed-details.focused) .ui-button,
+body.sleep-mode:has(.seed-details.focused) .app-pane.left,
+body.sleep-mode:has(.seed-details.focused) .app-pane.right {
+  transition: opacity 1s, color 1s, background-color 1s, border-color 1s;
+}
+body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)) .app-pane,
+body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)) .basic-actions,
+body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)) .app-pane.left,
+body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)) .app-pane.right,
+body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)) .reset-seed-button {
+  opacity: 0;
+}
+
+body:has(.seed-details.focused):has(.changed-mod) .editor-inner:hover .mod-sliders {
+  border-color: #ffffff;
+}
+
+
 
 /* 
 body:has(.seed-details.focused) .reset-seed-button{
@@ -5619,12 +5635,6 @@ body:has(.seed-details.focused) .seed-indicator{
   fill: #ffff003a !important;
 }
 
-.mod-controls #icon-red rect.cls-1,
-.mod-controls #icon-green rect.cls-1,
-.mod-controls #icon-blue rect.cls-1 {
-  transition:fill 0.3s
-}
-
 .attunement-reset, .mod-reset {
   font-size:13px;
 }
@@ -5641,6 +5651,28 @@ body:has(.seed-details.focused) .seed-indicator{
   opacity: 0;
 }
 
+.mod-sliders {
+  border: solid 2px #00000012;
+  border-top: 0;
+  border-radius: 0 0 6px 6px;
+  padding: 32px 20px 20px 20px;
+  transition: border-color 0.3s;
+}
+
+body:has(.changed-mod) .mod-sliders {
+  border: solid 2px #000000;
+  border-top: none;
+}
+
+
+.mod-controls {
+  border-radius: 2px 2px 0 0;
+}
+
+.mod-controls,
+.mod-number-container {
+  margin-bottom: 0;
+}
 
 
 
@@ -6024,6 +6056,7 @@ body:has(.seed-details.focused) .seed-indicator{
   body:has(.seed-details.focused):has(.layer-grid-wrap.show) .app-pane.left,
   body:has(.seed-details.focused):has(.display-settings-wrap.show) .app-pane.left {
     transform: translate(-4vw,0);
+    transition: none;
   }
 
   body:has(.seed-details.focused) .svg-container {
@@ -7516,9 +7549,9 @@ body:has(.seed-details.focused) .seed-indicator{
 }
 
 .metadata-item {
-  border-bottom: 1px dashed #00000026;
+  border-bottom: 2px solid #ffffff07;
   justify-content: space-between;
-  padding-bottom: 2px;
+  padding-bottom: 3px;
   font-size: 13px;
   font-weight: 700;
   line-height: 13px;

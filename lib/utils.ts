@@ -71,55 +71,60 @@ export function sanitizeAttunement(attunement: number): number {
 
 
 // Hide mouse cursor after 5 seconds of inactivity and disable interactions
-export function hideMouseCursor(element: HTMLElement) {
+export function hideMouseCursor() {
   let timeout: NodeJS.Timeout;
   let isHidden = false;
   
   const hideCursor = () => {
-    document.body.classList.add('cursor-hidden');
+    document.body.classList.add('sleep-mode');
     isHidden = true;
-  };
-
-  const resetTimer = () => {
-    clearTimeout(timer);
-    showCursor();
-    timer = setTimeout(hideCursor, timeout);
   };
 
   const showCursor = () => {
     if (isHidden) {
-      document.body.classList.remove('cursor-hidden');
+      document.body.classList.remove('sleep-mode');
       isHidden = false;
-      // Explicitly reset cursor style
-      element.style.cursor = 'auto';
-      // Force a repaint to ensure hover states are updated
-      element.style.display = 'none';
-      element.offsetHeight; // Trigger a reflow
-      element.style.display = '';
     }
     clearTimeout(timeout);
-    timeout = setTimeout(hideCursor, 5000);
+    timeout = setTimeout(hideCursor, 6000);
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleInteraction = (event: Event) => {
     showCursor();
+    
+    // If the cursor was hidden, prevent the current event from triggering
+    // This ensures that the first interaction after sleep mode doesn't accidentally trigger unwanted actions
+    if (isHidden) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
   };
 
-  element.addEventListener('mousemove', handleMouseMove);
-  element.addEventListener('mousedown', showCursor);
-  element.addEventListener('mouseup', showCursor);
+  const attachListeners = () => {
+    document.addEventListener('mousemove', handleInteraction, true);
+    document.addEventListener('mousedown', handleInteraction, true);
+    document.addEventListener('mouseup', handleInteraction, true);
+    document.addEventListener('keydown', handleInteraction, true);
+    document.addEventListener('touchstart', handleInteraction, true);
+  };
+
+  const removeListeners = () => {
+    document.removeEventListener('mousemove', handleInteraction, true);
+    document.removeEventListener('mousedown', handleInteraction, true);
+    document.removeEventListener('mouseup', handleInteraction, true);
+    document.removeEventListener('keydown', handleInteraction, true);
+    document.removeEventListener('touchstart', handleInteraction, true);
+  };
 
   // Initial setup
+  attachListeners();
   showCursor();
 
   // Return a cleanup function
   return () => {
-    element.removeEventListener('mousemove', handleMouseMove);
-    element.removeEventListener('mousedown', showCursor);
-    element.removeEventListener('mouseup', showCursor);
+    removeListeners();
     clearTimeout(timeout);
-    document.body.classList.remove('cursor-hidden');
-    element.style.cursor = 'auto';
+    document.body.classList.remove('sleep-mode');
   };
 }
 

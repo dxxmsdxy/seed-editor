@@ -228,33 +228,40 @@ export default function Home() {
   
   // Toggle the SVG preview's play state
   const togglePlay = useCallback(() => {
-    dispatch(toggleSpinAnimationPause());
-    dispatch(toggleDepthAnimationPause());
-  
-    const isNowPaused = !isSpinAnimationPaused;
-  
-    if (isNowPaused) {
-      // Reset animations to their positions based on editorMod
-      const artwork = document.querySelector('.seedartwork') as SVGSVGElement;
-      if (artwork) {
-        resetLayers(artwork);
-  
-        const modValues = parseModValues(editorMod);
-  
-        // Apply color mod
-        const colorElements = artwork.querySelectorAll('.seedartwork,.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline,.sub,.sub path,.sub polygon,.sub circle,.sub ellipse,.sub line,.sub rect,.sub polyline,.sub .fx');
-        applyModValueToElements(colorElements, modValues.color, 'color');
-  
-        // Apply spin mod
-        const spinElements = artwork.querySelectorAll('.lr.on, .sub.on');
-        applyModValueToElements(spinElements, modValues.spin, 'spin');
-  
-        // Apply depth mod
-        const depthElements = artwork.querySelectorAll('.lr.on .fx');
-        applyModValueToElements(depthElements, modValues.depth, 'depth');
-      }
+  dispatch(toggleSpinAnimationPause());
+  dispatch(toggleDepthAnimationPause());
+
+  const isNowPaused = !isSpinAnimationPaused;
+
+  if (isNowPaused) {
+    // Reset animations to their positions based on editorMod
+    const artwork = document.querySelector('.seedartwork') as SVGSVGElement;
+    if (artwork) {
+      // Remove the 'spin' class
+      artwork.classList.remove('spin');
+
+      // Reset layers
+      resetLayers(artwork);
+
+      const modValues = parseModValues(editorMod);
+
+      // Apply spin mod
+      const spinElements = artwork.querySelectorAll('.lr.on, .sub.on');
+      applyModValueToElements(spinElements, modValues.spin, 'spin');
+
+      // Add the 'spin' class back after a short delay
+      setTimeout(() => {
+        artwork.classList.add('spin');
+      }, 50); // 50ms delay, adjust if needed
     }
-  }, [dispatch, isSpinAnimationPaused, editorMod]);
+  } else {
+    // If resuming animation, ensure the 'spin' class is present
+    const artwork = document.querySelector('.seedartwork') as SVGSVGElement;
+    if (artwork) {
+      artwork.classList.add('spin');
+    }
+  }
+}, [dispatch, isSpinAnimationPaused, editorMod]);
 
   // Handle the special Ctrl + Shift + Copy functionality
   const handleSpecialCopy = useCallback((event: React.KeyboardEvent<HTMLSpanElement>) => {
@@ -281,22 +288,11 @@ export default function Home() {
   // EFFECTS ----------------------------------------
 
   // Add event listeners to editor elements
-  useEffect(() => {
-    const editorElements = document.querySelectorAll('.editor .app-pane *');
-    editorElements.forEach(element => {
-      element.addEventListener('click', handleEditorInteraction);
-    });
+  
 
-    return () => {
-      editorElements.forEach(element => {
-        element.removeEventListener('click', handleEditorInteraction);
-      });
-    };
-  }, [handleEditorInteraction]);
-
-  // Double-click listener
+  // Deselect queue item on click outside of editor
   useEffect(() => {
-    const handleDoubleClickOutside = (event: MouseEvent) => {
+    const handleResetSelectionClick = (event: MouseEvent) => {
       const editorWrapper = document.querySelector('.editor-inner');
       if (editorWrapper && (!editorWrapper.contains(event.target as Node) || event.target === editorWrapper)) {
         dispatch(setSelectedIndex(null));
@@ -305,8 +301,8 @@ export default function Home() {
         setisOverlayToggled(false);
       }
     };
-    document.addEventListener('dblclick', handleDoubleClickOutside);
-    return () => document.removeEventListener('dblclick', handleDoubleClickOutside);
+    document.addEventListener('dblclick', handleResetSelectionClick);
+    return () => document.removeEventListener('dblclick', handleResetSelectionClick);
   }, [setisOverlayToggled, dispatch]);
 
   // Toggle changes flags on Editor element
@@ -454,13 +450,13 @@ export default function Home() {
   }, [editorAttunement]); */
  
   // Hide cursor after inactivity
-  /* useEffect(() => {
+  useEffect(() => {
     const sleeptarget = document.querySelector('body');
     if (sleeptarget) {
       const cleanup = hideMouseCursor(sleeptarget);
       return cleanup;
     }
-  }, []); */
+  }, []);
 
 
 
@@ -618,51 +614,53 @@ export default function Home() {
           </div>
           <>
             <div className="app-pane left">
-              <div style={{ opacity: 1 }} className="basic-actions">
-                <a
-                  className={`ui-button randomize z-button ${isSelectedItemLocked() ? 'disabled' : ''}`}
-                  onClick={handleRandomizeBits}
-                >Random</a>
-                <a
-                  id="layers-ui-button"
-                  className={`ui-button advanced shrink z-button ${
-                    layersUIToggled ? "selected" : ""
-                  } ${isSelectedItemLocked() ? 'disabled' : ''}`}
-                  onClick={() => {
-                    if (!isSelectedItemLocked()) {
-                      dispatch(toggleLayersUI());
-                      dispatch(toggleDisplaySettingsUI(false));
-                    }
-                  }}
-                >Lr</a>
-                <a
-                  id="display-settings-button"
-                  className={`ui-button advanced mod-button shrink z-button ${
-                    displaySettingsToggled ? "selected" : ""
-                  } ${editorSeed === '0' ? "disabled" : ""} ${isSelectedItemLocked() ? 'disabled' : ''}`}
-                  onClick={() => {
-                    if (editorSeed !== '0' && !isSelectedItemLocked()) {
-                      dispatch(toggleLayersUI(false));
-                      dispatch(toggleDisplaySettingsUI());
-                    }
-                  }}
-                >+<span></span></a>
-              </div>
-              <div className={`layer-grid-wrap ${layersUIToggled ? "show" : ""}`}>
-                <BitsArray bitsArray={bitsArray} toggleBit={handleToggleBit} />
-                <a
-                  href="#"
-                  className="ui-button reset-button reset z-button show"
-                  onClick={handleResetEditorMod}
-                >Reset</a>
-              </div>
-              <div className={`display-settings-wrap ${displaySettingsToggled ? "show" : ""}`}>
-                <DisplaySettings
-                  queueItems={queueItems}
-                  selectedQueueIndex={selectedQueueIndex}
-                  isLocked={selectedQueueIndex !== null ? queueItems[selectedQueueIndex].locked : false}
-                  updateQueueItem={updateQueueItem}
-                />
+              <div className="editor-controls">
+                <div style={{ opacity: 1 }} className="basic-actions">
+                  <a
+                    className={`ui-button randomize z-button ${isSelectedItemLocked() ? 'disabled' : ''}`}
+                    onClick={handleRandomizeBits}
+                  >Random</a>
+                  <a
+                    id="layers-ui-button"
+                    className={`ui-button advanced shrink z-button ${
+                      layersUIToggled ? "selected" : ""
+                    } ${isSelectedItemLocked() ? 'disabled' : ''}`}
+                    onClick={() => {
+                      if (!isSelectedItemLocked()) {
+                        dispatch(toggleLayersUI());
+                        dispatch(toggleDisplaySettingsUI(false));
+                      }
+                    }}
+                  >Lr</a>
+                  <a
+                    id="display-settings-button"
+                    className={`ui-button advanced mod-button shrink z-button ${
+                      displaySettingsToggled ? "selected" : ""
+                    } ${editorSeed === '0' ? "disabled" : ""} ${isSelectedItemLocked() ? 'disabled' : ''}`}
+                    onClick={() => {
+                      if (editorSeed !== '0' && !isSelectedItemLocked()) {
+                        dispatch(toggleLayersUI(false));
+                        dispatch(toggleDisplaySettingsUI());
+                      }
+                    }}
+                  >+<span></span></a>
+                </div>
+                <div className={`layer-grid-wrap ${layersUIToggled ? "show" : ""}`}>
+                  <BitsArray bitsArray={bitsArray} toggleBit={handleToggleBit} />
+                  <a
+                    href="#"
+                    className="ui-button reset-button reset z-button show"
+                    onClick={handleResetEditorMod}
+                  >Reset</a>
+                </div>
+                <div className={`display-settings-wrap ${displaySettingsToggled ? "show" : ""}`}>
+                  <DisplaySettings
+                    queueItems={queueItems}
+                    selectedQueueIndex={selectedQueueIndex}
+                    isLocked={selectedQueueIndex !== null ? queueItems[selectedQueueIndex].locked : false}
+                    updateQueueItem={updateQueueItem}
+                  />
+                </div>
               </div>
             </div>
             <div className="artwork-preview">
