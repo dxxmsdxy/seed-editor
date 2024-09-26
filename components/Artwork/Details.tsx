@@ -1,5 +1,6 @@
 import React from 'react';
-import { calculateRemainder } from '@/lib/utils/artwork/helpers';
+import { useAppSelector } from '@/app/hooks';
+import { getMintOrder, calculateRemainder } from '@/lib/utils';
 
 interface DetailsProps {
   isFocused: boolean;
@@ -29,9 +30,19 @@ const Details: React.FC<DetailsProps> = ({
 }) => {
   const activeBits = bitsArray.filter(bit => bit).length;
   const cardinalNumber = calculateRemainder(BigInt(editorSeed));
-  const mintOrder = 0;
 
   const seedState = editorMod === "000000000000000" ? "Natural" : "Modified";
+
+  // Get the selected queue item and its kind
+  const selectedIndex = useAppSelector(state => state.queue.selectedIndex);
+  const queueItems = useAppSelector(state => state.queue.items);
+  const selectedItem = selectedIndex !== null ? queueItems[selectedIndex] : null;
+  const selectedKind = selectedItem ? selectedItem.kind : "--";
+ 
+  // Get the mint order
+  const mintOrder = selectedItem ? getMintOrder(selectedItem.id) : null;
+  const mintOrderDisplay = mintOrder !== null ? mintOrder.toString() : "--";
+
 
   return (
     <div className={`seed-details ${isFocused ? 'focused' : ''} ${showOverlay ? 'show' : ''}`}>
@@ -41,7 +52,7 @@ const Details: React.FC<DetailsProps> = ({
             SEED<span>Draft</span>
           </div>
           <div className="overlay-description">
-            <span>id:</span>{mintOrder}
+            <span>id:</span>{mintOrderDisplay}
           </div>
         </div>  
         <div className="seed-details-metadata">
@@ -52,7 +63,7 @@ const Details: React.FC<DetailsProps> = ({
             <ul className="metadata-list">
               <li className="metadata-item">
                 <span className="metadata-label">Kind:</span>
-                <span className="metadata-value">Genesis</span>
+                <span className="metadata-value">{selectedKind}</span>
               </li>
               <li className="metadata-item">
                 <span className="metadata-label">State:</span>

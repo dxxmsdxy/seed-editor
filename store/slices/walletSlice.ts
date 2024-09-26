@@ -1,8 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { initializeQueue, updateQueueOrder, selectNextUnsetQueueItemThunk } from './queueSlice';
-import {
-  toggleLayersUI, toggleDisplaySettingsUI,
-} from '@/store/slices/editorSlice';
+import { toggleLayersUI, toggleDisplaySettingsUI } from '@/store/slices/editorSlice';
+import { determineKind } from '@/lib/utils';
 
 
 
@@ -30,7 +29,8 @@ const transformWalletData = (data: any[]) => {
     seed: item.seed,
     modNumber: item.modNumber,
     attunementNumber: item.attunementNumber,
-    locked: item.locked
+    locked: item.locked,
+    kind: determineKind(item.id)
   }));
 };
 

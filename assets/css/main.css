@@ -3942,15 +3942,20 @@ input::-moz-focus-outer {
   right: 0;
   bottom: 0;
   width: 10vw;
-  background-color: #00000014;
+  background-color: #00000000;
+  background-image: url("/icons/icon_arrow-right_black.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 18px auto;
   cursor: pointer;
-  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
-  opacity: 0;
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out, background-color 0.2s;
+  opacity: 0.1;
   pointer-events: auto;
 }
 
 .reset-editor:hover {
   opacity: 1;
+  background-color: #00000014;
 }
 
 .reset-editor.hidden {
@@ -5517,12 +5522,17 @@ body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)) .app
 body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)) .basic-actions,
 body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)) .app-pane.left,
 body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)) .app-pane.right,
-body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)) .reset-seed-button {
+body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)) .reset-seed-button,
+body.sleep-mode:has(.seed-details.focused) .reset-editor {
   opacity: 0;
 }
 
 body:has(.seed-details.focused):has(.changed-mod):not(.sleep-mode) .editor-inner:hover .mod-sliders {
   border-color: #ffffff;
+}
+
+body:has(.seed-details.focused) .reset-editor {
+  background-image: url("/icons/icon_arrow-right_white.svg");
 }
 
 

@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import seedList from '@/public/seedList.json';
 
 
 
@@ -69,6 +70,21 @@ export function sanitizeAttunement(attunement: number): number {
   return Math.max(0, Math.min(9, Math.floor(attunement)));
 }
 
+// Determine the kind of a seed based on seedList.json
+const seedKindMap = new Map(seedList.map(item => [item.id, item.kind]));
+
+export function determineKind(id: string): string {
+  return seedKindMap.get(id) || "Wild";
+}
+
+// Get the mint order (index) of a seed
+export function getMintOrder(id: string): number | null {
+  return seedList.findIndex(item => item.id === id);
+}
+
+export function calculateRemainder(seed) {
+  return BigInt(seed)%13n;
+}
 
 // Hide mouse cursor after 5 seconds of inactivity and disable interactions
 export function hideMouseCursor() {

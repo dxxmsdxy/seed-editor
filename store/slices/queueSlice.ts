@@ -19,6 +19,7 @@ export interface QueueItem {
   locked: boolean;
   isSet: boolean;
   justSet: boolean;
+  kind: string;
 }
 
 interface QueueState {
@@ -59,6 +60,7 @@ const queueSlice = createSlice({
           newAttunement: null,
           initialLocked: item.locked || false,
           isSet: false,
+          kind: item.kind,
         };
       });
     

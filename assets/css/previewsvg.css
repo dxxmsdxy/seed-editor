@@ -468,7 +468,7 @@
 .seedartwork.destruction.reveal.flip:has(g.on):not(.invert) .art g.on:nth-child(4n of .on) .fx{fill:#c14e85;stroke:#9f3d3d}
 /*.seedartwork.destruction.invert.flip .wrap,.seedartwork.destruction.invert.flip .backdrop{filter:hue-rotate(260deg)saturate(0.53)invert(1)}*/
 .seedartwork.destruction .backdrop {
-  fill: #832130;
+  fill: #832147;
 }
 .seedartwork.destruction .bkg,
 .seedartwork.destruction .art,
