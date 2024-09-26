@@ -1,9 +1,11 @@
 import React from 'react';
+import { calculateRemainder } from '@/lib/utils/artwork/helpers';
 
 interface DetailsProps {
   isFocused: boolean;
   showOverlay: boolean;
   editorSeed: string;
+  editorMod: string;
   editorAttunement: number;
   bitsArray: boolean[];
 }
@@ -21,12 +23,15 @@ const Details: React.FC<DetailsProps> = ({
   isFocused,
   showOverlay,
   editorSeed,
+  editorMod,
   editorAttunement,
   bitsArray,
 }) => {
   const activeBits = bitsArray.filter(bit => bit).length;
-  const cardinalNumber = 0;
+  const cardinalNumber = calculateRemainder(BigInt(editorSeed));
   const mintOrder = 0;
+
+  const seedState = editorMod === "000000000000000" ? "Natural" : "Modified";
 
   return (
     <div className={`seed-details ${isFocused ? 'focused' : ''} ${showOverlay ? 'show' : ''}`}>
@@ -51,7 +56,7 @@ const Details: React.FC<DetailsProps> = ({
               </li>
               <li className="metadata-item">
                 <span className="metadata-label">State:</span>
-                <span className="metadata-value">Natural</span>
+                <span className="metadata-value">{seedState}</span>
               </li>
               <li className="metadata-item">
               <span className="metadata-label">Attunement:</span>
@@ -63,7 +68,7 @@ const Details: React.FC<DetailsProps> = ({
               </li>
               <li className="metadata-item">
                 <span className="metadata-label">Cardinal No.:</span>
-                <span className="metadata-value">{cardinalNumber}</span>
+                <span className="metadata-value">{cardinalNumber.toString()}</span>
               </li>
             </ul>
           </div>

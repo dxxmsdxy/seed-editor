@@ -3155,6 +3155,7 @@ body:has(.mod-button.disabled) .attune-nav {
   line-height: 0;
   transition: color .2s ease-in-out, background-color .2s ease-in-out;
   display: flex;
+  cursor: pointer;
 }
 
 .btn-display-setting:active,
@@ -5222,6 +5223,7 @@ body:has(.seed-details.focused) .btn-layer,
 body:has(.seed-details.focused) .grid,
 body:has(.seed-details.focused) .ui-element,
 body:has(.seed-details.focused) .slider-ui,
+body:has(.seed-details.focused) .mod-sliders,
 body:has(.seed-details.focused) .attunement-label,
 body:has(.seed-details.focused) .page-label,
 body:has(.seed-details.focused) .attunement-selector,
@@ -5519,7 +5521,7 @@ body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)) .res
   opacity: 0;
 }
 
-body:has(.seed-details.focused):has(.changed-mod) .editor-inner:hover .mod-sliders {
+body:has(.seed-details.focused):has(.changed-mod):not(.sleep-mode) .editor-inner:hover .mod-sliders {
   border-color: #ffffff;
 }
 

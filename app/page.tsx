@@ -3,7 +3,6 @@ import { useRef, useCallback, useEffect, useState } from "react";
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { debounce } from 'lodash';
 import { useSearchParams } from 'next/navigation';
 
 import Artwork from "@/components/Artwork";
@@ -701,6 +700,7 @@ export default function Home() {
                       isFocused={isArtworkFocused}
                       showOverlay={isOverlayToggled}
                       editorSeed={editorSeed ?? ''}
+                      editorMod={editorMod ?? '000000000000000'}
                       editorAttunement={editorAttunement ?? 0}
                       bitsArray={bitsArray}
                     />
@@ -760,6 +760,7 @@ export default function Home() {
                 isFocused={isArtworkFocused}
                 showOverlay={isOverlayToggled}
                 editorSeed={editorSeed ?? ''}
+                editorMod={editorMod ?? '000000000000000'}
                 editorAttunement={editorAttunement ?? 0}
                 bitsArray={bitsArray}
               />
