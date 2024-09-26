@@ -20,6 +20,8 @@ import { setShowInscribeModal } from '@/store/slices/modalSlice';
 import { applyModValueToElements, resetLayers } from '@/lib/utils/artwork/updateSVGWithMod';
 import { selectElementContents, clearSelection, hideMouseCursor } from '@/lib/utils';
 import { calculateMostFrequentNumeral } from '@/lib/utils/artwork/helpers';
+import { startAudio, playAudio, pauseAudio, stopAudio, setTempo } from '@/lib/utils/seedSoundGenerator';
+
 
 
 
@@ -32,6 +34,7 @@ export default function Home() {
   const urlSeed = useAppSelector(state => state.seed.urlSeed);
   const urlMod = useAppSelector(state => state.seed.urlMod);
   const urlAttunement = useAppSelector(state => state.seed.urlAttunement);
+  const [isPlayingSound, setIsPlayingSound] = useState(false);
 
   // REDUX STATE ------------------------------------
 
@@ -224,43 +227,82 @@ export default function Home() {
       onDoubleClick: handleClick,
     };
   }, []);
+
+  /* // Initialize or crossfade audio when editorSeed changes
+  useEffect(() => {
+    if (editorSeed && !isNaN(parseInt(editorSeed, 10))) {
+      // Start or initialize audio with the new seed
+      startAudio(editorSeed);
+    } else {
+      // If the seed is invalid or undefined, stop audio
+      stopAudio();
+      setIsPlayingSound(false);
+    }
+    // Cleanup on component unmount
+    return () => {
+      stopAudio();
+    };
+  }, [editorSeed]);
+
+  // Handle play/pause state changes
+  useEffect(() => {
+    if (isSpinAnimationPaused) {
+      // Fade out the audio when pausing
+      pauseAudio();
+      setIsPlayingSound(false);
+    } else {
+      // Fade in the audio when playing
+      if (editorSeed && !isNaN(parseInt(editorSeed, 10))) {
+        playAudio();
+        setIsPlayingSound(true);
+      }
+    }
+  }, [isSpinAnimationPaused, editorSeed]);
+
+  // State for tempo
+  const [tempoValue, setTempoValue] = useState(60); // Default tempo
+
+  // Handle tempo changes
+  const handleTempoChange = (event) => {
+    const newTempo = parseInt(event.target.value, 10);
+    if (!isNaN(newTempo)) {
+      setTempoValue(newTempo);
+      setTempo(newTempo); // Call setTempo from soundGenerator.js
+    }
+  }; */
   
-  // Toggle the SVG preview's play state
+  // Toggle the play/pause state
   const togglePlay = useCallback(() => {
-  dispatch(toggleSpinAnimationPause());
-  dispatch(toggleDepthAnimationPause());
+    dispatch(toggleSpinAnimationPause());
+    dispatch(toggleDepthAnimationPause());
 
-  const isNowPaused = !isSpinAnimationPaused;
-
-  if (isNowPaused) {
-    // Reset animations to their positions based on editorMod
+    // Additional logic for animation toggling
     const artwork = document.querySelector('.seedartwork') as SVGSVGElement;
     if (artwork) {
-      // Remove the 'spin' class
-      artwork.classList.remove('spin');
-
-      // Reset layers
-      resetLayers(artwork);
-
-      const modValues = parseModValues(editorMod);
-
-      // Apply spin mod
-      const spinElements = artwork.querySelectorAll('.lr.on, .sub.on');
-      applyModValueToElements(spinElements, modValues.spin, 'spin');
-
-      // Add the 'spin' class back after a short delay
-      setTimeout(() => {
+      if (isSpinAnimationPaused) {
+        // Resume animation
         artwork.classList.add('spin');
-      }, 50); // 50ms delay, adjust if needed
+        // Additional logic to resume layers
+      } else {
+        // Pause animation
+        artwork.classList.remove('spin');
+
+        // Reset layers
+        resetLayers(artwork);
+  
+        const modValues = parseModValues(editorMod);
+  
+        // Apply spin mod
+        const spinElements = artwork.querySelectorAll('.lr.on, .sub.on');
+        applyModValueToElements(spinElements, modValues.spin, 'spin');
+  
+        // Add the 'spin' class back after a short delay
+        setTimeout(() => {
+          artwork.classList.add('spin');
+        }, 50); // 50ms delay, adjust if needed
+      }
     }
-  } else {
-    // If resuming animation, ensure the 'spin' class is present
-    const artwork = document.querySelector('.seedartwork') as SVGSVGElement;
-    if (artwork) {
-      artwork.classList.add('spin');
-    }
-  }
-}, [dispatch, isSpinAnimationPaused, editorMod]);
+  }, [dispatch, isSpinAnimationPaused]);
 
   // Handle the special Ctrl + Shift + Copy functionality
   const handleSpecialCopy = useCallback((event: React.KeyboardEvent<HTMLSpanElement>) => {
@@ -457,7 +499,7 @@ export default function Home() {
     }
   }, []);
 
-
+  
 
   // INITIALIZE EDITOR WITH URL PARAMETERS
 

@@ -5535,6 +5535,9 @@ body:has(.seed-details.focused) .reset-editor {
   background-image: url("/icons/icon_arrow-right_white.svg");
 }
 
+.soundPlay {
+  pointer-events: auto;
+}
 
 
 /* 
