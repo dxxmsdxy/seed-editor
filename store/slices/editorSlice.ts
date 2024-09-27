@@ -283,10 +283,13 @@ const editorSlice = createSlice({
         return;
       }
     
-      const editorModMatchesItem =
-        state.editorMod === (selectedItem.isSet ? (selectedItem.newMod || selectedItem.modNumber || "000000000000000") : (selectedItem.modNumber || "000000000000000"));
-    
-      state.hasEditorChanges = !editorModMatchesItem;
+      const editorMatchesItem =
+      state.editorSeed === (selectedItem.newSeed || selectedItem.seed) &&
+      state.editorMod === (selectedItem.newMod || selectedItem.modNumber || "000000000000000") &&
+      ((!state.isAttunementOverridden && state.editorAttunement === (selectedItem.newAttunement ?? selectedItem.attunementNumber ?? 0)) ||
+       (state.isAttunementOverridden && state.editorAttunement === selectedItem.newAttunement));
+  
+    state.hasEditorChanges = !editorMatchesItem;
     },
 
     setHasEditorChanges: (state, action: PayloadAction<boolean>) => {
