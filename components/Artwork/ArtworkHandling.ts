@@ -6,7 +6,6 @@ import { attunementNames, updateThemeColor, checkPalindrome } from '@/lib/utils/
 
 interface ArtworkHandlingProps {
     svgRef: React.RefObject<SVGSVGElement>;
-    isFlippedRef: React.MutableRefObject<boolean>;
     editorSeed: string;
     editorMod: string;
     editorAttunement: number;

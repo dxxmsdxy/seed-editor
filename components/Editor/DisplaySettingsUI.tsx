@@ -3,7 +3,7 @@ import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { useSelector } from 'react-redux';
 import { updateDisplaySetting, updateEditorMod, resetEditorMod, updateEditorAttunement, selectModValues, selectShouldShowResetMod, resetEditorAttunement, selectDisplaySettings, toggleColorAnimationPause, toggleDepthAnimationPause, toggleSpinAnimationPause, updateSliderValue, selectAttunement, updateDisplaySettingsFromMod, updateTintPercentModSegment } from '@/store/slices/editorSlice';
 import { selectElementContents, clearSelection } from '@/lib/utils';
-import { attunementNames } from '@/lib/utils/artwork/helpers';
+import { attunementNames, calculateMostFrequentNumeral } from '@/lib/utils/artwork/helpers';
 import RangeSlider from './RangeSlider';
 import debounce from 'lodash/debounce';
 
@@ -19,6 +19,7 @@ const icons = iconContext.keys().map(iconContext);
 const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
   
   const dispatch = useAppDispatch();
+  const editorSeed = useAppSelector((state) => state.seed.editorSeed);
   const editorMod = useAppSelector((state) => state.seed.editorMod);
   const editorAttunement = useAppSelector((state) => state.seed.editorAttunement);
   const isAttunementOverridden = useAppSelector((state) => state.seed.isAttunementOverridden);
@@ -152,7 +153,7 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
   const handleAttunementChange = React.useCallback((newAttunement: number) => {
     if (!isLocked) {
       if (!isNaN(newAttunement) && newAttunement >= 0 && newAttunement <= 9) {
-        dispatch(updateEditorAttunement({ attunementNumber: newAttunement, isOverride: true }));
+        dispatch(updateEditorAttunement({ attunementNumber: newAttunement, isOverride: true, updateChanges: true }));
         setShowAttunementName(true);
       }
     }

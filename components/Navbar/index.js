@@ -90,7 +90,7 @@ export const Navbar = () => {
             <div className="navbar-connect">
               {!isOTC && (
                 loading ? (
-                  <span>Loading...</span>
+                  <span className="ui-button">Loading</span>
                 ) : (
                   <Link
                     href="#"

@@ -4402,6 +4402,22 @@ ul li + li.set::after {
   z-index: 2000;
 }
 
+.queue-item-style-preview {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  bottom: 0px;
+  display: flex;
+  width: 32px;
+  height: 100%;
+  align-self: center;
+  align-items: center;
+  flex-flow: column;
+  pointer-events: none;
+  opacity: 0;
+  display: none;
+}
+
 .queue-lock {
   opacity: 0;
   background-color: #ffffff00;
@@ -4444,6 +4460,10 @@ li.queue-item.selected .queue-lock.locked {
   opacity: 1;
   background-image:
   url("/icons/seeds-editor-icons_lock_white.svg");
+}
+
+li.queue-item.set:last-child {
+  border-top: solid 2px #000;
 }
 
 li.queue-item.selected .queue-lock {
@@ -5469,8 +5489,11 @@ body:has(.seed-details.focused):not(.sleep-mode) .slider-ui {
   background-color: #fff;
 }
 
-body:has(.seed-details.focused) .setting-slider.default .slider-ui {
+body:has(.seed-details.focused):not(.sleep-mode) .setting-slider.default .slider-ui {
   background-color: #ffffff11;
+}
+body.sleep-mode:has(.seed-details.focused) .range-slider__value {
+  color: #ffffff22;
 }
 
 .range-slider__value::after {
@@ -5518,16 +5541,16 @@ body.sleep-mode:has(.seed-details.focused) .app-pane.left,
 body.sleep-mode:has(.seed-details.focused) .app-pane.right {
   transition: opacity 1s, color 1s, background-color 1s, border-color 1s;
 }
-body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)) .app-pane,
-body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)) .basic-actions,
-body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)) .app-pane.left,
-body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)) .app-pane.right,
-body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)) .reset-seed-button,
+body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)):has(.display-settings-wrap:not(.show)) .app-pane,
+body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)):has(.display-settings-wrap:not(.show)) .basic-actions,
+body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)):has(.display-settings-wrap:not(.show)) .app-pane.left,
+body.sleep-mode:has(.seed-details.focused):has(.layer-grid-wrap:not(.show)):has(.display-settings-wrap:not(.show)) .app-pane.right,
+body.sleep-mode:has(.seed-details.focused) .reset-seed-button,
 body.sleep-mode:has(.seed-details.focused) .reset-editor {
   opacity: 0;
 }
 
-body:has(.seed-details.focused):has(.changed-mod):not(.sleep-mode) .editor-inner:hover .mod-sliders {
+body:has(.seed-details.focused):has(.changed-mod):not(.sleep-mode) .mod-sliders {
   border-color: #ffffff;
 }
 
@@ -5688,6 +5711,17 @@ body:has(.changed-mod) .mod-sliders {
 .mod-number-container {
   margin-bottom: 0;
 }
+
+
+.ui-button.select.loading .select-icon {
+  opacity: 0;
+}
+.ui-button.select.loading .previewloader_previewLoader__zqz_4 {
+  opacity:1;
+}
+
+
+
 
 
 
@@ -7584,12 +7618,14 @@ body:has(.changed-mod) .mod-sliders {
   aspect-ratio: 800 / 1067;
   position: relative;
   height: 100%;
+  overflow: hidden;
+  border-radius: 5px;
+  box-shadow: 0 2px 6px #00000014, 0 0 3px #0000000d;
 }
 
 .seeds-exemplar {
   height: 100%;
   max-height: 51vh;
-  box-shadow: 0 2px 5px #00000014;
   aspect-ratio: 800 / 1067;
 }
 
@@ -7669,7 +7705,8 @@ body:has(.changed-mod) .mod-sliders {
   max-width: 980px;
   margin-top: 10px;
   margin-bottom: 25px;
-  box-shadow: 0 2px 5px #00000014;
+  box-shadow: 0 4px 8px #0000001d, 0 0 3px #0000000d;
+  border-radius: 3px;
 }
 
 .feature-image.mobile {

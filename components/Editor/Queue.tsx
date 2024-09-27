@@ -130,6 +130,9 @@ const Queue: React.FC = () => {
               onClick={() => handleQueueItemSelect(item.index)}
             >
             <div className={`queued-seed-number`}>
+              <span
+                className="queue-item-style-preview"
+              ></span>
               <span 
                 className={`queue-lock ${item.locked ? 'locked' : ''} ${item.isSeedZero ? 'disabled' : ''}`}
                 onClick={(e) => {

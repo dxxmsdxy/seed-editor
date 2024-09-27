@@ -4,6 +4,7 @@ import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { useSearchParams } from 'next/navigation';
+import { debounce } from 'lodash';
 
 import Artwork from "@/components/Artwork";
 import Details from '@/components/Artwork/Details';
@@ -20,7 +21,8 @@ import { setShowInscribeModal } from '@/store/slices/modalSlice';
 import { applyModValueToElements, resetLayers } from '@/lib/utils/artwork/updateSVGWithMod';
 import { selectElementContents, clearSelection, hideMouseCursor } from '@/lib/utils';
 import { calculateMostFrequentNumeral } from '@/lib/utils/artwork/helpers';
-import { startAudio, playAudio, pauseAudio, stopAudio, setTempo } from '@/lib/utils/seedSoundGenerator';
+import PreviewLoader from '@/components/Artwork/PreviewLoader';
+
 
 
 
@@ -35,6 +37,7 @@ export default function Home() {
   const urlMod = useAppSelector(state => state.seed.urlMod);
   const urlAttunement = useAppSelector(state => state.seed.urlAttunement);
   const [isPlayingSound, setIsPlayingSound] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // REDUX STATE ------------------------------------
 
@@ -74,10 +77,21 @@ export default function Home() {
 
   // React to user interaction with the Editor UI
   const handleEditorInteraction = useCallback(() => {
-    if (selectedQueueIndex === null && seed !== BigInt(0)) {
+    if (selectedQueueIndex !== null) {
+      const selectedItem = queueItems[selectedQueueIndex];
+      dispatch(checkEditorMatchesSelectedItem(selectedItem));
+    } else if (seed !== BigInt(0)) {
       // dispatch(selectNextUnsetQueueItemThunk());
     }
-  }, [selectedQueueIndex, seed]);
+  }, [selectedQueueIndex, queueItems, seed, dispatch]);
+  
+  // Listen for editor attunement changes
+  useEffect(() => {
+    if (selectedQueueIndex !== null) {
+      const selectedItem = queueItems[selectedQueueIndex];
+      dispatch(checkEditorMatchesSelectedItem(selectedItem));
+    }
+  }, [editorAttunement, selectedQueueIndex, queueItems, dispatch]);
 
 
   // EDITOR LOGIC ---------------------------------
@@ -163,29 +177,46 @@ export default function Home() {
   };
 
   // Set the selected queue item with the Editor's state
-  const handleSetQueueItem = useCallback(() => {
-    if (selectedQueueIndex !== null && hasEditorChanges) {
-      dispatch(updateQueueItem({
-        index: selectedQueueIndex,
-        item: {
-          newSeed: editorSeed,
-          newMod: editorMod,
-          newAttunement: editorAttunement,
-        },
-        isExplicitSet: true,
-      }));
-      dispatch(updateHasEditorChanges(false));
-      dispatch(toggleLayersUI(false));
-      dispatch(toggleDisplaySettingsUI(false));
-      
-      // Update the editor state to reflect the new queue item
-      dispatch(updateEditorState({
-        seed: editorSeed,
-        mod: editorMod,
-        attunement: editorAttunement,
-      }));
+const handleSetQueueItem = useCallback(() => {
+  if (selectedQueueIndex !== null && hasEditorChanges) {
+    const selectedItem = queueItems[selectedQueueIndex];
+    
+    // Prepare the new item state
+    const newItemState = {
+      newSeed: editorSeed,
+      newMod: editorMod === '000000000000000' ? null : editorMod,
+      newAttunement: isAttunementOverridden ? editorAttunement : null,
+    };
+
+    // If the editor mod is default
+    if (editorMod === '000000000000000') {
+      newItemState.newMod = "000000000000000";
     }
-  }, [selectedQueueIndex, hasEditorChanges, editorSeed, editorMod, editorAttunement, dispatch]);
+
+    // If attunement is not overridden
+    if (!isAttunementOverridden) {
+      newItemState.newAttunement = calculateMostFrequentNumeral(BigInt(editorSeed || '0'));
+    }
+
+    dispatch(updateQueueItem({
+      index: selectedQueueIndex,
+      item: newItemState,
+      isExplicitSet: true,
+    }));
+
+    dispatch(updateHasEditorChanges(false));
+    dispatch(toggleLayersUI(false));
+    dispatch(toggleDisplaySettingsUI(false));
+    
+    // Update the editor state to reflect the new queue item
+    dispatch(updateEditorState({
+      seed: editorSeed,
+      mod: editorMod,
+      attunement: editorAttunement,
+      isAttunementOverridden: isAttunementOverridden,
+    }));
+  }
+}, [selectedQueueIndex, hasEditorChanges, editorSeed, editorMod, editorAttunement, isAttunementOverridden, queueItems, dispatch]);
 
 
   // ADDITIONAL FUNCTIONALITY ----------------------
@@ -328,23 +359,33 @@ export default function Home() {
 
   // EFFECTS ----------------------------------------
 
-  // Add event listeners to editor elements
-  
-
   // Deselect queue item on click outside of editor
   useEffect(() => {
     const handleResetSelectionClick = (event: MouseEvent) => {
       const editorWrapper = document.querySelector('.editor-inner');
-      if (editorWrapper && (!editorWrapper.contains(event.target as Node) || event.target === editorWrapper)) {
+      const navbar = document.querySelector('.navbar');
+      const inscribeModal = document.querySelector('.mint-modal'); 
+      const artworkContainer = document.querySelector('.svg-container');
+      
+      if (
+        editorWrapper && 
+        navbar && 
+        !editorWrapper.contains(event.target as Node) && 
+        !navbar.contains(event.target as Node) && 
+        (!inscribeModal || !inscribeModal.contains(event.target as Node)) && 
+        (!artworkContainer || !artworkContainer.contains(event.target as Node)) &&
+        event.target !== editorWrapper &&
+        !isArtworkFocused // Add this condition
+      ) {
         dispatch(setSelectedIndex(null));
         dispatch(resetEditorState());
-
         setisOverlayToggled(false);
       }
     };
-    document.addEventListener('dblclick', handleResetSelectionClick);
-    return () => document.removeEventListener('dblclick', handleResetSelectionClick);
-  }, [setisOverlayToggled, dispatch]);
+    
+    document.addEventListener('click', handleResetSelectionClick);
+    return () => document.removeEventListener('click', handleResetSelectionClick);
+  }, [setisOverlayToggled, dispatch, isArtworkFocused]);
 
   // Toggle changes flags on Editor element
   useEffect(() => {
@@ -494,7 +535,7 @@ export default function Home() {
   useEffect(() => {
     const sleeptarget = document.querySelector('body');
     if (sleeptarget) {
-      const cleanup = hideMouseCursor(sleeptarget);
+      const cleanup = hideMouseCursor();
       return cleanup;
     }
   }, []);
@@ -583,12 +624,23 @@ export default function Home() {
     
   }, [shouldUpdateURL, editorSeed, editorMod, editorAttunement, isAttunementOverridden]);
 
+  /* const loadPreview = useCallback(debounce(() => {
+    setIsLoading(true);
+    // ...
+    // ...
+    // Simulating an update process
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+  }, 300), []);
 
+  useEffect(() => {
+    loadPreview();
+  }, [editorSeed, editorMod, editorAttunement]);
+ */
 
-
-  // WIP --------------------------------------
   
-  // WIP claim functionality
+  // OTC functionality
 
   const isOTC = useAppSelector(selectOTCMode);
   const searchParams = useSearchParams();
@@ -793,6 +845,7 @@ export default function Home() {
                       <path d="m17.5 123.8 162.2 156.6L426.6 16.1" />
                     </svg>
                   </span>
+                  <PreviewLoader loading={isLoading} size="small" customClass="editorLoader_" />
                 </a>
               </div>
             </div>
@@ -808,14 +861,14 @@ export default function Home() {
               />
             </div>
           </>
+          <div 
+            className={`reset-editor ${layersUIToggled || displaySettingsToggled ? '' : 'hidden'}`}
+            onClick={() => {
+              dispatch(toggleLayersUI(false));
+              dispatch(toggleDisplaySettingsUI(false));
+            }}
+          ></div>
         </div>
-        <div 
-          className={`reset-editor ${layersUIToggled || displaySettingsToggled ? '' : 'hidden'}`}
-          onClick={() => {
-            dispatch(toggleLayersUI(false));
-            dispatch(toggleDisplaySettingsUI(false));
-          }}
-        ></div>
       </div>
       <InscribeModal show={showInscribeModal} queueItems={setQueueItems} isOTC={isOTC} />
     </>

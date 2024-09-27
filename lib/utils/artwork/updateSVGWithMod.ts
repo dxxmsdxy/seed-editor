@@ -95,6 +95,12 @@ function applySpinMod(elements: Element[], spinModValue: number): void {
   const curveAdjustment = Math.min(elementCount / 25, 1);
   const adjustedT = (t: number) => Math.pow(t, 1 / (1 + curveAdjustment));
 
+  // Function to calculate multiplier when spin mod is 0
+  const calculateMultiplier = (index: number, count: number) => {
+    // Create a range of multipliers from 1 to 3
+    return 1 + (2 * index / (count - 1));
+  };
+
   elements.forEach((element, index) => {
     let originalDelay: number;
     let originalDuration: number;
@@ -111,9 +117,16 @@ function applySpinMod(elements: Element[], spinModValue: number): void {
 
     const elementT = adjustedT((index + 1) / elementCount);
     
-    // Adjust duration multiplier to range from 0.1 (10x shorter) to 10 (10x longer)
-    const durationMultiplier = Math.pow(15, 1 - 2 * normalizedPosition * elementT);
-    const adjustedDuration = originalDuration * durationMultiplier;
+    let adjustedDuration: number;
+    if (spinModValue === 0) {
+      // Use multiplier when spin mod is 0
+      const multiplier = calculateMultiplier(index, elementCount);
+      adjustedDuration = originalDuration * multiplier;
+    } else {
+      // Adjust duration multiplier to range from 0.1 (10x shorter) to 10 (10x longer)
+      const durationMultiplier = Math.pow(15, 1 - 2 * normalizedPosition * elementT);
+      adjustedDuration = originalDuration * durationMultiplier;
+    }
 
     // Adjust delay to maintain relative positions
     const adjustedDelay = -(normalizedPosition * TOTAL_ANIMATION_DURATION * elementT) - originalDelay;

@@ -126,7 +126,7 @@ const editorSlice = createSlice({
         editorMod: sanitizedMod,
         editorAttunement: sanitizedAttunement,
         bitsArray: seedToBits(BigInt(sanitizedSeed)),
-        hasEditorChanges: false,
+        hasEditorChanges: false, // Reset to false, will be updated by checkEditorMatchesSelectedItem
         modValues: parseModValues(sanitizedMod),
         shouldUpdateURL: updateURL,
       };
@@ -227,11 +227,16 @@ const editorSlice = createSlice({
       const sanitizedAttunement = sanitizeAttunement(action.payload.attunementNumber);
       const newState = {
         editorAttunement: sanitizedAttunement,
-        hasEditorChanges: action.payload.updateChanges ?? state.hasEditorChanges,
-        isAttunementOverridden: action.payload.isOverride ?? state.isAttunementOverridden,
+        hasEditorChanges: action.payload.updateChanges ?? true, // Always set to true when explicitly updated
+        isAttunementOverridden: action.payload.isOverride ?? true, // Always set to true when explicitly updated
       };
       pushToHistory(state, newState);
       Object.assign(state, newState);
+    },
+
+    resetAttunementOverride: (state) => {
+      state.isAttunementOverridden = false;
+      state.editorAttunement = calculateMostFrequentNumeral(BigInt(state.editorSeed || '0')) ?? 0;
     },
 
     // Increment/decrement the attunement number
@@ -282,6 +287,10 @@ const editorSlice = createSlice({
         state.editorMod === (selectedItem.isSet ? (selectedItem.newMod || selectedItem.modNumber || "000000000000000") : (selectedItem.modNumber || "000000000000000"));
     
       state.hasEditorChanges = !editorModMatchesItem;
+    },
+
+    setHasEditorChanges: (state, action: PayloadAction<boolean>) => {
+      state.hasEditorChanges = action.payload;
     },
 
     // Reset the Editor's attunement number
@@ -756,6 +765,7 @@ export const {
   toggleColorAnimationPause,
   toggleDepthAnimationPause,
   toggleSpinAnimationPause,
+  setHasEditorChanges,
 } = editorSlice.actions;
 
 export default editorSlice.reducer;

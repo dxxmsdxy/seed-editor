@@ -101,7 +101,7 @@ const queueSlice = createSlice({
         const currentItem = state.items[index];
         
         if (isReset) {
-          // Reset logic
+          // Reset logic (unchanged)
           Object.assign(currentItem, {
             newSeed: null,
             newMod: null,
@@ -113,6 +113,16 @@ const queueSlice = createSlice({
         } else {
           // Update logic
           const hasChanged = updateItemValues(currentItem, item, isExplicitSet);
+
+          // New logic for handling mod and attunement
+          if (isExplicitSet) {
+            if (currentItem.modNumber && item.newMod === undefined) {
+              currentItem.newMod = "000000000000000"; // Default mod value
+            }
+            if (currentItem.attunementNumber !== null && item.newAttunement === undefined) {
+              currentItem.newAttunement = calculateMostFrequentNumeral(BigInt(item.newSeed || currentItem.seed));
+            }
+          }
 
           if (hasChanged && !currentItem.isSet) {
             currentItem.justSet = true;

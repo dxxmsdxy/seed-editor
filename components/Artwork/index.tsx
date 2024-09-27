@@ -57,6 +57,8 @@ const Artwork: React.FC<ArtworkProps> = ({
     }
   }, [urlSeed, urlMod, urlAttunement, editorSeed, editorMod, editorAttunement, urlParamsProcessed, dispatch]);
 
+
+
   return (
     <>
       <ArtworkHandling
