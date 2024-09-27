@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { seedToBits } from '@/lib/utils';
+import { seedToBits } from '@/lib/newUtils';
 
 
 
@@ -46,7 +46,7 @@ export const Bit = ({
       className={`btn-layer z-button ${bit ? "selected" : ""}`}
       title={`Decimal value: ${decimalValue}`}
     >
-      {100 - index} {/* Change this line */}
+      {100 - index}
     </div>
   );
 };
@@ -54,7 +54,7 @@ export const Bit = ({
 // Generate a bit array with a seed
 export const BitsArray = ({ toggleBit }: { toggleBit: (index: number) => void }) => {
   const editorSeed = useSelector((state: RootState) => state.seed.editorSeed);
-  const bitsArray = useMemo(() => seedToBits(BigInt(editorSeed)), [editorSeed]);
+  const bitsArray = useMemo(() => seedToBits(BigInt(editorSeed ?? 0)), [editorSeed]);
   const [activeSelection, setActiveSelection] = useState(false);
 
   const startSelection = () => setActiveSelection(true);
@@ -67,12 +67,12 @@ export const BitsArray = ({ toggleBit }: { toggleBit: (index: number) => void })
   return (
     <div className="z-layout-grid grid">
       {bitsArray.map((bit, index) => {
-        const decimalValue = 2 ** (99 - index); // Change this line
+        const decimalValue = 2 ** (99 - index);
         return (
           <Bit
             key={index}
             bit={bit}
-            index={99 - index} // Change this line
+            index={99 - index}
             toggleBit={toggleBit}
             activeSelection={activeSelection}
             startSelection={startSelection}

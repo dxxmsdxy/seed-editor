@@ -4,7 +4,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useArtworkHotkeys } from "@/hooks";
 import { RootState } from '@/store';
 import { selectShouldResetLayers, updateEditorState, clearUrlParams, selectDisplaySettings } from '@/store/slices/editorSlice';
-import { ArtworkHandling } from './ArtworkHandling';
+import NewArtworkHandling from './NewArtworkHandling';
+
 
 
 
@@ -61,7 +62,7 @@ const Artwork: React.FC<ArtworkProps> = ({
 
   return (
     <>
-      <ArtworkHandling
+      <NewArtworkHandling
         svgRef={svgRef}
         editorSeed={editorSeed}
         editorMod={editorMod}
