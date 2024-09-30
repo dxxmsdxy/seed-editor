@@ -13,6 +13,7 @@ export interface QueueItem {
     newMod: string | null;
     newAttunement: number | null;
   };
+  kind?: string;
 }
 
 interface QueueState {

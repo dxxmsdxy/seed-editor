@@ -1,41 +1,83 @@
 "use client";
 import { useState, useMemo } from "react";
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
-import { seedToBits } from '@/lib/newUtils';
+import { useSelector, useDispatch } from 'react-redux';
+import { toggleBit, selectBitsArray, selectReversedBitsArray } from '@/store/slices/newEditorSlice';
 
 
 
 
 //================================================//
 
+// Generate a bit array with a seed
+export const BitsArray = () => {
+  const dispatch = useDispatch();
+  const bitsArray = useSelector(selectBitsArray);
+  const reversedBitsArray = useSelector(selectReversedBitsArray);
+  const [activeSelection, setActiveSelection] = useState(false);
+
+  const startSelection = () => setActiveSelection(true);
+  const updateSelection = () => !activeSelection && setActiveSelection(true);
+  const handleEndSelection = () => setActiveSelection(false);
+
+  const handleToggleBit = (index: number) => {
+    dispatch(toggleBit(index));
+  };
+
+  return (
+    <div className="z-layout-grid grid">
+      {[...Array(100)].map((_, index) => {
+        const arrayIndex = index + 1;
+        const reversedIndex = index;
+        return (
+          <Bit
+            key={arrayIndex}
+            bit={bitsArray[reversedIndex]}
+            visualIndex={arrayIndex}
+            activeSelection={activeSelection}
+            startSelection={() => {
+              startSelection();
+              handleToggleBit(index);
+            }}
+            updateSelection={() => {
+              updateSelection();
+              if (activeSelection) {
+                handleToggleBit(index);
+              }
+            }}
+            endSelection={handleEndSelection}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
 // Initial bit state
-export type Bit = {
+export type BitProps = {
   bit: boolean;
-  index: number;
-  toggleBit: (index: number) => void;
+  visualIndex: number;
   activeSelection: boolean;
   startSelection: () => void;
   updateSelection: () => void;
   endSelection: () => void;
 };
 
-// The individual bit buttons in the layer grid
 export const Bit = ({
-  bit, index, toggleBit, activeSelection, startSelection, endSelection, decimalValue
-}: Bit & { decimalValue: number }) => {
+  bit, visualIndex, activeSelection, startSelection, updateSelection, endSelection
+}: BitProps) => {
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     startSelection();
-    toggleBit(index);
   };
 
   const handleMouseEnter = () => {
-    if (activeSelection) {toggleBit(index)}
+    if (activeSelection) {
+      updateSelection();
+    }
   };
 
   const handleMouseUp = () => {
-    if (activeSelection) {endSelection()}
+    endSelection();
   };
 
   return (
@@ -44,44 +86,8 @@ export const Bit = ({
       onMouseEnter={handleMouseEnter}
       onMouseUp={handleMouseUp}
       className={`btn-layer z-button ${bit ? "selected" : ""}`}
-      title={`Decimal value: ${decimalValue}`}
     >
-      {100 - index}
-    </div>
-  );
-};
-
-// Generate a bit array with a seed
-export const BitsArray = ({ toggleBit }: { toggleBit: (index: number) => void }) => {
-  const editorSeed = useSelector((state: RootState) => state.seed.editorSeed);
-  const bitsArray = useMemo(() => seedToBits(BigInt(editorSeed ?? 0)), [editorSeed]);
-  const [activeSelection, setActiveSelection] = useState(false);
-
-  const startSelection = () => setActiveSelection(true);
-  const updateSelection = () => !activeSelection && setActiveSelection(true);
-  const endSelection = () => setActiveSelection(false);
-
-  // STRUCTURE --------------------------------
-
-  // Return structure for the LayersUI grid
-  return (
-    <div className="z-layout-grid grid">
-      {bitsArray.map((bit, index) => {
-        const decimalValue = 2 ** (99 - index);
-        return (
-          <Bit
-            key={index}
-            bit={bit}
-            index={99 - index}
-            toggleBit={toggleBit}
-            activeSelection={activeSelection}
-            startSelection={startSelection}
-            updateSelection={updateSelection}
-            endSelection={endSelection}
-            decimalValue={decimalValue}
-          />
-        );
-      })}
+      {visualIndex}
     </div>
   );
 };

@@ -7,9 +7,9 @@ import { debounce } from 'lodash';
 
 import Artwork from "@/components/Artwork";
 import Details from '@/components/Artwork/Details';
-import Queue from '@/components/Editor/Queue';
+import Queue from '@/components/Editor/NEW_Queue';
 import { BitsArray } from "@/components/Editor/LayersUI";
-import DisplaySettings from '@/components/Editor/DisplaySettingsUI';
+import NEW_DisplaySettings from '@/components/Editor/NEW_DisplaySettingsUI';
 import InscribeModal from "@/components/Editor/InscribeModal";
 import DiagnosticsPanel from "@/components/Editor/DiagnosticsPanel";
 
@@ -32,11 +32,11 @@ import {
   setUrlParams,
   setUIVisibility,
   selectUIVisibility,
-  toggleColorAnimationPause,
-  toggleDepthAnimationPause,
-  toggleSpinAnimationPause,
+  setSpinAnimationPaused,
+  setDepthAnimationPaused,
 } from '@/store/slices/newEditorSlice';
 import { initializeQueue, setSelectedIndex, updateQueueItem,selectSetQueueItems } from '@/store/slices/newQueueSlice';
+import { connectWalletAndLoadData } from '@/store/slices/walletSlice';
 import { selectElementContents, clearSelection, randomizeBits } from '@/lib/newUtils';
 import PreviewLoader from '@/components/Artwork/PreviewLoader';
 import { calculateMostFrequentNumeral } from "@/lib/utils/artwork/helpers";
@@ -66,8 +66,12 @@ const Home: React.FC = () => {
   const getSetQueueItems = useAppSelector(selectSetQueueItems);
   const walletConnected = useSelector((state: RootState) => state.wallet.connected);
 
+  const isSpinAnimationPaused = useSelector((state: RootState) => state.newEditor.isSpinAnimationPaused)
+  const isDepthAnimationPaused = useSelector((state: RootState) => state.newEditor.isDepthAnimationPaused)
+
+
   // REFS -------------------------------------------
-  const artRef = useRef<SVGSVGElement | null>(null);
+  const artRef = useRef<{ resetLayersCallback: () => void } | null>(null)
   const editorRef = useRef<HTMLDivElement>(null);
   const seedInputRef = useRef<HTMLDivElement>(null);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -138,21 +142,20 @@ const Home: React.FC = () => {
 
   const handleSeedInputChange = useCallback((updatedSeed: string) => {
     const parts = updatedSeed.split(/[.:]/);
-    let newSeed = parts[0];
-    let newMod = editorMod;
-    let newAttunement = editorAttunement;
+    let seed = parts[0];
+    let mod = editorMod;
+    let attunement = editorAttunement;
 
     if (parts.length > 1) {
       if (parts[1].length === 15 && /^\d+$/.test(parts[1])) {
-        newMod = parts[1];
+        mod = parts[1];
       }
       if (parts.length > 2 && /^\d+$/.test(parts[2])) {
-        newAttunement = parseInt(parts[2]).toString();
-        dispatch(overrideAttunement(newAttunement));
+        attunement = parseInt(parts[2]).toString();
       }
     }
 
-    dispatch(updateEditorState({ seed: newSeed, mod: newMod, attunement: newAttunement }));
+    dispatch(updateEditorState({ seed: seed, mod: mod, attunement: attunement }));
   }, [dispatch, editorMod, editorAttunement]);
 
   const handleResetEditorSeed = useCallback(() => {
@@ -160,12 +163,6 @@ const Home: React.FC = () => {
       dispatch(resetEditorState());
     }
   }, [dispatch, isSelectedItemLocked]);
-
-  const handleToggleBit = (index: number) => {
-    if (!isSelectedItemLocked()) {
-      toggleBit(index);
-    }
-  };
 
   const handleRandomizeBits = useCallback(() => {
     if (!isSelectedItemLocked()) {
@@ -201,9 +198,36 @@ const Home: React.FC = () => {
     dispatch(setUIVisibility(uiVisibility === 'displaySettings' ? 'none' : 'displaySettings'));
   }, [dispatch, uiVisibility]);
 
-  const togglePlay = useCallback(() => {},[]);
+  const togglePlay = useCallback(() => {
+    dispatch(setSpinAnimationPaused(!isSpinAnimationPaused))
+    dispatch(setDepthAnimationPaused(!isDepthAnimationPaused))
+
+    // Remove direct DOM manipulation from here
+  }, [dispatch, isSpinAnimationPaused, isDepthAnimationPaused]);
 
   // EFFECTS ----------------------------------------
+
+  useEffect(() => {
+    if (walletConnected) {
+      dispatch(connectWalletAndLoadData());
+    }
+  }, [walletConnected, dispatch]);
+
+  useEffect(() => {
+    const artwork = document.querySelector('.seedartwork') as SVGSVGElement
+    if (artwork) {
+      artwork.classList.toggle('pauseSpin', isSpinAnimationPaused)
+      artwork.classList.toggle('pauseDepth', isDepthAnimationPaused)
+      artwork.classList.toggle('spin', !isSpinAnimationPaused)
+      artwork.classList.toggle('depth', !isDepthAnimationPaused)
+
+      if (isSpinAnimationPaused || isDepthAnimationPaused) {
+        if (artRef.current && artRef.current.resetLayersCallback) {
+          artRef.current.resetLayersCallback()
+        }
+      }
+    }
+  }, [isSpinAnimationPaused, isDepthAnimationPaused, artRef])
 
   useEffect(() => {
     const handleResetSelectionClick = (event: MouseEvent) => {
@@ -269,6 +293,27 @@ const Home: React.FC = () => {
     }
   }, [dispatch, editorSeed, editorMod, editorAttunement]);
 
+  // Toggle changes flags on Editor element
+  useEffect(() => {
+    const editorElement = document.querySelector('.editor');
+    if (editorElement) {
+
+      // Check for mod changes
+      if (editorMod && editorMod !== "000000000000000") {
+        editorElement.classList.add('changed-mod');
+      } else {
+        editorElement.classList.remove('changed-mod');
+      }
+
+      // Check for attunement override
+      if (isAttunementOverridden) {
+        editorElement.classList.add('changed-attunement');
+      } else {
+        editorElement.classList.remove('changed-attunement');
+      }
+    }
+  }, [hasEditorChanges, editorMod, isAttunementOverridden]);
+
   // MEMOIZED VALUES --------------------------------
 
   const enableSeedResetButton = useMemo(() => {
@@ -276,110 +321,113 @@ const Home: React.FC = () => {
     const isNonDefaultMod = editorMod !== '000000000000000';
     const isNonDefaultAttunement = editorAttunement !== calculateMostFrequentNumeral(BigInt(editorSeed));
     
-    return isNonZeroSeed || isNonDefaultMod || isNonDefaultAttunement;
+    return isNonZeroSeed && isNonDefaultMod || isNonZeroSeed && isNonDefaultAttunement;
   }, [editorSeed, editorMod, editorAttunement]);
+
+  const memoizedArtwork = useMemo(() => (
+    <Artwork 
+      ref={artRef}
+      seed={editorSeed}
+      mod={editorMod}
+      attunement={editorAttunement.toString()}
+      isPlaying={isPlaying}
+      editorSeed={editorSeed}
+      editorAttunement={editorAttunement}
+      modValues={modValues}
+    />
+  ), [editorSeed, editorMod, editorAttunement, isPlaying]);
+
   
   // RENDER -----------------------------------------
   
   return (
     <>
       <DiagnosticsPanel/>
-        <div className="editor">
-          <div className="editor-inner" ref={editorRef}>
-            <div className="seed-indicator">
-              <div className="seed-touchable">
-                <div className="label seed-label">SEED:</div>
-                <span
-                  ref={seedInputRef}
-                  className={`seed-input ${isSelectedItemLocked() ? 'disabled' : ''}`}
-                  contentEditable={!isSelectedItemLocked()}
-                  inputMode="numeric"
-                  onClick={(e) => !isSelectedItemLocked() && selectElementContents(e.currentTarget)}
-                  onKeyDown={handleSpecialCopy}
-                  onBlur={(e) => {
-                    e.preventDefault();
-                    if (!isSelectedItemLocked()) {
-                    const updatedSeed = e.currentTarget.textContent || '';
-                    handleSeedInputChange(updatedSeed);
-                    e.currentTarget.textContent = editorSeed;
-                    clearSelection();
-                    }
-                  }}
-                  onPaste={(e) => {
-                    e.preventDefault();
-                    if (!isSelectedItemLocked()) {
-                    const pastedText = e.clipboardData.getData('text');
-                    handleSeedInputChange(pastedText);
-                    e.currentTarget.textContent = editorSeed;
-                    clearSelection()}
-                  }}
-                >{editorSeed}</span>
-                {enableSeedResetButton && !isSelectedItemLocked() && (
-                  <div className="reset-seed-button reset show" onClick={handleResetEditorSeed}>
-                      Reset
-                  </div>
-                )}
-              </div>
+      <div className="editor">
+        <div className="editor-inner" ref={editorRef}>
+          <div className="seed-indicator">
+            <div className="seed-touchable">
+              <div className="label seed-label">SEED:</div>
+              <span
+                ref={seedInputRef}
+                className={`seed-input ${isSelectedItemLocked() ? 'disabled' : ''}`}
+                contentEditable={!isSelectedItemLocked()}
+                inputMode="numeric"
+                onClick={(e) => !isSelectedItemLocked() && selectElementContents(e.currentTarget)}
+                onKeyDown={handleSpecialCopy}
+                onBlur={(e) => {
+                  e.preventDefault();
+                  if (!isSelectedItemLocked()) {
+                  const updatedSeed = e.currentTarget.textContent || '';
+                  handleSeedInputChange(updatedSeed);
+                  e.currentTarget.textContent = editorSeed;
+                  clearSelection();
+                  }
+                }}
+                onPaste={(e) => {
+                  e.preventDefault();
+                  if (!isSelectedItemLocked()) {
+                  const pastedText = e.clipboardData.getData('text');
+                  handleSeedInputChange(pastedText);
+                  e.currentTarget.textContent = editorSeed;
+                  clearSelection()}
+                }}
+              >{editorSeed}</span>
+              {enableSeedResetButton && (
+                <div className="reset-seed-button reset show" onClick={handleResetEditorSeed}>
+                    Reset
+                </div>
+              )}
             </div>
-            <>
-              <div className="app-pane left">
-                <div className="editor-controls">
-                  <div style={{ opacity: 1 }} className="basic-actions">
-                    <a
-                      className={`ui-button randomize z-button ${isSelectedItemLocked() ? 'disabled' : ''}`}
-                      onClick={handleRandomizeBits}
-                    >Random</a>
-                    <a
-                      id="layers-ui-button"
-                      className={`ui-button advanced shrink z-button ${
-                          uiVisibility === 'layers' ? "selected" : ""
-                      } ${isSelectedItemLocked() ? 'disabled' : ''}`}
-                      onClick={handleLayersUIToggle}
-                    >Lr</a>
-                    <a
-                      id="display-settings-button"
-                      className={`ui-button advanced mod-button shrink z-button ${
-                          uiVisibility === 'displaySettings' ? "selected" : ""
-                      } ${editorSeed === '0' ? "disabled" : ""} ${isSelectedItemLocked() ? 'disabled' : ''}`}            
-                      onClick={handleDisplaySettingsToggle}
-                    >+<span></span></a>
-                  </div>
-                  <div className={`layer-grid-wrap ${uiVisibility === 'layers' ? "show" : ""}`}>
-                    <BitsArray bitsArray={bitsArray} toggleBit={handleToggleBit} />
-                  </div>
-                  <div className={`display-settings-wrap ${uiVisibility === 'displaySettings' ? "show" : ""}`}>
-                    <DisplaySettings
-                      isLocked={isSelectedItemLocked()}
-                    />
-                  </div>
+          </div>
+          <>
+            <div className="app-pane left">
+              <div className="editor-controls">
+                <div style={{ opacity: 1 }} className="basic-actions">
+                  <a
+                    className={`ui-button randomize z-button ${isSelectedItemLocked() ? 'disabled' : ''}`}
+                    onClick={handleRandomizeBits}
+                  >Random</a>
+                  <a
+                    id="layers-ui-button"
+                    className={`ui-button advanced shrink z-button ${
+                        uiVisibility === 'layers' ? "selected" : ""
+                    } ${isSelectedItemLocked() ? 'disabled' : ''}`}
+                    onClick={handleLayersUIToggle}
+                  >Lr</a>
+                  <a
+                    id="display-settings-button"
+                    className={`ui-button advanced mod-button shrink z-button ${
+                        uiVisibility === 'displaySettings' ? "selected" : ""
+                    } ${editorSeed === '0' ? "disabled" : ""} ${isSelectedItemLocked() ? 'disabled' : ''}`}            
+                    onClick={handleDisplaySettingsToggle}
+                  >+<span></span></a>
+                </div>
+                <div className={`layer-grid-wrap ${uiVisibility === 'layers' ? "show" : ""}`}>
+                  <BitsArray />
+                </div>
+                <div className={`display-settings-wrap ${uiVisibility === 'displaySettings' ? "show" : ""}`}>
+                  <NEW_DisplaySettings isLocked={isSelectedItemLocked()}
+                  />
                 </div>
               </div>
-              <div className="artwork-preview">
-                <div
-                  style={{
-                  opacity: 1,
-                  transform: "translate3d(0px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg)",
-                  transformStyle: "preserve-3d"}}
-                  className="svg-aspect-ratio"
+            </div>
+            <div className="artwork-preview">
+              <div
+                style={{
+                opacity: 1,
+                transform: "translate3d(0px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg)",
+                transformStyle: "preserve-3d"}}
+                className="svg-aspect-ratio"
+              >
+                <div 
+                  className={`svg-container ${isSpinAnimationPaused ? 'paused' : 'playing'}`}
                 >
                   <div 
-                    className="svg-container paused"
+                    className="svg-outer"
+                    {...handleArtworkInteraction()}
                   >
-                    <div 
-                      className="svg-outer"
-                      {...handleArtworkInteraction()}
-                    >
-                      {editorSeed && (
-                        <Artwork 
-                          ref={artRef}
-                          seed={editorSeed}
-                          mod={editorMod}
-                          attunement={editorAttunement.toString()}
-                          isPlaying={isPlaying}
-                          editorSeed={editorSeed}
-                          editorAttunement={editorAttunement}
-                        />
-                      )}
+                    {editorSeed && memoizedArtwork}
                     <div className="rgblens"></div>
                   </div>
                   <div className="seed-overlay-container">

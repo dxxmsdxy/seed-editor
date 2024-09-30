@@ -114,10 +114,6 @@ p *,
   transform: translate(0, 0);
 }
 
-.layer-grid-wrap,
-.btn-layer {
-  transition: background-color 0.3s linear;
-}
 
 /* html:has(svg.creation), */
 /* body:has(svg.creation), */

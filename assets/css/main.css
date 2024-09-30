@@ -2271,7 +2271,7 @@ a {
   font-size: 14px;
   font-weight: 700;
   line-height: 3.6vh;
-  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+  transition: color 0.3s, background-color 0.3s, opacity 0.3s;
   display: flex;
 }
 
@@ -2289,6 +2289,7 @@ a {
   color: #fff;
   text-align: center;
   background-color: #000;
+  transition: color 0.2s, background-color 0.2s, opacity 0.2s;
 }
 
 .ui-button {
@@ -3136,7 +3137,7 @@ body:has(.mod-button.disabled) .attune-nav {
   grid-row-gap: 0vw;
   border: 1px solid #000;
   grid-template-rows: auto;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
   margin-bottom: 25px;
   overflow: hidden;
 }
@@ -5382,7 +5383,9 @@ body:has(.seed-details.focused):not(.sleep-mode) .mod-reset {
 body:has(.display-settings-wrap.show) .queue-container,
 body:has(.display-settings-wrap.show) .app-pane.right,
 body:has(.layer-grid-wrap.show) .app-pane.right,
-body:has(.layer-grid-wrap.show) .queue-container {
+body:has(.layer-grid-wrap.show) .queue-container,
+body:has(.display-settings-wrap.show) .reset-editor,
+body:has(.layer-grid-wrap.show) .reset-editor {
   pointer-events: none;
   opacity: 0;
   transition: transform 0s, opacity 0s
@@ -5591,7 +5594,6 @@ body:has(.seed-details.focused) .seed-indicator{
 
 
 .diagnostic {
-  display: none;
   position: fixed;
   bottom: 8px;
   left: 15px;

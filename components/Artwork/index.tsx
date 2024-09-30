@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useArtworkHotkeys } from "@/hooks";
 import { RootState } from '@/store';
-import { selectShouldResetLayers, updateEditorState, clearUrlParams, selectDisplaySettings } from '@/store/slices/editorSlice';
+import { updateEditorState, selectDisplaySettings, selectEditorMod, selectModValues } from '@/store/slices/newEditorSlice';
 import NewArtworkHandling from './NewArtworkHandling';
 
 
@@ -19,30 +19,32 @@ interface ArtworkProps {
   editorSeed: string;
   editorMod: string;
   editorAttunement: number;
-  selectedQueueIndex: number | null;
+  selectedQueueIndex: number;
 }
 
 const Artwork: React.FC<ArtworkProps> = ({ 
   seed, 
   mod, 
   attunement, 
-  editorSeed, 
-  editorMod, 
-  editorAttunement 
+  editorSeed,
+  editorAttunement,
+  selectedQueueIndex
 }) => {
   useArtworkHotkeys(BigInt(seed));
   const dispatch = useDispatch();
   const currentDate = new Date();
-  const urlSeed = useSelector((state: RootState) => state.seed.urlSeed);
-  const urlMod = useSelector((state: RootState) => state.seed.urlMod);
-  const urlAttunement = useSelector((state: RootState) => state.seed.urlAttunement);
-  const shouldResetLayers = useSelector(selectShouldResetLayers);
+  const urlSeed = useSelector((state: RootState) => state.newEditor.urlSeed);
+  const urlMod = useSelector((state: RootState) => state.newEditor.urlMod);
+  const urlAttunement = useSelector((state: RootState) => state.newEditor.urlAttunement);
   const displaySettings = useSelector(selectDisplaySettings);
   const {
     isColorAnimationPaused,
     isDepthAnimationPaused,
     isSpinAnimationPaused
-  } = useSelector((state: RootState) => state.seed);
+  } = useSelector((state: RootState) => state.newEditor);
+  
+  const editorMod = useSelector(selectEditorMod);
+  const modValues = useSelector(selectModValues);
 
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -64,22 +66,11 @@ const Artwork: React.FC<ArtworkProps> = ({
     <>
       <NewArtworkHandling
         svgRef={svgRef}
-        editorSeed={editorSeed}
-        editorMod={editorMod}
-        editorAttunement={editorAttunement}
         isColorAnimationPaused={isColorAnimationPaused}
         isDepthAnimationPaused={isDepthAnimationPaused}
         isSpinAnimationPaused={isSpinAnimationPaused}
-        selectedQueueItem={null}
-        shouldResetLayers={shouldResetLayers}
-        urlSeed={urlSeed ?? ''}
-        urlMod={urlMod ?? ''}
-        urlAttunement={urlAttunement ?? ''}
-        urlParamsProcessed={urlParamsProcessed}
-        displaySettings={displaySettings}
-        dispatch={dispatch}
       />
-        <svg
+      <svg
         ref={svgRef}
         xmlns="http://www.w3.org/2000/svg"
         xmlnsXlink="http://www.w3.org/1999/xlink"

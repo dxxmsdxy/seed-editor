@@ -143,7 +143,7 @@ function applySpinMod(elements: Element[], spinModValue: number): void {
 
 function applyDepthMod(elements: Element[], depthModValue: number): void {
   const normalizedPosition = depthModValue / MAX_MOD_VALUE;
-  const delay = -(normalizedPosition * TOTAL_ANIMATION_DURATION * DEPTH_MULTIPLIER);
+  const delay = -(normalizedPosition * TOTAL_ANIMATION_DURATION );
 
   const elementCount = elements.length;
   const curveAdjustment = Math.min(elementCount / 25, 1);

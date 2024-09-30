@@ -4,7 +4,7 @@ import { useAppSelector } from '@/app/hooks';
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
 import { connectWalletAndLoadData, disconnectWalletAndClearQueue } from '@/store/slices/walletSlice';
-import { initializeQueue } from '@/store/slices/queueSlice';
+import { initializeQueue } from '@/store/slices/newQueueSlice';
 import { MenuDesktop } from "./MenuDesktop";
 import { MenuMobileContent, MenuMobileTrigger } from "./MenuMobile";
 import { DropdownMenu } from "@/components/UI/dropdownMenu";
@@ -42,7 +42,6 @@ export const Navbar = () => {
       const resultAction = await dispatch(connectWalletAndLoadData());
       if (connectWalletAndLoadData.fulfilled.match(resultAction)) {
         console.log('Wallet connected and data loaded:', resultAction.payload);
-        dispatch(initializeQueue(resultAction.payload));
       } else if (connectWalletAndLoadData.rejected.match(resultAction)) {
         console.error('Failed to connect wallet and load data:', resultAction.error);
       }

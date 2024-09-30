@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppSelector } from '@/app/hooks';
-import { getMintOrder, calculateRemainder } from '@/lib/utils';
+import { getMintOrder, calculateRemainder, calculateMostFrequentNumeral } from '@/lib/newUtils';
 
 interface DetailsProps {
   isFocused: boolean;
@@ -30,8 +30,9 @@ const Details: React.FC<DetailsProps> = ({
 }) => {
   const activeBits = bitsArray.filter(bit => bit).length;
   const cardinalNumber = calculateRemainder(BigInt(editorSeed));
+  const naturalAttunement = calculateMostFrequentNumeral(BigInt(editorSeed));
 
-  const seedState = editorMod === "000000000000000" ? "Natural" : "Modified";
+  const seedState = editorMod === "000000000000000" && editorAttunement == naturalAttunement ? "Natural" : "Modified";
 
   // Get the selected queue item and its kind
   const selectedIndex = useAppSelector(state => state.queue.selectedIndex);

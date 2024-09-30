@@ -124,6 +124,14 @@ export function calculateMostFrequentNumeral(seed) {
     return mostFrequentNumeral !== null ? parseInt(mostFrequentNumeral) : null;
 }
 
+export function updateDataAttunementAttribute(seed, artwork) {
+  const mostFrequentNumeral = calculateMostFrequentNumeral(seed);
+  artwork.setAttribute(
+    "data-attunement",
+    mostFrequentNumeral !== null ? mostFrequentNumeral.toString() : ""
+  );
+}
+
 // Check if the seed number is a palindrome
 export function checkPalindrome(seed) {  
   // Convert the BigInt to a string for easier manipulation

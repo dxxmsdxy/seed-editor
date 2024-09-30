@@ -6,6 +6,7 @@ import {
   selectCurrentPage,
   selectItemsPerPage,
   selectIsQueueModified,
+  selectSelectedIndex,
   updateQueueItem,
   resetQueueItem,
   setSelectedIndex,
@@ -22,7 +23,7 @@ const Queue: React.FC = () => {
   const currentPage = useAppSelector(selectCurrentPage);
   const itemsPerPage = useAppSelector(selectItemsPerPage);
   const isQueueModified = useAppSelector(selectIsQueueModified);
-  const selectedQueueIndex = useAppSelector(state => state.queue.selectedIndex);
+  const selectedQueueIndex = useAppSelector(selectSelectedIndex);
 
   // EVENT HANDLERS --------------------------------
 
@@ -73,85 +74,98 @@ const Queue: React.FC = () => {
 
   // RENDER ----------------------------------------
 
-  return (
-    <div className="queue-container">
-      <div className={`page-selector ${totalPages > 1 ? '' : 'disabled'}`} onClick={goToFirstPage}>
-        <div 
-          className={`page-nav prev ${currentPage === 1 ? 'disabled' : ''}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (currentPage > 1) handlePageChange(currentPage - 1);
-          }}
-        >&lt;</div>
-        <div className="page-label-container" onClick={goToFirstPage}>
-          <div className="page-label">
-            <span 
-              className="page-value"
-              contentEditable="true"
-              inputMode="numeric"
-              onClick={(e) => {
-                e.stopPropagation();
-                selectElementContents(e.currentTarget);
-              }}
-              onBlur={(e) => {
-                e.preventDefault();
-                const newPage = parseInt(e.currentTarget.textContent || "1", 10);
-                handlePageChange(newPage);
-                e.currentTarget.textContent = currentPage.toString();
-                clearSelection();
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  e.currentTarget.blur();
-                }
-              }}
-            >{currentPage}</span> / {totalPages}
-          </div>
-        </div>
-        <div 
-          className={`page-nav next ${currentPage === totalPages ? 'disabled' : ''}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (currentPage < totalPages) handlePageChange(currentPage + 1);
-          }}
-        >&gt;</div>
+  if (currentPageItems.length === 0) {
+    return (
+      <div className="queue-container">
+        <a
+            className={`ui-button inscribe z-button ${isQueueModified ? "" : "disabled"}`}
+            onClick={handleInscribeClick}
+          >
+            --
+          </a>
       </div>
-      <ul role="list" className="queue-list">
-        {currentPageItems.map((item, index) => (
-          <React.Fragment key={item.id}>
-            {index === dividerIndex && <span className="queue-divider"></span>}
-            <li
-              className={`queue-item ${item.isSelected ? "selected" : ""} ${item.isSet ? 'set' : ''}`}
-              onClick={() => handleQueueItemSelect(item.index)}
-            >
-              <div className={`queued-seed-number`}>
-                <span className="queue-item-style-preview"></span>
-                <strong>{item.displaySeed}</strong>
-                <span 
-                  className="queue-reset"
-                  onClick={(e) => handleQueueItemReset(e, item.index)}
-                ></span>
-              </div>
-            </li>
-          </React.Fragment>
-        ))}
-      </ul>
-      <a
-        className={`ui-button inscribe z-button ${isQueueModified ? "" : "disabled"}`}
-        onClick={handleInscribeClick}
-      >
-        Inscribe
-        {isQueueModified && (
-          <span className="queue-count">
-            <span>(</span>
-            {currentPageItems.filter(item => item.isSet).length}
-            <span>)</span>
-          </span>
-        )}
-      </a>
-    </div>
-  );
+    )
+  } else {
+    return (
+      <div className="queue-container">
+        <div className={`page-selector ${totalPages > 1 ? '' : 'disabled'}`} onClick={goToFirstPage}>
+          <div 
+            className={`page-nav prev ${currentPage === 1 ? 'disabled' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (currentPage > 1) handlePageChange(currentPage - 1);
+            }}
+          >&lt;</div>
+          <div className="page-label-container" onClick={goToFirstPage}>
+            <div className="page-label">
+              <span 
+                className="page-value"
+                contentEditable="true"
+                inputMode="numeric"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  selectElementContents(e.currentTarget);
+                }}
+                onBlur={(e) => {
+                  e.preventDefault();
+                  const newPage = parseInt(e.currentTarget.textContent || "1", 10);
+                  handlePageChange(newPage);
+                  e.currentTarget.textContent = currentPage.toString();
+                  clearSelection();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                  }
+                }}
+              >{currentPage}</span> / {totalPages}
+            </div>
+          </div>
+          <div 
+            className={`page-nav next ${currentPage === totalPages ? 'disabled' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (currentPage < totalPages) handlePageChange(currentPage + 1);
+            }}
+          >&gt;</div>
+        </div>
+        <ul role="list" className="queue-list">
+          {currentPageItems.map((item, index) => (
+            <React.Fragment key={item.id}>
+              {index === dividerIndex && <span className="queue-divider"></span>}
+              <li
+                className={`queue-item ${item.isSelected ? "selected" : ""} ${item.isSet ? 'set' : ''}`}
+                onClick={() => handleQueueItemSelect(item.index)}
+              >
+                <div className={`queued-seed-number`}>
+                  <span className="queue-item-style-preview"></span>
+                  <strong>{item.displaySeed}</strong>
+                  <span 
+                    className="queue-reset"
+                    onClick={(e) => handleQueueItemReset(e, item.index)}
+                  ></span>
+                </div>
+              </li>
+            </React.Fragment>
+          ))}
+        </ul>
+        <a
+          className={`ui-button inscribe z-button ${isQueueModified ? "" : "disabled"}`}
+          onClick={handleInscribeClick}
+        >
+          Inscribe
+          {isQueueModified && (
+            <span className="queue-count">
+              <span>(</span>
+              {currentPageItems.filter(item => item.isSet).length}
+              <span>)</span>
+            </span>
+          )}
+        </a>
+      </div>
+    );
+  }
 };
 
 export default Queue;

@@ -2478,16 +2478,11 @@ body {
     contrast(1.1);
 }
 
-.seedartwork.depth:has(g.on):not(.reveal) .art g.on {
-}
+.seedartwork.depth:has(g.on):not(.reveal) .art g.on {}
 
-.seedartwork.cmyk:has(g.on):not(.reveal) .art g.on .fx {
-}
+.seedartwork.cmyk:has(g.on):not(.reveal) .art g.on .fx {}
 
-.seedartwork:has(.sphere-1.on) .sphere-2 {
-  display: block;
-  opacity: 1;
-}
+.seedartwork:has(#sphere-1.on) #sphere-2 {}
 
 @keyframes grayscaleColorCycle {
   from {
@@ -2501,7 +2496,6 @@ body {
 .seedartwork.grayscale:has(g.on) {
   animation: grayscaleColorCycle 3.1s linear infinite forwards 0s;
 }
-
 
 .seedartwork.creation.accent-1:has(g.on):not(.cmyk) .art g.on:nth-last-child(even of .on) .fx {
   fill: #d5d0c5;

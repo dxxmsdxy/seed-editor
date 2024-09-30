@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { initializeQueue, updateQueueOrder, selectNextUnsetQueueItemThunk } from './queueSlice';
-import { toggleLayersUI, toggleDisplaySettingsUI } from '@/store/slices/editorSlice';
-import { determineKind } from '@/lib/utils';
+import { determineKind } from '@/lib/newUtils';
 
 
 
@@ -23,13 +22,18 @@ const initialState: WalletState = {
 };
 
 // Utility function to transform wallet data
-const transformWalletData = (data: any[]) => {
+const transformWalletData = (data: any[]): QueueItem[] => {
   return data.map((item: any) => ({
     id: item.id,
-    seed: item.seed,
-    modNumber: item.modNumber,
-    attunementNumber: item.attunementNumber,
+    initialSeed: item.seed,
+    initialMod: item.modNumber,
+    initialAttunement: item.attunementNumber,
     locked: item.locked,
+    newValues: {
+      newSeed: null,
+      newMod: null,
+      newAttunement: null,
+    },
     kind: determineKind(item.id)
   }));
 };
@@ -48,10 +52,6 @@ export const connectWalletAndLoadData = createAsyncThunk(
       
       const transformedData = transformWalletData(data);
       await dispatch(initializeQueue(transformedData));
-      await dispatch(updateQueueOrder());
-      await dispatch(toggleLayersUI(false));
-      await dispatch(toggleDisplaySettingsUI(false));
-      await dispatch(selectNextUnsetQueueItemThunk());
       
       return transformedData;
     } catch (error) {
