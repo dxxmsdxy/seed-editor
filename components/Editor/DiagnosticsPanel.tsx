@@ -1,10 +1,16 @@
-"use client";
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { selectEditorSeed, selectEditorMod, selectEditorAttunement, selectModValues } from '@/store/slices/newEditorSlice';
 import { selectSelectedIndex, selectQueueItems } from '@/store/slices/newQueueSlice';
 
+
+
+
+
+//=================================================//
+
+// Diagnostic panel state
 interface DiagnosticValues {
     seed: {
       editor: string;
@@ -30,6 +36,9 @@ interface DiagnosticValues {
       displaySettings: number;
     };
 }
+
+
+// MODULE --------------------------------------
 
 export default function DiagnosticsPanel() {
     const [diagnosticValues, setDiagnosticValues] = useState<DiagnosticValues>({
@@ -73,6 +82,11 @@ export default function DiagnosticsPanel() {
     }, [walletConnected, editorSeed, editorMod, editorAttunement, selectedIndex, queueItems, modValues]);
 
     if (!walletConnected) return null;
+
+
+
+
+    // STRUCTURE ----------------------------------
 
     return (
         <div className="diagnostic">

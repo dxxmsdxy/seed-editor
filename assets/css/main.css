@@ -5384,8 +5384,7 @@ body:has(.display-settings-wrap.show) .queue-container,
 body:has(.display-settings-wrap.show) .app-pane.right,
 body:has(.layer-grid-wrap.show) .app-pane.right,
 body:has(.layer-grid-wrap.show) .queue-container,
-body:has(.display-settings-wrap.show) .reset-editor,
-body:has(.layer-grid-wrap.show) .reset-editor {
+body:has(.display-settings-wrap:not(.show)):has(.layer-grid-wrap:not(.show)) .reset-editor {
   pointer-events: none;
   opacity: 0;
   transition: transform 0s, opacity 0s

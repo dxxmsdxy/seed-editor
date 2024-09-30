@@ -3,7 +3,6 @@ import React, { useRef, useCallback, useEffect, useState, useMemo } from "react"
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { debounce } from 'lodash';
 
 import Artwork from "@/components/Artwork";
 import Details from '@/components/Artwork/Details';
@@ -13,40 +12,21 @@ import NEW_DisplaySettings from '@/components/Editor/NEW_DisplaySettingsUI';
 import InscribeModal from "@/components/Editor/InscribeModal";
 import DiagnosticsPanel from "@/components/Editor/DiagnosticsPanel";
 
-import { 
-  updateEditorState,
-  toggleBit,
-  resetEditorState,
-  overrideAttunement,
-  resetAttunementOverride,
-  undo, 
-  redo, 
-  selectEditorSeed,
-  selectEditorMod,
-  selectEditorAttunement,
-  selectIsAttunementOverridden,
-  selectBitsArray,
-  selectModValues,
-  selectDisplaySettings,
-  selectHasEditorChanges,
-  setUrlParams,
-  setUIVisibility,
-  selectUIVisibility,
-  setSpinAnimationPaused,
-  setDepthAnimationPaused,
-} from '@/store/slices/newEditorSlice';
-import { initializeQueue, setSelectedIndex, updateQueueItem,selectSetQueueItems } from '@/store/slices/newQueueSlice';
+import { updateEditorState, resetEditorState, undo, redo, selectEditorSeed, selectEditorMod, selectEditorAttunement, selectIsAttunementOverridden, selectBitsArray, selectModValues, selectDisplaySettings, selectHasEditorChanges, setUrlParams, setUIVisibility, selectUIVisibility, setSpinAnimationPaused, setDepthAnimationPaused } from '@/store/slices/newEditorSlice';
+import { setSelectedIndex, updateQueueItem,selectSetQueueItems } from '@/store/slices/newQueueSlice';
 import { connectWalletAndLoadData } from '@/store/slices/walletSlice';
-import { selectElementContents, clearSelection, randomizeBits } from '@/lib/newUtils';
+import { selectElementContents, clearSelection, randomizeBits, hideMouseCursor } from '@/lib/newUtils';
 import PreviewLoader from '@/components/Artwork/PreviewLoader';
 import { calculateMostFrequentNumeral } from "@/lib/utils/artwork/helpers";
 
 
 
 
+
+//=================================================//
+
 const Home: React.FC = () => {
   const dispatch = useAppDispatch();
-  
 
   // REDUX STATE ------------------------------------
   const editorSeed = useSelector(selectEditorSeed);
@@ -56,18 +36,15 @@ const Home: React.FC = () => {
   const bitsArray = useSelector(selectBitsArray);
   const modValues = useSelector(selectModValues);
   const displaySettings = useSelector(selectDisplaySettings);
-  const hasEditorChanges = useSelector((state: RootState) => 
-    selectHasEditorChanges(state, { seed: editorSeed, mod: editorMod, attunement: editorAttunement })
-  );
+  const hasEditorChanges = useSelector((state: RootState) => selectHasEditorChanges(state, { seed: editorSeed, mod: editorMod, attunement: editorAttunement }));
   const uiVisibility = useSelector(selectUIVisibility);
-
-  const { items: queueItems, selectedIndex: selectedQueueIndex} = useAppSelector((state: RootState) => state.newQueue);
-  const showInscribeModal = useAppSelector((state) => state.modal.showInscribeModal);
-  const getSetQueueItems = useAppSelector(selectSetQueueItems);
-  const walletConnected = useSelector((state: RootState) => state.wallet.connected);
-
   const isSpinAnimationPaused = useSelector((state: RootState) => state.newEditor.isSpinAnimationPaused)
   const isDepthAnimationPaused = useSelector((state: RootState) => state.newEditor.isDepthAnimationPaused)
+
+  const walletConnected = useSelector((state: RootState) => state.wallet.connected);
+  const { items: queueItems, selectedIndex: selectedQueueIndex} = useAppSelector((state: RootState) => state.newQueue);
+  const getSetQueueItems = useAppSelector(selectSetQueueItems);
+  const showInscribeModal = useAppSelector((state) => state.modal.showInscribeModal);
 
 
   // REFS -------------------------------------------
@@ -76,33 +53,22 @@ const Home: React.FC = () => {
   const seedInputRef = useRef<HTMLDivElement>(null);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+
   // CHECKS -----------------------------------------
   const [isLoading, setIsLoading] = useState(false);
   const [isArtworkFocused, setIsArtworkFocused] = useState(false);
   const [isOverlayToggled, setIsOverlayToggled] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
+
   // CALLBACKS --------------------------------------
+
   const isSelectedItemLocked = useCallback(() => {
     if (selectedQueueIndex === null || selectedQueueIndex >= queueItems.length) return false;
     return queueItems[selectedQueueIndex].locked;
   }, [selectedQueueIndex, queueItems]);
 
-  const handleSetQueueItem = useCallback(() => {
-    if (selectedQueueIndex !== null && !isSelectedItemLocked()) {
-      dispatch(updateQueueItem({
-        index: selectedQueueIndex,
-        item: {
-          newSeed: editorSeed,
-          newMod: editorMod,
-          newAttunement: editorAttunement,
-        },
-        isExplicitSet: true
-      }));
-    }
-  }, [dispatch, selectedQueueIndex, isSelectedItemLocked, editorSeed, editorMod, editorAttunement]);
-
-  // Handle SVG overlay mouse interactions
+  // Handle artwork preview mouse interactions
   const handleArtworkInteraction = useCallback(() => {
     const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
       if (isArtworkFocused) {
@@ -140,6 +106,7 @@ const Home: React.FC = () => {
     setIsOverlayToggled(prev => !prev);
   }, []);
 
+  // Update the editor seed number via text input
   const handleSeedInputChange = useCallback((updatedSeed: string) => {
     const parts = updatedSeed.split(/[.:]/);
     let seed = parts[0];
@@ -147,7 +114,7 @@ const Home: React.FC = () => {
     let attunement = editorAttunement;
 
     if (parts.length > 1) {
-      if (parts[1].length === 15 && /^\d+$/.test(parts[1])) {
+      if (parts[1].length === 12 && /^\d+$/.test(parts[1])) {
         mod = parts[1];
       }
       if (parts.length > 2 && /^\d+$/.test(parts[2])) {
@@ -158,26 +125,13 @@ const Home: React.FC = () => {
     dispatch(updateEditorState({ seed: seed, mod: mod, attunement: attunement }));
   }, [dispatch, editorMod, editorAttunement]);
 
-  const handleResetEditorSeed = useCallback(() => {
-    if (!isSelectedItemLocked()) {
-      dispatch(resetEditorState());
-    }
-  }, [dispatch, isSelectedItemLocked]);
-
-  const handleRandomizeBits = useCallback(() => {
-    if (!isSelectedItemLocked()) {
-      const { bitArray, newSeed } = randomizeBits();
-      dispatch(updateEditorState({ seed: newSeed }));
-    }
-  }, [dispatch, isSelectedItemLocked]);
-
   // Handle the special Ctrl + Shift + Copy functionality
   const handleSpecialCopy = useCallback((event: React.KeyboardEvent<HTMLSpanElement>) => {
     if (event.ctrlKey && event.shiftKey && event.key === 'C') {
       event.preventDefault();
       let copyText = editorSeed;
 
-      if (editorMod !== '000000000000000') {
+      if (editorMod !== '000000000000') {
         copyText += '.' + editorMod;
       }
 
@@ -190,45 +144,72 @@ const Home: React.FC = () => {
     }
   }, [editorSeed, editorMod, editorAttunement]);
 
+  // Reset the editor seed number
+  const handleResetEditorSeed = useCallback(() => {
+    if (!isSelectedItemLocked()) {
+      dispatch(resetEditorState());
+    }
+  }, [dispatch, isSelectedItemLocked]);
+
+  // Randomize the editor seed number
+  const handleRandomizeBits = useCallback(() => {
+    if (!isSelectedItemLocked()) {
+      const { bitArray, newSeed } = randomizeBits();
+      dispatch(updateEditorState({ seed: newSeed }));
+    }
+  }, [dispatch, isSelectedItemLocked]);
+
+  // Toggle the editor UI sections
   const handleLayersUIToggle = useCallback(() => {
     dispatch(setUIVisibility(uiVisibility === 'layers' ? 'none' : 'layers'));
   }, [dispatch, uiVisibility]);
-
   const handleDisplaySettingsToggle = useCallback(() => {
     dispatch(setUIVisibility(uiVisibility === 'displaySettings' ? 'none' : 'displaySettings'));
   }, [dispatch, uiVisibility]);
 
+  // Toggle artwork play/pause state
   const togglePlay = useCallback(() => {
-    dispatch(setSpinAnimationPaused(!isSpinAnimationPaused))
-    dispatch(setDepthAnimationPaused(!isDepthAnimationPaused))
+    dispatch(setSpinAnimationPaused(!isSpinAnimationPaused));
+    dispatch(setDepthAnimationPaused(!isDepthAnimationPaused));
 
-    // Remove direct DOM manipulation from here
+    const artwork = document.querySelector('.seedartwork') as SVGSVGElement
+    if (artwork) {
+      if (!isSpinAnimationPaused || !isDepthAnimationPaused) {
+        artwork.classList.remove('spin', 'depth')
+        if (artRef.current && artRef.current.resetLayersCallback) {
+          artRef.current.resetLayersCallback()
+        }
+      } else {
+        artwork.classList.add('spin', 'depth')
+      }
+    }
+    setIsPlaying(prev => !prev)
   }, [dispatch, isSpinAnimationPaused, isDepthAnimationPaused]);
+
+  const handleSetQueueItem = useCallback(() => {
+    if (selectedQueueIndex !== null && !isSelectedItemLocked()) {
+      dispatch(updateQueueItem({
+        index: selectedQueueIndex,
+        item: {
+          newSeed: editorSeed,
+          newMod: editorMod,
+          newAttunement: editorAttunement,
+        },
+        isExplicitSet: true
+      }));
+    }
+  }, [dispatch, selectedQueueIndex, isSelectedItemLocked, editorSeed, editorMod, editorAttunement]);
 
   // EFFECTS ----------------------------------------
 
+  // Load inscription data when wallet connected
   useEffect(() => {
     if (walletConnected) {
       dispatch(connectWalletAndLoadData());
     }
   }, [walletConnected, dispatch]);
 
-  useEffect(() => {
-    const artwork = document.querySelector('.seedartwork') as SVGSVGElement
-    if (artwork) {
-      artwork.classList.toggle('pauseSpin', isSpinAnimationPaused)
-      artwork.classList.toggle('pauseDepth', isDepthAnimationPaused)
-      artwork.classList.toggle('spin', !isSpinAnimationPaused)
-      artwork.classList.toggle('depth', !isDepthAnimationPaused)
-
-      if (isSpinAnimationPaused || isDepthAnimationPaused) {
-        if (artRef.current && artRef.current.resetLayersCallback) {
-          artRef.current.resetLayersCallback()
-        }
-      }
-    }
-  }, [isSpinAnimationPaused, isDepthAnimationPaused, artRef])
-
+  // Reset the editor state on click conditions
   useEffect(() => {
     const handleResetSelectionClick = (event: MouseEvent) => {
       const editorWrapper = document.querySelector('.editor-inner');
@@ -256,19 +237,21 @@ const Home: React.FC = () => {
     return () => document.removeEventListener('click', handleResetSelectionClick);
   }, [dispatch, isArtworkFocused]);
 
+  // Update the editor state when a queue item is selected
   useEffect(() => {
     if (selectedQueueIndex !== null && selectedQueueIndex < queueItems.length) {
       const selectedItem = queueItems[selectedQueueIndex];
       if (!hasEditorChanges) {
         dispatch(updateEditorState({
           seed: selectedItem.newValues.newSeed || selectedItem.initialSeed || '0',
-          mod: selectedItem.newValues.newMod || selectedItem.initialMod || '000000000000000',
+          mod: selectedItem.newValues.newMod || selectedItem.initialMod || '000000000000',
           attunement: selectedItem.newValues.newAttunement || selectedItem.initialAttunement || 0,
         }));
       }
     }
   }, [selectedQueueIndex, queueItems, hasEditorChanges, dispatch]);
 
+  // Keyboard event listeners
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.ctrlKey && event.key === 'z' && !event.shiftKey) {
@@ -287,6 +270,7 @@ const Home: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [dispatch, handleRandomizeBits]);
 
+  // Update the url parameters with the editor state
   useEffect(() => {
     if (editorSeed || editorMod || editorAttunement) {
       dispatch(setUrlParams({ seed: editorSeed, mod: editorMod, attunement: editorAttunement.toString() }));
@@ -299,7 +283,7 @@ const Home: React.FC = () => {
     if (editorElement) {
 
       // Check for mod changes
-      if (editorMod && editorMod !== "000000000000000") {
+      if (editorMod && editorMod !== "000000000000") {
         editorElement.classList.add('changed-mod');
       } else {
         editorElement.classList.remove('changed-mod');
@@ -314,16 +298,27 @@ const Home: React.FC = () => {
     }
   }, [hasEditorChanges, editorMod, isAttunementOverridden]);
 
+  // Hide cursor after inactivity
+  useEffect(() => {
+    const sleeptarget = document.querySelector('body');
+    if (sleeptarget) {
+      const cleanup = hideMouseCursor();
+      return cleanup;
+    }
+  }, []);
+
   // MEMOIZED VALUES --------------------------------
 
+  // Conditions for when editor seed can be reset
   const enableSeedResetButton = useMemo(() => {
     const isNonZeroSeed = editorSeed !== '0';
-    const isNonDefaultMod = editorMod !== '000000000000000';
+    const isNonDefaultMod = editorMod !== '000000000000';
     const isNonDefaultAttunement = editorAttunement !== calculateMostFrequentNumeral(BigInt(editorSeed));
     
     return isNonZeroSeed && isNonDefaultMod || isNonZeroSeed && isNonDefaultAttunement;
   }, [editorSeed, editorMod, editorAttunement]);
 
+  // Memoized artwork component
   const memoizedArtwork = useMemo(() => (
     <Artwork 
       ref={artRef}
@@ -337,8 +332,10 @@ const Home: React.FC = () => {
     />
   ), [editorSeed, editorMod, editorAttunement, isPlaying]);
 
+
   
-  // RENDER -----------------------------------------
+  
+  // STRUCTURE --------------------------------------
   
   return (
     <>
@@ -435,7 +432,7 @@ const Home: React.FC = () => {
                       isFocused={isArtworkFocused}
                       showOverlay={isOverlayToggled}
                       editorSeed={editorSeed ?? ''}
-                      editorMod={editorMod ?? '000000000000000'}
+                      editorMod={editorMod ?? '000000000000'}
                       editorAttunement={editorAttunement ?? 0}
                       bitsArray={bitsArray}
                     />
@@ -496,7 +493,7 @@ const Home: React.FC = () => {
                 isFocused={isArtworkFocused}
                 showOverlay={isOverlayToggled}
                 editorSeed={editorSeed ?? ''}
-                editorMod={editorMod ?? '000000000000000'}
+                editorMod={editorMod ?? '000000000000'}
                 editorAttunement={editorAttunement ?? 0}
                 bitsArray={bitsArray}
               />

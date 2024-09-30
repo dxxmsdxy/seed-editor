@@ -2,12 +2,20 @@ import { createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit';
 import { RootState } from '@/store';
 import { calculateMostFrequentNumeral } from '@/lib/utils/artwork/helpers';
 
+
+
+
+
+//==================================================//
+
+// Queue item state
 export interface QueueItem {
   id: string;
   initialSeed: string;
   initialMod: string | null;
   initialAttunement: number | null;
   locked: boolean;
+  isSet: boolean;
   newValues: {
     newSeed: string | null;
     newMod: string | null;
@@ -16,6 +24,7 @@ export interface QueueItem {
   kind?: string;
 }
 
+// Queue state
 interface QueueState {
   items: QueueItem[];
   selectedIndex: number | null;
@@ -23,12 +32,16 @@ interface QueueState {
   itemsPerPage: number;
 }
 
+// Initialize queue state
 const initialState: QueueState = {
   items: [],
   selectedIndex: null,
   currentPage: 1,
   itemsPerPage: 10,
 };
+
+
+// STATE ACTIONS --------------------------------
 
 const newQueueSlice = createSlice({
   name: 'newQueue',
@@ -70,15 +83,43 @@ const newQueueSlice = createSlice({
     setCurrentPage: (state, action: PayloadAction<number>) => {
       state.currentPage = action.payload;
     },
+    updateQueueOrder: (state) => {
+      const selectedItemId = state.selectedIndex !== null && state.selectedIndex < state.items.length
+        ? state.items[state.selectedIndex].id
+        : null;
+      
+      state.items.sort((a, b) => {
+        const priorityA = getPriority(a);
+        const priorityB = getPriority(b);
+        return priorityA - priorityB || state.items.indexOf(a) - state.items.indexOf(b);
+      });
+    
+      if (selectedItemId !== null) {
+        state.selectedIndex = state.items.findIndex(item => item.id === selectedItemId);
+      }
+    },
   },
 });
 
-// Selectors
+
+// UTILITY FUNCTIONS -------------------------------
+
+const getPriority = (item: QueueItem) => {
+  if (item.isSet) return 0;
+  if (item.locked && !item.isSet) return 1;
+  if ((item.initialSeed !== '0' || item.newValues.newSeed !== null) && !item.isSet) return 2;
+  return 3;
+};
+
+
+// SELECTORS ---------------------------------------
+
 export const selectQueueItems = (state: RootState) => state.newQueue.items;
 export const selectSelectedIndex = (state: RootState) => state.newQueue.selectedIndex;
 export const selectCurrentPage = (state: RootState) => state.newQueue.currentPage;
 export const selectItemsPerPage = (state: RootState) => state.newQueue.itemsPerPage;
 
+// Get queue items
 export const selectQueueItemsForRendering = createSelector(
   [selectQueueItems, selectSelectedIndex],
   (items, selectedIndex) => items.map((item, index) => ({
@@ -91,6 +132,7 @@ export const selectQueueItemsForRendering = createSelector(
   }))
 );
 
+// Check if queue has been modified
 export const selectIsQueueModified = createSelector(
   [selectQueueItems],
   (items) => items.some(item => 
@@ -110,11 +152,13 @@ export const selectSetQueueItems = createSelector(
   )
 );
 
+// Get the total queue page count
 export const selectTotalPages = createSelector(
   [selectQueueItems, selectItemsPerPage],
   (items, itemsPerPage) => Math.ceil(items.length / itemsPerPage)
 );
 
+// Get the queue items on current queue page
 export const selectCurrentPageItems = createSelector(
   [selectQueueItemsForRendering, selectCurrentPage, selectItemsPerPage],
   (items, currentPage, itemsPerPage) => {
@@ -125,6 +169,7 @@ export const selectCurrentPageItems = createSelector(
 );
 
 
+// EXPORTED ACTIONS ---------------------------------
 
 export const {
   initializeQueue,
@@ -132,6 +177,7 @@ export const {
   resetQueueItem,
   setSelectedIndex,
   setCurrentPage,
+  updateQueueOrder,
 } = newQueueSlice.actions;
 
 export default newQueueSlice.reducer;

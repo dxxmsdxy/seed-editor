@@ -3,6 +3,8 @@ import { debounce } from 'lodash';
 
 
 
+
+
 //================================================//
 
 interface RangeSliderProps {
@@ -40,11 +42,7 @@ const RangeSlider: React.FC<RangeSliderProps> = React.memo(({
   const [localValue, setLocalValue] = useState(value);
   const [displayedValue, setDisplayedValue] = useState(value);
 
-  useEffect(() => {
-    setLocalValue(value);
-    setDisplayedValue(value);
-  }, [value]);
-
+  // Debounced slider changes
   const debouncedOnChange = useCallback(
     debounce((name: string, value: number) => {
       onChange(name, value, false);
@@ -52,18 +50,19 @@ const RangeSlider: React.FC<RangeSliderProps> = React.memo(({
     [onChange]
   );
 
+  // Update mod value from slider
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = parseInt(e.target.value);
     setLocalValue(newValue);
     setDisplayedValue(newValue);
   };
-
   const handleSlideEnd = () => {
     setIsActive(false);
     onChange(name, localValue, false);
     debouncedOnChange.flush();
   };
 
+  // Keyboard incrementing slider position
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (disabled) return;
 
@@ -80,6 +79,15 @@ const RangeSlider: React.FC<RangeSliderProps> = React.memo(({
     setDisplayedValue(newValue);
     debouncedOnChange(name, newValue);
   }, [localValue, max, min, step, disabled, name, debouncedOnChange]);
+
+
+  // EFFECTS ---------------------------------------
+
+  useEffect(() => {
+    setLocalValue(value);
+    setDisplayedValue(value);
+  }, [value]);
+
 
 
   

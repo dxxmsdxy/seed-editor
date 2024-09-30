@@ -1,14 +1,14 @@
 import { combineReducers } from '@reduxjs/toolkit';
-import seedReducer from './slices/editorSlice';
 import queueReducer from './slices/queueSlice';
 import otcReducer from './slices/otcSlice';
 import newEditorSlice from './slices/newEditorSlice';
+import walletSlice from './slices/walletSlice';
 import newQueueSlice from './slices/newQueueSlice';
 
 const rootReducer = combineReducers({
   newEditor: newEditorSlice,
   newQueue: newQueueSlice,
-  seed: seedReducer,
+  wallet: walletSlice,
   queue: queueReducer,
   otc: otcReducer,
 });

@@ -5,6 +5,7 @@ import seedList from '@/public/seedList.json';
 
 
 
+
 //===========================================//
 
 export const attunementNames = [
@@ -30,10 +31,10 @@ export function sanitizeSeed(seed: string): string {
 // Sanitize mod number
 export function sanitizeMod(mod: string): string {
   if (mod === undefined) {
-    return '000000000000000';
+    return '000000000000';
   }
-  const sanitized = mod.replace(/\D/g, '').slice(0, 15);
-  return sanitized.padStart(15, '0');
+  const sanitized = mod.replace(/\D/g, '').slice(0, 12);
+  return sanitized.padStart(12, '0');
 }
 
 // Sanitize attunement number

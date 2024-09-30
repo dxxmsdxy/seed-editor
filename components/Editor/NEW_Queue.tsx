@@ -25,20 +25,29 @@ const Queue: React.FC = () => {
   const isQueueModified = useAppSelector(selectIsQueueModified);
   const selectedQueueIndex = useAppSelector(selectSelectedIndex);
 
+
+
+
+
+  //================================================//
+
   // EVENT HANDLERS --------------------------------
 
+  // Change queue page
   const handlePageChange = useCallback((newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
       dispatch(setCurrentPage(newPage));
     }
   }, [dispatch, totalPages]);
 
+  // Go to first page of the queue
   const goToFirstPage = useCallback((e: React.MouseEvent) => {
     if (!(e.target as HTMLElement).classList.contains('page-value')) {
       handlePageChange(1);
     }
   }, [handlePageChange]);
 
+  // Select a queue item
   const handleQueueItemSelect = useCallback((index: number) => {
     dispatch(setSelectedIndex(index));
     const selectedItem = currentPageItems[index];
@@ -49,6 +58,7 @@ const Queue: React.FC = () => {
     }));
   }, [dispatch, currentPageItems]);
 
+  // Reset a queue item to its initial state
   const handleQueueItemReset = useCallback((e: React.MouseEvent, index: number) => {
     e.stopPropagation();
     dispatch(resetQueueItem(index));
@@ -57,22 +67,29 @@ const Queue: React.FC = () => {
     }
   }, [dispatch, selectedQueueIndex]);
 
+  // Click the inscribe button
   const handleInscribeClick = useCallback(() => {
     if (isQueueModified) {
       dispatch(setShowInscribeModal(true));
     }
   }, [dispatch, isQueueModified]);
 
+
   // DERIVED STATE ---------------------------------
 
+  // Determine where to place "set items" divider
   const getDividerIndex = useCallback((items: typeof currentPageItems) => {
     const lastSetItemIndex = items.findLastIndex(item => item.isSet);
     return lastSetItemIndex + 1;
   }, []);
 
+  // Store divider index
   const dividerIndex = useMemo(() => getDividerIndex(currentPageItems), [currentPageItems, getDividerIndex]);
 
-  // RENDER ----------------------------------------
+
+  
+
+  // STRUCTURE -------------------------------------
 
   if (currentPageItems.length === 0) {
     return (

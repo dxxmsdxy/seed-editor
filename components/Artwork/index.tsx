@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useArtworkHotkeys } from "@/hooks";
 import { RootState } from '@/store';
 import { updateEditorState, selectDisplaySettings, selectEditorMod, selectModValues } from '@/store/slices/newEditorSlice';
 import NewArtworkHandling from './NewArtworkHandling';
@@ -30,7 +29,6 @@ const Artwork: React.FC<ArtworkProps> = ({
   editorAttunement,
   selectedQueueIndex
 }) => {
-  useArtworkHotkeys(BigInt(seed));
   const dispatch = useDispatch();
   const currentDate = new Date();
   const urlSeed = useSelector((state: RootState) => state.newEditor.urlSeed);
@@ -54,13 +52,16 @@ const Artwork: React.FC<ArtworkProps> = ({
       dispatch(updateEditorState({
         seed: urlSeed || editorSeed,
         mod: urlMod || editorMod,
-        attunement: parseInt(urlAttunement || '') || editorAttunement,
+        attunement: (parseInt(urlAttunement || '') || editorAttunement).toString(),
       }));
       setUrlParamsProcessed(true);
     }
   }, [urlSeed, urlMod, urlAttunement, editorSeed, editorMod, editorAttunement, urlParamsProcessed, dispatch]);
 
 
+
+
+  // STRUCTURE ------------------------------------
 
   return (
     <>

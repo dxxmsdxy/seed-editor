@@ -32,7 +32,7 @@ const Details: React.FC<DetailsProps> = ({
   const cardinalNumber = calculateRemainder(BigInt(editorSeed));
   const naturalAttunement = calculateMostFrequentNumeral(BigInt(editorSeed));
 
-  const seedState = editorMod === "000000000000000" && editorAttunement == naturalAttunement ? "Natural" : "Modified";
+  const seedState = editorMod === "000000000000" && editorAttunement == naturalAttunement ? "Natural" : "Modified";
 
   // Get the selected queue item and its kind
   const selectedIndex = useAppSelector(state => state.queue.selectedIndex);

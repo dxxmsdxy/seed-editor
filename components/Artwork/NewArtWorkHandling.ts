@@ -5,12 +5,21 @@ import { applyModValueToElements, resetLayers, flipLayers } from '@/lib/utils/ar
 import { selectEditorSeed, selectEditorMod, selectEditorAttunement, selectBitsArray, selectIsAttunementOverridden, selectModValues, selectDisplaySettings } from '@/store/slices/newEditorSlice'
 import { attunementNames, updateThemeColor, checkPalindrome } from '@/lib/newUtils'
 
+
+
+
+
+//===============================================//
+
+// Artwork preview SVG state
 interface NewArtworkHandlingProps {
     svgRef: React.RefObject<SVGSVGElement>
     isColorAnimationPaused: boolean
     isDepthAnimationPaused: boolean
     isSpinAnimationPaused: boolean
 }
+
+// LOGIC -----------------------------------------
 
 const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
     svgRef,
@@ -19,6 +28,8 @@ const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
     isSpinAnimationPaused,
 }) => {
 
+    // REDUX STATE -------------------------------
+    
     const editorSeed = useAppSelector(selectEditorSeed);
     const bitsArray = useAppSelector(selectBitsArray);
     const editorMod = useAppSelector(selectEditorMod);
@@ -30,8 +41,12 @@ const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
     const urlMod = useAppSelector((state) => state.newEditor.urlMod);
     const urlAttunement = useAppSelector((state) => state.newEditor.urlAttunement);
 
+
+    // CALLBACKS ----------------------------------
+
     const memoizedApplyModValueToElements = useCallback(applyModValueToElements, []);
 
+    // Reset the SVG's layers to initial state
     const resetLayersCallback = useCallback(() => {
         if (svgRef.current) {
         resetLayers(svgRef.current);
@@ -43,19 +58,20 @@ const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
         }
     }, [svgRef, memoizedApplyModValueToElements, modValues]);
 
+    // Update the artwork with editor state
     const updateArtwork = useCallback(() => {
         if (!svgRef.current) return;
         const svg = svgRef.current;
         
+            svg.classList.add('seedartwork');
             svg?.classList.add("js");
             svg?.classList.add("reveal");
             svg?.classList.add("pauseColor");
+            svg?.classList.add("spin");
         
             svg?.setAttribute("width", "100%");
             svg?.setAttribute("height", "100%");
             svg?.setAttribute("tabIndex", "0");
-
-            svg.classList.add('seedartwork');
         
             const displayClasses = ['reveal', 'flip', 'invert', 'hyper', 'grayscale', 'cmyk', 'accent-1', 'accent-2', 'accent-3'];
             displayClasses.forEach((className, index) => {
@@ -78,13 +94,13 @@ const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
             if (svgRef.current) {
                 const artwork = svgRef.current
                 
-                const colorElements = document.querySelectorAll('.seedartwork,.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline,.sub,.sub path,.sub polygon,.sub circle,.sub ellipse,.sub line,.sub rect,.sub polyline,.sub .fx')
+                const colorElements = document.querySelectorAll('.seedartwork,.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline,.sub.on path,.sub.on polygon,.sub.on circle,.sub.on ellipse,.sub.on line,.sub.on rect,.sub.on polyline,.sub.on .fx')
                 memoizedApplyModValueToElements(colorElements, modValues.color, 'color')
             
                 const spinElements = artwork.querySelectorAll('.lr.on, .sub.on')
                 memoizedApplyModValueToElements(spinElements, modValues.spin, 'spin')
             
-                const depthElements = artwork.querySelectorAll('.lr.on .fx')
+                const depthElements = artwork.querySelectorAll('.lr.on .fx, .sub.on .fx')
                 memoizedApplyModValueToElements(depthElements, modValues.depth, 'depth')
             
                 const rgblens = document.querySelector('.rgblens') as HTMLElement
@@ -99,7 +115,7 @@ const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
                     }
                 }
             
-                svg.classList.toggle('depth', modValues.depth > 0)
+                svg.classList.toggle('depth', modValues.depth > 0);
             
                 svg.classList.toggle('pauseColor', isColorAnimationPaused)
                 svg.classList.toggle('pauseDepth', isDepthAnimationPaused)
@@ -107,6 +123,7 @@ const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
             }
     }, [displaySettings, modValues, editorMod, editorAttunement, isColorAnimationPaused, isDepthAnimationPaused, isSpinAnimationPaused]);
 
+    // Update the artwork attunement with editor state
     const updateAttunement = useCallback(() => {
         if (svgRef.current) {
           const svg = svgRef.current;
@@ -117,6 +134,9 @@ const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
           updateThemeColor(attunementNames[Number(editorAttunement)]);
         }
     }, [svgRef, editorAttunement]);
+
+
+    // EFFECTS ----------------------------------------
 
     useEffect(() => {
         if (svgRef.current) {

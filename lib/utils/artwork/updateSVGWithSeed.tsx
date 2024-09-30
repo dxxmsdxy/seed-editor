@@ -1,9 +1,15 @@
+/**
+ * SEEDS Artwork Layer Utility Function
+ * =================================================
+ * Update the layers of the SEEDS artwork SVG based on a seed number.
+ * =================================================
+ */ 
+
 export function updateSVGWithSeed(
   editorSeed: bigint,
   artwork: SVGSVGElement,
   bitsArray: boolean[],
-  context: Document | DocumentFragment = document,
-  removeUnusedElements: boolean = false
+  context: Document | DocumentFragment = document
 ) {
   const lrElements = Array.from(context.querySelectorAll(".lr"));
   const subLrElements = Array.from(context.querySelectorAll(".sub"));

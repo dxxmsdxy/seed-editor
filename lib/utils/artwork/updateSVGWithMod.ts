@@ -1,38 +1,25 @@
 /**
  * SEEDS Artwork Mod Utility Functions
  * =================================================
+ * - Mod Value Range: 00 to 99
  * 
- * This module provides utility functions for working with mod values in the GENESIS SEEDS system.
- * The genesis seed source file's animations synchronize on a 10-minute (600 seconds) animation cycle.
- *  These functions interpret the mod as a 3-digit sequence encoding animation initial states for looping animations.
- * * 
- * - Mod Value Range: 000 to 999
- * 
- * Using a 3-digit mod value (000-999), we can represent any point within the
+ * Using a 2-digit mod value (00-99), we can represent a point within the
  * animation cycle. This mod value can be converted to a negative animation delay
  * to control the playback position of individual elements.
  * 
  * Conversion Formula:
- * - Delay = -(Mod Value / 999) * TOTAL_ANIMATION_DURATION
- * - Mod Value = -(Delay / TOTAL_ANIMATION_DURATION) * 999
- * 
+ * - Delay = -(Mod Value / 99) * TOTAL_ANIMATION_DURATION
+ * - Mod Value = -(Delay / TOTAL_ANIMATION_DURATION) * 99
  * =================================================
- */ 
+ */
+
 
 const TOTAL_ANIMATION_DURATION = 100; // seconds
-const MAX_MOD_VALUE = 999;
+const MAX_MOD_VALUE = 99;
 const DEPTH_MULTIPLIER = 3; // New constant for depth multiplier
 
 
-/* APPLY MOD VALUE TO ELEMENTS
- * Applies a single mod value to multiple elements, adjusting for their individual initial delays.
- * @param elements - The elements to update.
- * @param modValue - The mod value to apply (0 to 999).
- * 
- * @example
- * const elements = document.querySelectorAll('.animated-element');
- * applyModValueToElements(elements, 500);
- */
+// APPLY MOD VALUE TO ELEMENTS
 export function applyModValueToElements(elements: NodeListOf<Element> | HTMLCollectionOf<Element> | Element[], modValue: number, modType: 'color' | 'depth' | 'spin'): void {
   const elementsArray = Array.from(elements);
   if (elementsArray.length === 0) {
@@ -76,7 +63,7 @@ export function applyModValueToElements(elements: NodeListOf<Element> | HTMLColl
         
         if (modType === 'spin') {
           // Linear interpolation between 1 and 0.2 (1/5 of original duration)
-          const durationMultiplier = 10 - (9.9 * normalizedPosition);
+          const durationMultiplier = 1 - (0.8 * normalizedPosition);
           const adjustedDuration = originalDuration * durationMultiplier;
           (element as HTMLElement).style.animationDuration = `${adjustedDuration.toFixed(10)}s`;
         } else {
@@ -118,18 +105,21 @@ function applySpinMod(elements: Element[], spinModValue: number): void {
     const elementT = adjustedT((index + 1) / elementCount);
     
     let adjustedDuration: number;
+    let adjustedDelay: number;
+
     if (spinModValue === 0) {
       // Use multiplier when spin mod is 0
       const multiplier = calculateMultiplier(index, elementCount);
       adjustedDuration = originalDuration * multiplier;
+      adjustedDelay = originalDelay;
     } else {
       // Adjust duration multiplier to range from 0.1 (10x shorter) to 10 (10x longer)
       const durationMultiplier = Math.pow(15, 1 - 2 * normalizedPosition * elementT);
       adjustedDuration = originalDuration * durationMultiplier;
+      
+      // Adjust delay based on the normalized position and element index
+      adjustedDelay = -(normalizedPosition * TOTAL_ANIMATION_DURATION * elementT) + originalDelay;
     }
-
-    // Adjust delay to maintain relative positions
-    const adjustedDelay = -(normalizedPosition * TOTAL_ANIMATION_DURATION * elementT) - originalDelay;
 
     // Only update if there's a significant change
     if (Math.abs(parseFloat((element as HTMLElement).style.animationDuration) - adjustedDuration) > 0.01 ||
@@ -143,7 +133,7 @@ function applySpinMod(elements: Element[], spinModValue: number): void {
 
 function applyDepthMod(elements: Element[], depthModValue: number): void {
   const normalizedPosition = depthModValue / MAX_MOD_VALUE;
-  const delay = -(normalizedPosition * TOTAL_ANIMATION_DURATION );
+  const delay = -(normalizedPosition * TOTAL_ANIMATION_DURATION * DEPTH_MULTIPLIER );
 
   const elementCount = elements.length;
   const curveAdjustment = Math.min(elementCount / 25, 1);
@@ -155,7 +145,7 @@ function applyDepthMod(elements: Element[], depthModValue: number): void {
 
     if (element.hasAttribute('data-original-delay') && element.hasAttribute('data-original-duration')) {
       originalDelay = parseFloat(element.getAttribute('data-original-delay') || '0');
-      originalDuration = parseFloat(element.getAttribute('data-original-duration') || TOTAL_ANIMATION_DURATION.toString());
+      originalDuration = 60;
     } else {
       originalDelay = parseFloat(window.getComputedStyle(element).animationDelay) || 0;
       originalDuration = parseFloat(window.getComputedStyle(element).animationDuration) || TOTAL_ANIMATION_DURATION;

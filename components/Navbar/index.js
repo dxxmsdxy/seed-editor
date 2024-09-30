@@ -4,11 +4,11 @@ import { useAppSelector } from '@/app/hooks';
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
 import { connectWalletAndLoadData, disconnectWalletAndClearQueue } from '@/store/slices/walletSlice';
-import { initializeQueue } from '@/store/slices/newQueueSlice';
 import { MenuDesktop } from "./MenuDesktop";
 import { MenuMobileContent, MenuMobileTrigger } from "./MenuMobile";
 import { DropdownMenu } from "@/components/UI/dropdownMenu";
 import { selectOTCMode } from "@/store/slices/otcSlice";
+
 
 
 
@@ -19,23 +19,7 @@ export const Navbar = () => {
   const { connected, loading, error } = useSelector((state) => state.wallet);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(null);
-
   const isOTC = useAppSelector(selectOTCMode);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsMobile(window.innerWidth < 992);
-    }
-  }, []);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 992);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   const handleConnect = async () => {
     try {
@@ -58,6 +42,26 @@ export const Navbar = () => {
       console.error('Unexpected error during wallet disconnection:', error);
     }
   };
+
+  // EFFECTS --------------------------------------
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsMobile(window.innerWidth < 992);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 992);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+
+  // STRUCTURE -----------------------------------
 
   return (
     <div

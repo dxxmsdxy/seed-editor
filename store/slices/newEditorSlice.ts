@@ -3,6 +3,12 @@ import { RootState } from '@/store';
 import { selectSelectedIndex, selectQueueItems } from './newQueueSlice';
 import { seedToBits, sanitizeSeed, sanitizeMod, sanitizeAttunement, calculateMostFrequentNumeral } from "@/lib/newUtils";
 
+
+
+
+
+//=================================================//
+
 // Core editor state
 interface EditorState {
   editorSeed: string;
@@ -31,7 +37,7 @@ interface EditorState {
   uiVisibility?: 'none' | 'layers' | 'displaySettings';
 }
 
-// Update the EditorHistoryState interface
+// Editor history state
 interface EditorHistoryState {
   seed: string;
   mod: string;
@@ -47,9 +53,10 @@ interface EditorHistoryState {
   };
 }
 
+// Initializing state
 const initialState: EditorState = {
   editorSeed: '0',
-  editorMod: '000000000000000',
+  editorMod: '000000000000',
   editorAttunement: '0',
   bitsArray: Array(100).fill(false),
   hasEditorChanges: false,
@@ -72,6 +79,9 @@ const initialState: EditorState = {
   isSpinAnimationPaused: true,
   isDepthAnimationPaused: true,
 };
+
+
+// STATE ACTIONS --------------------------------
 
 const newEditorSlice = createSlice({
   name: 'newEditor',
@@ -138,19 +148,19 @@ const newEditorSlice = createSlice({
     
       switch (name) {
         case 'color':
-          newMod = value.toString().padStart(3, '0') + newMod.slice(3);
+          newMod = value.toString().padStart(2, '0') + newMod.slice(2);
           break;
         case 'spin':
-          newMod = newMod.slice(0, 3) + value.toString().padStart(3, '0') + newMod.slice(6);
+          newMod = newMod.slice(0, 2) + value.toString().padStart(2, '0') + newMod.slice(4);
           break;
         case 'depth':
-          newMod = newMod.slice(0, 6) + value.toString().padStart(3, '0') + newMod.slice(9);
+          newMod = newMod.slice(0, 4) + value.toString().padStart(2, '0') + newMod.slice(6);
           break;
         case 'tint':
-          newMod = newMod.slice(0, 9) + value.toString().padStart(2, '0') + newMod.slice(11);
+          newMod = newMod.slice(0, 6) + value.toString().padStart(2, '0') + newMod.slice(8);
           break;
         case 'tintPercent':
-          newMod = newMod.slice(0, 11) + Math.floor(value / 10).toString().slice(-1) + newMod.slice(12);
+          newMod = newMod.slice(0, 8) + Math.floor(value / 10).toString().slice(-1) + newMod.slice(9);
           break;
       }
     
@@ -241,7 +251,10 @@ const newEditorSlice = createSlice({
   },
 });
 
-// Helper function to push current state to history
+
+// UTILITY FUNCTIONS -------------------------------
+
+// Push current state to history
 const MAX_HISTORY_LENGTH = 25;
 const pushToHistory = (state: EditorState) => {
   const lastHistoryState = state.history.past[state.history.past.length - 1];
@@ -271,23 +284,9 @@ const pushToHistory = (state: EditorState) => {
   }
 };
 
-export const {
-  updateEditorState,
-  resetEditorState,
-  setHasEditorChanges,
-  toggleBit,
-  updateModValue,
-  toggleDisplaySetting,
-  resetAttunementOverride,
-  undo,
-  redo,
-  setUIVisibility,
-  setUrlParams,
-  setSpinAnimationPaused,
-  setDepthAnimationPaused,
-} = newEditorSlice.actions;
 
-// Selectors
+// SELECTORS -----------------------------------------
+
 export const selectEditorSeed = (state: RootState) => state.newEditor.editorSeed;
 export const selectEditorMod = (state: RootState) => state.newEditor.editorMod;
 export const selectEditorAttunement = createSelector(
@@ -344,10 +343,10 @@ export const selectIsEditorModChanged = createSelector(
   [selectEditorMod, selectSelectedIndex, selectQueueItems],
   (editorMod, selectedIndex, queueItems) => {
     if (selectedIndex === null) {
-      return editorMod !== '000000000000000';
+      return editorMod !== '000000000000';
     }
     const selectedItem = queueItems[selectedIndex];
-    return editorMod !== (selectedItem.newValues.newMod || selectedItem.initialMod || '000000000000000');
+    return editorMod !== (selectedItem.newValues.newMod || selectedItem.initialMod || '000000000000');
   }
 );
 
@@ -364,5 +363,24 @@ export const selectIsEditorAttunementChanged = createSelector(
 );
 
 export const selectUIVisibility = (state: RootState) => state.newEditor.uiVisibility;
+
+
+// EXPORTED ACTIONS -------------------------------
+
+export const {
+  updateEditorState,
+  resetEditorState,
+  setHasEditorChanges,
+  toggleBit,
+  updateModValue,
+  toggleDisplaySetting,
+  resetAttunementOverride,
+  undo,
+  redo,
+  setUIVisibility,
+  setUrlParams,
+  setSpinAnimationPaused,
+  setDepthAnimationPaused,
+} = newEditorSlice.actions;
 
 export default newEditorSlice.reducer;

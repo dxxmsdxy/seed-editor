@@ -13,12 +13,13 @@ import {
   setHasEditorChanges, 
   resetAttunementOverride,
   selectEditorSeed,
-  selectEditorAttunement,
-  selectIsEditorAttunementChanged
+  selectEditorAttunement
 } from '@/store/slices/newEditorSlice';
 import { selectElementContents, clearSelection, attunementNames, sanitizeMod, sanitizeAttunement, calculateMostFrequentNumeral } from '@/lib/newUtils';
 import { selectSelectedIndex } from '@/store/slices/newQueueSlice';
 import RangeSlider from './RangeSlider';
+
+
 
 
 
@@ -29,11 +30,11 @@ const icons = iconContext.keys().map(iconContext);
 
 // COMPONENT LOGIC ---------------------------------
 
-
-
 const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
   
-   const dispatch = useAppDispatch();
+  // REDUX STATE -----------------------------------
+
+  const dispatch = useAppDispatch();
   const editorSeed = useAppSelector(selectEditorSeed);
   const editorMod = useAppSelector(selectEditorMod);
   const editorAttunement = useAppSelector(selectEditorAttunement);
@@ -65,6 +66,7 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
     }
   }, [dispatch]);
 
+  // Toggle attunement override state
   const handleAttunementToggle = useCallback(() => {
     const defaultAttunement = calculateMostFrequentNumeral(BigInt(editorSeed))?.toString() ?? "0";
     if (isAttunementOverridden) {
@@ -96,6 +98,7 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
     }
   }, [handleAttunementChange]);
 
+  // Handle manual input of mod
   const handleModInputChange = useCallback((value: string) => {
     const sanitizedMod = sanitizeMod(value);
     dispatch(updateEditorState({ mod: sanitizedMod }));
@@ -110,10 +113,10 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
       } else if (selectedItem.initialMod !== null && editorMod !== selectedItem.initialMod) {
         dispatch(updateEditorState({ mod: selectedItem.initialMod }));
       } else {
-        dispatch(updateEditorState({ mod: '000000000000000' }));
+        dispatch(updateEditorState({ mod: '000000000000' }));
       }
     } else {
-      dispatch(updateEditorState({ mod: '000000000000000' }));
+      dispatch(updateEditorState({ mod: '000000000000' }));
     }
   }, [dispatch, editorMod, selectedQueueIndex, queueItems]);
 
@@ -145,17 +148,6 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
     dispatch(toggleDisplaySetting(index));
   }, [dispatch]);  
 
-  /* useEffect(() => {
-    const attunementSelector = document.querySelector('.attunement-selector');
-    if (attunementSelector) {
-      if (isAttunementOverridden) {
-        attunementSelector.classList.remove('default');
-      } else {
-        attunementSelector.classList.add('default');
-      }
-    }
-  }, [isAttunementOverridden]); */
-
   // Handle slider change
   const handleSliderChange = useCallback((name: string, value: number) => {
     dispatch(updateModValue({ name, value }));
@@ -165,7 +157,6 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLSpanElement>) => {
     if (e.ctrlKey && (e.key === 'z' || e.key === 'Z')) {
       e.preventDefault();
-      // You may want to dispatch undo/redo actions here if needed
     }
   };
 
@@ -181,6 +172,8 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
       modInput.textContent = '.' + (editorMod || '');
     }
   }, [editorMod]);
+
+
 
 
   // STRUCTURE ---------------------------------------
@@ -240,9 +233,9 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
         </div>
         <div className="mod-sliders">
           {/* Sliders */}
-          <RangeSlider name="color" value={modValues.color} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
-          <RangeSlider name="spin" value={modValues.spin} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
-          <RangeSlider name="depth" value={modValues.depth} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
+          <RangeSlider name="color" value={modValues.color} onChange={handleSliderChange} min={0} max={99} defaultValue={0} disabled={isLocked} />
+          <RangeSlider name="spin" value={modValues.spin} onChange={handleSliderChange} min={0} max={99} defaultValue={0} disabled={isLocked} />
+          <RangeSlider name="depth" value={modValues.depth} onChange={handleSliderChange} min={0} max={99} defaultValue={0} disabled={isLocked} />
           <RangeSlider name="tint" value={modValues.tint} onChange={handleSliderChange} min={0} max={99} step={1} defaultValue={0} disabled={isLocked} />
           <RangeSlider 
             name="tintPercent" 
