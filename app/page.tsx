@@ -621,7 +621,7 @@ const Home: React.FC = () => {
                   onClick={handleSetQueueItem}
                 >
                   Set Queue Item
-                  <span className="select-icon z-embed">
+                  <span className="select-icon">
                     <svg
                       version="1.1"
                       id="checkmark"
