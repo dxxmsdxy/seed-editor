@@ -3,7 +3,7 @@ import { useAppSelector } from '@/app/hooks'
 import { updateSVGWithSeed } from "@/lib/utils/artwork/updateSVGWithSeed";
 import { applyModValueToElements, resetLayers, flipLayers } from '@/lib/utils/artwork/updateSVGWithMod'
 import { selectEditorSeed, selectEditorMod, selectEditorAttunement, selectBitsArray, selectIsAttunementOverridden, selectModValues, selectDisplaySettings } from '@/store/slices/newEditorSlice'
-import { attunementNames, updateThemeColor, checkPalindrome } from '@/lib/newUtils'
+import { attunementNames, updateThemeColor, checkPalindrome, calculateMostFrequentNumeral } from '@/lib/newUtils'
 
 
 
@@ -13,16 +13,18 @@ import { attunementNames, updateThemeColor, checkPalindrome } from '@/lib/newUti
 
 // Artwork preview SVG state
 interface NewArtworkHandlingProps {
-    svgRef: React.RefObject<SVGSVGElement>
-    isColorAnimationPaused: boolean
-    isDepthAnimationPaused: boolean
-    isSpinAnimationPaused: boolean
+    svgRef: React.RefObject<SVGSVGElement>;
+    updateArtworkRef: React.MutableRefObject<(() => void) | undefined>;
+    isColorAnimationPaused: boolean;
+    isDepthAnimationPaused: boolean;
+    isSpinAnimationPaused: boolean;
 }
 
 // LOGIC -----------------------------------------
 
 const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
     svgRef,
+    updateArtworkRef,
     isColorAnimationPaused,
     isDepthAnimationPaused,
     isSpinAnimationPaused,
@@ -34,9 +36,9 @@ const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
     const bitsArray = useAppSelector(selectBitsArray);
     const editorMod = useAppSelector(selectEditorMod);
     const editorAttunement = useAppSelector(selectEditorAttunement);
+    const isAttunementOverridden = useAppSelector(selectIsAttunementOverridden);
     const modValues = useAppSelector(selectModValues);
     const displaySettings = useAppSelector(selectDisplaySettings);
-    const isFlippedRef = useRef(false);
     const urlSeed = useAppSelector((state) => state.newEditor.urlSeed);
     const urlMod = useAppSelector((state) => state.newEditor.urlMod);
     const urlAttunement = useAppSelector((state) => state.newEditor.urlAttunement);
@@ -62,11 +64,17 @@ const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
     const updateArtwork = useCallback(() => {
         if (!svgRef.current) return;
         const svg = svgRef.current;
-        
+
+        requestAnimationFrame(() => {
+
+            resetLayers(svg);
+            updateSVGWithSeed(BigInt(editorSeed), svg, bitsArray);
+    
             svg.classList.add('seedartwork');
             svg?.classList.add("js");
             svg?.classList.add("reveal");
             svg?.classList.add("pauseColor");
+            svg?.classList.add("pauseDepth");
             svg?.classList.add("spin");
         
             svg?.setAttribute("width", "100%");
@@ -79,11 +87,7 @@ const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
                 svg.classList.toggle(className, isActive);
                     
                 if (className === 'flip') {
-                    const shouldFlip = isActive;
-                    if (shouldFlip !== isFlippedRef.current) {
-                        flipLayers(svg, shouldFlip);
-                        isFlippedRef.current = shouldFlip;
-                    }
+                    flipLayers(svg, isActive);
                 }
             });
         
@@ -114,14 +118,11 @@ const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
                         rgblens.style.opacity = modValues.tintPercent === 100 ? '1' : (modValues.tintPercent / 100).toString()
                     }
                 }
-            
                 svg.classList.toggle('depth', modValues.depth > 0);
-            
-                svg.classList.toggle('pauseColor', isColorAnimationPaused)
-                svg.classList.toggle('pauseDepth', isDepthAnimationPaused)
-                svg.classList.toggle('pauseSpin', isSpinAnimationPaused)
+                svg.classList.toggle('pauseSpin', isSpinAnimationPaused);
             }
-    }, [displaySettings, modValues, editorMod, editorAttunement, isColorAnimationPaused, isDepthAnimationPaused, isSpinAnimationPaused]);
+        });
+    }, [displaySettings, editorSeed, modValues, editorMod, editorAttunement, isColorAnimationPaused, isDepthAnimationPaused, isSpinAnimationPaused]);
 
     // Update the artwork attunement with editor state
     const updateAttunement = useCallback(() => {
@@ -130,21 +131,27 @@ const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
           attunementNames.forEach((className) => {
             svg.classList.remove(className);
           });
-          svg.classList.add(attunementNames[Number(editorAttunement)]);
-          updateThemeColor(attunementNames[Number(editorAttunement)]);
+          if (isAttunementOverridden || editorAttunement !== '0') {
+            svg.classList.add(attunementNames[Number(editorAttunement)]);
+            updateThemeColor(attunementNames[Number(editorAttunement)]);
+          } else {
+            const calculatedAttunement = calculateMostFrequentNumeral(BigInt(editorSeed))?.toString() ?? "0";
+            svg.classList.add(attunementNames[Number(calculatedAttunement)]);
+            updateThemeColor(attunementNames[Number(calculatedAttunement)]);
+          }
         }
-    }, [svgRef, editorAttunement]);
+    }, [svgRef, editorAttunement, editorSeed, isAttunementOverridden]);
 
 
     // EFFECTS ----------------------------------------
 
+
     useEffect(() => {
         if (svgRef.current) {
-        const svg = svgRef.current;
-        updateSVGWithSeed(BigInt(editorSeed.toString()), svg as SVGSVGElement, bitsArray);
-        updateAttunement();
+            updateArtwork();
+            updateAttunement();
         }
-    }, [svgRef, editorSeed, urlSeed, editorAttunement, urlAttunement]);
+    }, [svgRef, editorSeed, editorAttunement, isAttunementOverridden]);
 
     useEffect(() => {
         if (svgRef.current) {
@@ -152,6 +159,22 @@ const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
             updateArtwork();
         }
     }, [svgRef, resetLayersCallback, updateArtwork, modValues, editorMod]);
+
+    useEffect(() => {
+        updateArtworkRef.current = updateArtwork;
+    }, [updateArtwork]);
+
+    useEffect(() => {
+        if (svgRef.current) {
+            const artGroup = svgRef.current.querySelector('.art');
+            if (artGroup) {
+                const layers = artGroup.querySelectorAll('.lr, .sub');
+                layers.forEach((layer, index) => {
+                    layer.setAttribute('data-original-index', index.toString());
+                });
+            }
+        }
+    }, [svgRef]);
  
     return null
 }

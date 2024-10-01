@@ -87,23 +87,33 @@ const newEditorSlice = createSlice({
   name: 'newEditor',
   initialState,
   reducers: {
-    updateEditorState: (state, action: PayloadAction<{ seed?: string; mod?: string; attunement?: string }>) => {
-      const { seed, mod, attunement } = action.payload;
+    updateEditorState: (state, action: PayloadAction<{ seed?: string; mod?: string; attunement?: string; isAttunementOverridden?: boolean }>) => {
+      const { seed, mod, attunement, isAttunementOverridden } = action.payload;
       if (seed !== undefined) {
         state.editorSeed = sanitizeSeed(seed);
         state.bitsArray = seedToBits(BigInt(state.editorSeed));
         const calculatedAttunement = calculateMostFrequentNumeral(BigInt(state.editorSeed))?.toString() ?? "0";
         if (attunement !== undefined) {
           state.editorAttunement = sanitizeAttunement(attunement);
-          state.isAttunementOverridden = attunement !== calculatedAttunement;
+          state.isAttunementOverridden = isAttunementOverridden !== undefined ? isAttunementOverridden : attunement !== calculatedAttunement;
         } else if (!state.isAttunementOverridden) {
           state.editorAttunement = calculatedAttunement;
         }
       } else if (attunement !== undefined) {
         state.editorAttunement = sanitizeAttunement(attunement);
-        state.isAttunementOverridden = true;
+        state.isAttunementOverridden = isAttunementOverridden !== undefined ? isAttunementOverridden : true;
       }
-      if (mod !== undefined) state.editorMod = sanitizeMod(mod);
+      if (mod !== undefined) {
+        state.editorMod = sanitizeMod(mod);
+        // Update modValues when mod is changed
+        state.modValues = {
+          color: parseInt(state.editorMod.slice(0, 2), 10),
+          spin: parseInt(state.editorMod.slice(2, 4), 10),
+          depth: parseInt(state.editorMod.slice(4, 6), 10),
+          tint: parseInt(state.editorMod.slice(6, 8), 10),
+          tintPercent: parseInt(state.editorMod.slice(8, 9), 10) * 10 || 100,
+        };
+      }
       pushToHistory(state);
     },
     setHasEditorChanges: (state, action: PayloadAction<boolean>) => {
@@ -171,6 +181,9 @@ const newEditorSlice = createSlice({
       state.modValues[name] = value;
       pushToHistory(state);
     },
+    setIsAttunementOverridden: (state, action: PayloadAction<boolean>) => {
+      state.isAttunementOverridden = action.payload;
+    },
     resetAttunementOverride: (state) => {
       state.isAttunementOverridden = false;
       state.editorAttunement = calculateMostFrequentNumeral(BigInt(state.editorSeed))?.toString() ?? "0";
@@ -237,6 +250,25 @@ const newEditorSlice = createSlice({
         state.urlMod = action.payload.mod;
         state.urlAttunement = action.payload.attunement;
     },
+    setUrlMod: (state, action: PayloadAction<string>) => {
+      const mod = action.payload;
+      state.urlMod = mod;
+      state.editorMod = mod;
+      
+      state.modValues = {
+        color: parseInt(mod.slice(0, 2), 10),
+        spin: parseInt(mod.slice(2, 4), 10),
+        depth: parseInt(mod.slice(4, 6), 10),
+        tint: parseInt(mod.slice(6, 8), 10),
+        tintPercent: parseInt(mod.slice(8, 9), 10) * 10,
+      };
+
+      const displaySettingsValue = parseInt(mod.slice(-3), 10);
+      state.displaySettings = {
+        value: displaySettingsValue,
+        array: Array.from({ length: 9 }, (_, i) => !!(displaySettingsValue & (1 << i)))
+      };
+    },
     clearUrlParams: (state) => {
         state.urlSeed = null;
         state.urlMod = null;
@@ -285,6 +317,16 @@ const pushToHistory = (state: EditorState) => {
     
     state.history.future = [];
   }
+};
+
+export const parseMod = (mod: string) => {
+  return {
+    color: parseInt(mod.slice(0, 2), 10),
+    spin: parseInt(mod.slice(2, 4), 10),
+    depth: parseInt(mod.slice(4, 6), 10),
+    tint: parseInt(mod.slice(6, 8), 10),
+    tintPercent: parseInt(mod.slice(8, 9), 10) * 10 || 100, // Use 100 if it's 0
+  };
 };
 
 
@@ -346,12 +388,14 @@ export const selectHasEditorChanges = createSelector(
     selectQueueItems
   ],
   (editorSeed, editorMod, editorAttunement, selectedIndex, queueItems) => {
-    if (selectedIndex === null) return false;
+    if (selectedIndex === null || !queueItems.length) return false;
     const selectedItem = queueItems[selectedIndex];
+    if (!selectedItem) return false;
+
     return (
-      editorSeed !== (selectedItem.newValues.newSeed || selectedItem.initialSeed) ||
-      editorMod !== (selectedItem.newValues.newMod || selectedItem.initialMod || '000000000000') ||
-      editorAttunement !== (selectedItem.newValues.newAttunement?.toString() || selectedItem.initialAttunement?.toString() || calculateMostFrequentNumeral(BigInt(selectedItem.initialSeed))?.toString())
+      editorSeed !== (selectedItem.newValues?.newSeed || selectedItem.initialSeed) ||
+      editorMod !== (selectedItem.newValues?.newMod || selectedItem.initialMod || '000000000000') ||
+      editorAttunement !== (selectedItem.newValues?.newAttunement?.toString() || selectedItem.initialAttunement?.toString() || calculateMostFrequentNumeral(BigInt(selectedItem.initialSeed))?.toString())
     );
   }
 );
@@ -359,23 +403,28 @@ export const selectHasEditorChanges = createSelector(
 export const selectIsEditorModChanged = createSelector(
   [selectEditorMod, selectSelectedIndex, selectQueueItems],
   (editorMod, selectedIndex, queueItems) => {
-    if (selectedIndex === null) {
+    if (selectedIndex === null || queueItems.length === 0) {
       return editorMod !== '000000000000';
     }
     const selectedItem = queueItems[selectedIndex];
-    return editorMod !== (selectedItem.newValues.newMod || selectedItem.initialMod || '000000000000');
+    return selectedItem ? 
+      editorMod !== (selectedItem.newValues?.newMod || selectedItem.initialMod || '000000000000') : 
+      editorMod !== '000000000000';
   }
 );
 
 export const selectIsEditorAttunementChanged = createSelector(
   [selectEditorAttunement, selectSelectedIndex, selectQueueItems, selectEditorSeed],
   (editorAttunement, selectedIndex, queueItems, editorSeed) => {
-    if (selectedIndex === null) {
+    if (selectedIndex === null || queueItems.length === 0) {
       return editorAttunement !== calculateMostFrequentNumeral(BigInt(editorSeed))?.toString();
     }
     const selectedItem = queueItems[selectedIndex];
+    if (!selectedItem) {
+      return editorAttunement !== calculateMostFrequentNumeral(BigInt(editorSeed))?.toString();
+    }
     const defaultAttunement = calculateMostFrequentNumeral(BigInt(selectedItem.initialSeed))?.toString() ?? "0";
-    return editorAttunement !== (selectedItem.newValues.newAttunement?.toString() || selectedItem.initialAttunement?.toString() || defaultAttunement);
+    return editorAttunement !== (selectedItem.newValues?.newAttunement?.toString() || selectedItem.initialAttunement?.toString() || defaultAttunement);
   }
 );
 
@@ -391,6 +440,7 @@ export const {
   toggleBit,
   updateModValue,
   toggleDisplaySetting,
+  setIsAttunementOverridden,
   resetAttunementOverride,
   undo,
   redo,

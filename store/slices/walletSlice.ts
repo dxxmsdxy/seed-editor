@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { initializeQueue, QueueItem, updateQueueOrder } from './newQueueSlice';
+import { initializeQueue, QueueItem, updateQueueOrder, setSelectedIndex } from './newQueueSlice';
+import { resetEditorState } from './newEditorSlice';
 
 
 
@@ -58,8 +59,8 @@ const transformWalletData = (data: any[]): QueueItem[] => {
   return data.map((item: any) => ({
     id: item.id,
     initialSeed: item.seed,
-    initialMod: item.mod,
-    initialAttunement: item.attunement,
+    initialMod: item.modNumber || null,
+    initialAttunement: item.attunementNumber !== null ? Number(item.attunementNumber) : null,
     locked: item.locked,
     isSet: false,
     newValues: {
@@ -101,6 +102,8 @@ export const disconnectWalletAndClearQueue = createAsyncThunk(
   async (_, { dispatch }) => {
     dispatch(disconnectWallet());
     dispatch(initializeQueue([]));
+    dispatch(resetEditorState());
+    dispatch(setSelectedIndex(null)); // Add this line
   }
 );
 

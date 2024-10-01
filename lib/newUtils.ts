@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import seedList from '@/public/seedList.json';
+import { memoize } from 'lodash';
 
 
 
@@ -93,7 +94,7 @@ export function shuffleArray<T>(array: T[]): T[] {
   return shuffledArray;
 }
 
-export function calculateMostFrequentNumeral(seed) {
+export const calculateMostFrequentNumeral = memoize((seed) => {
     var seedStr = seed.toString();
     // @ts
     // const numeralFrequencies: Record<string, number> = {};
@@ -123,7 +124,7 @@ export function calculateMostFrequentNumeral(seed) {
       }
     }
     return mostFrequentNumeral !== null ? parseInt(mostFrequentNumeral) : null;
-}
+});
 
 export function updateDataAttunementAttribute(seed, artwork) {
   const mostFrequentNumeral = calculateMostFrequentNumeral(seed);
@@ -143,7 +144,7 @@ export function checkPalindrome(seed) {
 }
 
 // Check if the seed number is a Prime
-export function checkPrime(seed) {
+export const checkPrime = memoize((seed) => {
   return new Promise((resolve) => {
     function modPow(base, exponent, modulus) {
       if (modulus === BigInt(1)) return BigInt(0);
@@ -223,7 +224,7 @@ export function checkPrime(seed) {
       resolve(false); // Resolve with false if the computation takes too long
     }, 3000); // Adjust the timeout as needed
   });
-}
+});
 
 export function calculateRemainder(seed) {
     return BigInt(seed)%13n;

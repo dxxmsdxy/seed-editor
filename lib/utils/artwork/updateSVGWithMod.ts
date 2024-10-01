@@ -14,7 +14,7 @@
  */
 
 
-const TOTAL_ANIMATION_DURATION = 100; // seconds
+const TOTAL_ANIMATION_DURATION = 140; // seconds
 const MAX_MOD_VALUE = 99;
 const DEPTH_MULTIPLIER = 3; // New constant for depth multiplier
 
@@ -84,7 +84,7 @@ function applySpinMod(elements: Element[], spinModValue: number): void {
 
   // Function to calculate multiplier when spin mod is 0
   const calculateMultiplier = (index: number, count: number) => {
-    // Create a range of multipliers from 1 to 3
+    // Create a range of multipliers
     return 1 + (2 * index / (count - 1));
   };
 
@@ -113,8 +113,8 @@ function applySpinMod(elements: Element[], spinModValue: number): void {
       adjustedDuration = originalDuration * multiplier;
       adjustedDelay = originalDelay;
     } else {
-      // Adjust duration multiplier to range from 0.1 (10x shorter) to 10 (10x longer)
-      const durationMultiplier = Math.pow(15, 1 - 2 * normalizedPosition * elementT);
+      // Adjust duration multiplier to range
+      const durationMultiplier = Math.pow(5, 1 - 2 * normalizedPosition * elementT);
       adjustedDuration = originalDuration * durationMultiplier;
       
       // Adjust delay based on the normalized position and element index
@@ -223,23 +223,38 @@ function applyDropShadowFilter(svg: SVGSVGElement, depthModValue: number) {
 }
 
 
-export function flipLayers(svg: SVGSVGElement, shouldFlip: boolean): void {
+export function flipLayers(svg: SVGSVGElement, isFlipped: boolean): void {
   const artGroup = svg.querySelector('.art');
   if (!artGroup) return;
 
   const layers = Array.from(artGroup.querySelectorAll('.lr, .sub'));
   const lastNonLayerElement = artGroup.querySelector('#slot');
   
-  // Always reverse the current order of layers
-  const reversedLayers = layers.reverse();
-
-  reversedLayers.forEach(layer => {
-    if (lastNonLayerElement) {
-      artGroup.insertBefore(layer, lastNonLayerElement);
-    } else {
-      artGroup.appendChild(layer);
-    }
-  });
+  if (isFlipped) {
+    // Reverse the current order of layers
+    const reversedLayers = layers.reverse();
+    reversedLayers.forEach(layer => {
+      if (lastNonLayerElement) {
+        artGroup.insertBefore(layer, lastNonLayerElement);
+      } else {
+        artGroup.appendChild(layer);
+      }
+    });
+  } else {
+    // Restore original order
+    layers.sort((a, b) => {
+      const indexA = parseInt(a.getAttribute('data-original-index') || '0', 10);
+      const indexB = parseInt(b.getAttribute('data-original-index') || '0', 10);
+      return indexA - indexB;
+    });
+    layers.forEach(layer => {
+      if (lastNonLayerElement) {
+        artGroup.insertBefore(layer, lastNonLayerElement);
+      } else {
+        artGroup.appendChild(layer);
+      }
+    });
+  }
 }
 
 
@@ -268,6 +283,7 @@ export function resetLayers(svg: SVGSVGElement | null): void {
   ];
 
   const elements = svg.querySelectorAll(selectors.join(', '));
+
   elements.forEach(element => {
     const originalDelay = element.getAttribute('data-original-delay');
     const originalDuration = element.getAttribute('data-original-duration');
@@ -278,6 +294,30 @@ export function resetLayers(svg: SVGSVGElement | null): void {
       (element as HTMLElement).style.animationDuration = `${originalDuration}s`;
     }
   });
+
+  // Reset layer order
+  const artGroup = svg.querySelector('.art');
+  if (artGroup) {
+    const layers = Array.from(artGroup.querySelectorAll('.lr, .sub'));
+    const lastNonLayerElement = artGroup.querySelector('#slot');
+    
+    // Sort layers based on their original order (you may need to add a data attribute for this)
+    layers.sort((a, b) => {
+      const indexA = parseInt(a.getAttribute('data-original-index') || '0', 10);
+      const indexB = parseInt(b.getAttribute('data-original-index') || '0', 10);
+      return indexA - indexB;
+    });
+
+    // Reinsert layers in the original order
+    layers.forEach(layer => {
+      if (lastNonLayerElement) {
+        artGroup.insertBefore(layer, lastNonLayerElement);
+      } else {
+        artGroup.appendChild(layer);
+      }
+    });
+  }
+
   // Remove the depth filter style
   const depthFilterStyle = svg.querySelector('style.depth-filter');
   if (depthFilterStyle) {

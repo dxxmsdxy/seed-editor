@@ -2313,6 +2313,7 @@ a {
   transition: opacity 0.5s, color 0.2s ease-in-out,
     background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
   display: flex;
+  cursor: pointer;
 }
 
 .ui-button:hover {
@@ -5599,6 +5600,7 @@ body:has(.seed-details.focused) .seed-indicator{
 
 
 .diagnostic {
+  display: none;
   position: fixed;
   bottom: 8px;
   left: 15px;

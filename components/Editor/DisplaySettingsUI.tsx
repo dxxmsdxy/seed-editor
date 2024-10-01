@@ -6,7 +6,7 @@ import {
   selectEditorMod, 
   selectModValues, 
   selectDisplaySettings, 
-  toggleDisplaySetting, 
+  toggleDisplaySetting,
   selectIsEditorModChanged,
   updateModValue, 
   selectIsAttunementOverridden, 
@@ -17,6 +17,7 @@ import {
 } from '@/store/slices/newEditorSlice';
 import { selectElementContents, clearSelection, attunementNames, sanitizeMod, sanitizeAttunement, calculateMostFrequentNumeral } from '@/lib/newUtils';
 import { selectSelectedIndex } from '@/store/slices/newQueueSlice';
+import { flipLayers } from '@/lib/utils/artwork/updateSVGWithMod';
 import RangeSlider from './RangeSlider';
 
 
@@ -146,7 +147,7 @@ const DisplaySettings: React.FC = () => {
   // Handle display setting toggle
   const handleDisplaySettingToggle = useCallback((index: number) => {
     dispatch(toggleDisplaySetting(index));
-  }, [dispatch]);  
+  }, [dispatch]);
 
   // Handle slider change
   const handleSliderChange = useCallback((name: string, value: number) => {
@@ -172,6 +173,14 @@ const DisplaySettings: React.FC = () => {
       modInput.textContent = '.' + (editorMod || '');
     }
   }, [editorMod]);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlMod = urlParams.get('mod');
+    if (urlMod) {
+      dispatch(setUrlMod(urlMod));
+    }
+  }, [dispatch]);
 
 
 

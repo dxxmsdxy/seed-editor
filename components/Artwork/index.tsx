@@ -1,8 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '@/store';
-import { updateEditorState, selectDisplaySettings, selectEditorMod, selectModValues } from '@/store/slices/newEditorSlice';
+import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import NewArtworkHandling from './NewArtworkHandling';
 
 
@@ -17,47 +14,34 @@ interface ArtworkProps {
   attunement: string;
   editorSeed: string;
   editorMod: string;
-  editorAttunement: number;
-  selectedQueueIndex: number;
+  editorAttunement: string;
+  selectedQueueIndex: number | null;
+  isPlaying: boolean;
+  onArtworkReady: () => void;
 }
 
-const Artwork: React.FC<ArtworkProps> = ({ 
-  seed, 
-  mod, 
-  attunement, 
-  editorSeed,
-  editorAttunement,
-  selectedQueueIndex
-}) => {
-  const dispatch = useDispatch();
-  const currentDate = new Date();
-  const urlSeed = useSelector((state: RootState) => state.newEditor.urlSeed);
-  const urlMod = useSelector((state: RootState) => state.newEditor.urlMod);
-  const urlAttunement = useSelector((state: RootState) => state.newEditor.urlAttunement);
-  const displaySettings = useSelector(selectDisplaySettings);
-  const {
-    isColorAnimationPaused,
-    isDepthAnimationPaused,
-    isSpinAnimationPaused
-  } = useSelector((state: RootState) => state.newEditor);
-  
-  const editorMod = useSelector(selectEditorMod);
-  const modValues = useSelector(selectModValues);
-
+const Artwork = forwardRef<{ updateArtwork: () => void }, ArtworkProps>((props, ref) => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const updateArtworkRef = useRef<(() => void) | undefined>(undefined);
+  const currentDate = new Date();
 
-  const [urlParamsProcessed, setUrlParamsProcessed] = useState(false);
   useEffect(() => {
-    if (!urlParamsProcessed && (urlSeed || urlMod || urlAttunement)) {
-      dispatch(updateEditorState({
-        seed: urlSeed || editorSeed,
-        mod: urlMod || editorMod,
-        attunement: (parseInt(urlAttunement || '') || editorAttunement).toString(),
-      }));
-      setUrlParamsProcessed(true);
+    if (svgRef.current) {
+      props.onArtworkReady();
+      // Trigger an update when the artwork is ready
+      if (updateArtworkRef.current) {
+        updateArtworkRef.current();
+      }
     }
-  }, [urlSeed, urlMod, urlAttunement, editorSeed, editorMod, editorAttunement, urlParamsProcessed, dispatch]);
+  }, [svgRef.current, props.onArtworkReady]);
 
+  useImperativeHandle(ref, () => ({
+    updateArtwork: () => {
+      if (updateArtworkRef.current) {
+        updateArtworkRef.current();
+      }
+    }
+  }));
 
 
 
@@ -67,9 +51,10 @@ const Artwork: React.FC<ArtworkProps> = ({
     <>
       <NewArtworkHandling
         svgRef={svgRef}
-        isColorAnimationPaused={isColorAnimationPaused}
-        isDepthAnimationPaused={isDepthAnimationPaused}
-        isSpinAnimationPaused={isSpinAnimationPaused}
+        updateArtworkRef={updateArtworkRef}
+        isColorAnimationPaused={!props.isPlaying}
+        isDepthAnimationPaused={!props.isPlaying}
+        isSpinAnimationPaused={!props.isPlaying}
       />
       <svg
         ref={svgRef}
@@ -85,8 +70,8 @@ const Artwork: React.FC<ArtworkProps> = ({
         role="img"
         data-seed={0}
         tabIndex={0}
-        data-mod={editorMod}
-        data-attunement={editorAttunement}
+        data-mod={props.editorMod}
+        data-attunement={props.editorAttunement}
         preserveAspectRatio="true"
       >
         <desc id="seedsDesc">
@@ -924,6 +909,6 @@ const Artwork: React.FC<ArtworkProps> = ({
       </svg>
     </>
   );
-};
+});
 
 export default Artwork;

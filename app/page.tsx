@@ -1,5 +1,6 @@
 "use client";
 import React, { useRef, useCallback, useEffect, useState, useMemo } from "react";
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { createPortal } from 'react-dom';
 import { useSelector } from 'react-redux';
@@ -13,10 +14,10 @@ import DisplaySettings from '@/components/Editor/DisplaySettingsUI';
 import InscribeModal from "@/components/Editor/InscribeModal";
 import DiagnosticsPanel from "@/components/Editor/DiagnosticsPanel";
 
-import { updateEditorState, resetEditorState, undo, redo, selectEditorSeed, selectEditorMod, selectEditorAttunement, selectIsAttunementOverridden, selectBitsArray, selectModValues, selectDisplaySettings, selectHasEditorChanges, setUrlParams, setUIVisibility, selectUIVisibility, setSpinAnimationPaused, setDepthAnimationPaused } from '@/store/slices/newEditorSlice';
+import { updateEditorState, resetEditorState, undo, redo, selectEditorSeed, selectEditorMod, updateModValue, selectEditorAttunement, selectIsAttunementOverridden, setIsAttunementOverridden, selectBitsArray, selectModValues, selectDisplaySettings, selectHasEditorChanges, setUrlParams, setUIVisibility, selectUIVisibility, setSpinAnimationPaused, setDepthAnimationPaused, parseMod } from '@/store/slices/newEditorSlice';
 import { setSelectedIndex, updateQueueItem, updateQueueOrder, selectSetQueueItems, updateQueueItemWithDragDrop } from '@/store/slices/newQueueSlice';
 import { connectWalletAndLoadData } from '@/store/slices/walletSlice';
-import { selectElementContents, clearSelection, randomizeBits, hideMouseCursor, calculateMostFrequentNumeral } from '@/lib/newUtils';
+import { selectElementContents, clearSelection, randomizeBits, hideMouseCursor, calculateMostFrequentNumeral, sanitizeSeed, sanitizeMod, sanitizeAttunement } from '@/lib/newUtils';
 
 
 
@@ -26,8 +27,11 @@ import { selectElementContents, clearSelection, randomizeBits, hideMouseCursor, 
 
 const Home: React.FC = () => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   // REDUX STATE ------------------------------------
+
   const editorSeed = useSelector(selectEditorSeed);
   const editorMod = useSelector(selectEditorMod);
   const editorAttunement = useSelector(selectEditorAttunement);
@@ -46,6 +50,7 @@ const Home: React.FC = () => {
 
 
   // REFS -------------------------------------------
+
   const artRef = useRef<{ resetLayersCallback: () => void } | null>(null)
   const editorRef = useRef<HTMLDivElement>(null);
   const seedInputRef = useRef<HTMLDivElement>(null);
@@ -55,7 +60,9 @@ const Home: React.FC = () => {
 
 
   // CHECKS -----------------------------------------
+
   const [isLoading, setIsLoading] = useState(false);
+  const [isArtworkReady, setIsArtworkReady] = useState(false);
   const [isArtworkFocused, setIsArtworkFocused] = useState(false);
   const [isOverlayToggled, setIsOverlayToggled] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -133,7 +140,6 @@ const Home: React.FC = () => {
   // Toggle artwork play/pause state
   const togglePlay = useCallback(() => {
     dispatch(setSpinAnimationPaused(!isSpinAnimationPaused));
-    dispatch(setDepthAnimationPaused(!isDepthAnimationPaused));
 
     const artwork = document.querySelector('.seedartwork') as SVGSVGElement
     if (artwork) {
@@ -213,6 +219,10 @@ const Home: React.FC = () => {
     };
   }, [setIsArtworkFocused, setIsOverlayToggled]);
 
+  const handleArtworkReady = useCallback(() => {
+    setIsArtworkReady(true);
+  }, []);
+
   // Toggle the SVG Details overlay element
   const toggleArtworkOverlay = useCallback(() => {
     setIsOverlayToggled(prev => !prev);
@@ -227,33 +237,6 @@ const Home: React.FC = () => {
     }
   }, [walletConnected, dispatch]);
 
-  // Reset the editor state on click conditions
-  useEffect(() => {
-    const handleResetSelectionClick = (event: MouseEvent) => {
-      const editorWrapper = document.querySelector('.editor-inner');
-      const navbar = document.querySelector('.navbar');
-      const inscribeModal = document.querySelector('.mint-modal'); 
-      const artworkContainer = document.querySelector('.svg-container');
-      
-      if (
-        editorWrapper && 
-        navbar && 
-        !editorWrapper.contains(event.target as Node) && 
-        !navbar.contains(event.target as Node) && 
-        (!inscribeModal || !inscribeModal.contains(event.target as Node)) && 
-        (!artworkContainer || !artworkContainer.contains(event.target as Node)) &&
-        event.target !== editorWrapper &&
-        !isArtworkFocused
-      ) {
-        dispatch(setSelectedIndex(null));
-        dispatch(resetEditorState());
-        setIsOverlayToggled(false);
-      }
-    };
-    document.addEventListener('dblclick', handleResetSelectionClick);
-    return () => document.removeEventListener('dblclick', handleResetSelectionClick);
-  }, [dispatch, isArtworkFocused]);
-
   // Update the editor state when a queue item is selected
   useEffect(() => {
     if (selectedQueueIndex !== null && selectedQueueIndex < queueItems.length) {
@@ -267,31 +250,6 @@ const Home: React.FC = () => {
       }
     }
   }, [selectedQueueIndex, queueItems, hasEditorChanges, dispatch]);
-
-  // Keyboard event listeners
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.key === 'z' && !event.shiftKey) {
-        event.preventDefault();
-        dispatch(undo());
-      } else if (event.ctrlKey && event.key === 'Z' && event.shiftKey) {
-        event.preventDefault();
-        dispatch(redo());
-      } else if ((event.key === 'r' || event.key === 'R') && !event.ctrlKey) {
-        event.preventDefault();
-        handleRandomizeBits();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [dispatch, handleRandomizeBits]);
-
-  // Update the url parameters with the editor state
-  useEffect(() => {
-    if (editorSeed || editorMod || editorAttunement) {
-      dispatch(setUrlParams({ seed: editorSeed, mod: editorMod, attunement: editorAttunement.toString() }));
-    }
-  }, [dispatch, editorSeed, editorMod, editorAttunement]);
 
   // Toggle changes flags on Editor element
   useEffect(() => {
@@ -325,6 +283,54 @@ const Home: React.FC = () => {
       }
     }
   }, [editorSeed]);
+
+
+  // USER INTERACTION ----------------------------
+
+  // Reset the editor state on click conditions
+  useEffect(() => {
+    const handleResetSelectionClick = (event: MouseEvent) => {
+      const editorWrapper = document.querySelector('.editor-inner');
+      const navbar = document.querySelector('.navbar');
+      const inscribeModal = document.querySelector('.mint-modal'); 
+      const artworkContainer = document.querySelector('.svg-container');
+      
+      if (
+        editorWrapper && 
+        navbar && 
+        !editorWrapper.contains(event.target as Node) && 
+        !navbar.contains(event.target as Node) && 
+        (!inscribeModal || !inscribeModal.contains(event.target as Node)) && 
+        (!artworkContainer || !artworkContainer.contains(event.target as Node)) &&
+        event.target !== editorWrapper &&
+        !isArtworkFocused
+      ) {
+        dispatch(setSelectedIndex(null));
+        dispatch(resetEditorState());
+        setIsOverlayToggled(false);
+      }
+    };
+    document.addEventListener('dblclick', handleResetSelectionClick);
+    return () => document.removeEventListener('dblclick', handleResetSelectionClick);
+  }, [dispatch, isArtworkFocused]);
+
+  // Keyboard event listeners
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === 'z' && !event.shiftKey) {
+        event.preventDefault();
+        dispatch(undo());
+      } else if (event.ctrlKey && event.key === 'Z' && event.shiftKey) {
+        event.preventDefault();
+        dispatch(redo());
+      } else if ((event.key === 'r' || event.key === 'R') && !event.ctrlKey) {
+        event.preventDefault();
+        handleRandomizeBits();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [dispatch, handleRandomizeBits]);
 
   useEffect(() => {
     const handleGlobalMouseUp = (e: MouseEvent) => {
@@ -385,6 +391,66 @@ const Home: React.FC = () => {
     }
   }, []);
 
+
+  // URL PARAMETERS ------------------------------
+
+  // Update the url parameters with the editor state
+  useEffect(() => {
+    if (editorSeed || editorMod) {
+      let urlValue = editorSeed;
+      if (editorMod !== '000000000000') {
+        // Ensure tintPercent is correctly represented in the URL
+        const modForUrl = editorMod.slice(0, 8) + 
+          (modValues.tintPercent === 100 ? '0' : (modValues.tintPercent / 10).toString()) +
+          editorMod.slice(9);
+        urlValue += `.${modForUrl}`;
+      }
+      if (isAttunementOverridden) {
+        urlValue += `:${editorAttunement}`;
+      }
+      
+      const newUrl = `${window.location.pathname}${urlValue ? '?seed=' + urlValue : ''}`;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [editorSeed, editorMod, editorAttunement, isAttunementOverridden, modValues.tintPercent]);
+
+  // Initialize editor state from URL parameters
+  useEffect(() => {
+    const urlParams = searchParams.get('seed');
+    if (urlParams) {
+      const [seedPart, attunementPart] = urlParams.split(':');
+      const [seedRaw, modRaw] = seedPart.split('.');
+      
+      const seed = sanitizeSeed(seedRaw || '0');
+      const mod = sanitizeMod(modRaw || '000000000000');
+      const attunement = sanitizeAttunement(attunementPart || '0');
+      const isOverridden = attunementPart !== undefined;
+
+      const parsedModValues = parseMod(mod);
+
+      dispatch(updateEditorState({
+        seed,
+        mod,
+        attunement
+      }));
+      dispatch(setIsAttunementOverridden(isOverridden));
+      
+      // Update modValues separately to ensure correct tintPercent
+      Object.entries(parsedModValues).forEach(([key, value]) => {
+        dispatch(updateModValue({ name: key, value }));
+      });
+    }
+  }, []);
+
+  // Trigger artwork update when ready and initialized from URL
+  useEffect(() => {
+    if (isArtworkReady && searchParams.toString()) {
+      if (artRef.current && artRef.current.updateArtwork) {
+        artRef.current.updateArtwork();
+      }
+    }
+  }, [isArtworkReady]);
+
   // MEMOIZED VALUES --------------------------------
 
   // Conditions for when editor seed can be reset
@@ -405,8 +471,10 @@ const Home: React.FC = () => {
       attunement={editorAttunement.toString()}
       isPlaying={isPlaying}
       editorSeed={editorSeed}
+      editorMod={editorMod}
       editorAttunement={editorAttunement}
       modValues={modValues}
+      onArtworkReady={handleArtworkReady}
     />
   ), [editorSeed, editorMod, editorAttunement, isPlaying]);
 
