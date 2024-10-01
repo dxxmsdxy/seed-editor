@@ -1,108 +1,124 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { RootState } from '@/store';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
-import { useSelector } from 'react-redux';
-import { updateDisplaySetting, updateEditorMod, resetEditorMod, updateEditorAttunement, selectModValues, selectShouldShowResetMod, resetEditorAttunement, selectDisplaySettings, toggleColorAnimationPause, toggleDepthAnimationPause, toggleSpinAnimationPause, updateSliderValue, selectAttunement, updateDisplaySettingsFromMod, updateTintPercentModSegment } from '@/store/slices/editorSlice';
-import { selectElementContents, clearSelection } from '@/lib/utils';
-import { attunementNames, calculateMostFrequentNumeral } from '@/lib/utils/artwork/helpers';
+import { 
+  updateEditorState, 
+  selectEditorMod, 
+  selectModValues, 
+  selectDisplaySettings, 
+  toggleDisplaySetting, 
+  selectIsEditorModChanged,
+  updateModValue, 
+  selectIsAttunementOverridden, 
+  setHasEditorChanges, 
+  resetAttunementOverride,
+  selectEditorSeed,
+  selectEditorAttunement
+} from '@/store/slices/newEditorSlice';
+import { selectElementContents, clearSelection, attunementNames, sanitizeMod, sanitizeAttunement, calculateMostFrequentNumeral } from '@/lib/newUtils';
+import { selectSelectedIndex } from '@/store/slices/newQueueSlice';
 import RangeSlider from './RangeSlider';
-import debounce from 'lodash/debounce';
 
 
 
-//================================================//
+
+
+//=============================================//
 
 const iconContext = require.context('@/public/icons/settings', false, /seeds-editor-icons_.*\.svg$/);
 const icons = iconContext.keys().map(iconContext);
 
 // COMPONENT LOGIC ---------------------------------
 
-const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
+const DisplaySettings: React.FC = () => {
   
-  const dispatch = useAppDispatch();
-  const editorSeed = useAppSelector((state) => state.seed.editorSeed);
-  const editorMod = useAppSelector((state) => state.seed.editorMod);
-  const editorAttunement = useAppSelector((state) => state.seed.editorAttunement);
-  const isAttunementOverridden = useAppSelector((state) => state.seed.isAttunementOverridden);
-  const modValues = useAppSelector(selectModValues);
-  const displaySettings = useAppSelector(selectDisplaySettings);
-  const [showAttunementName, setShowAttunementName] = useState(false);
-  const shouldShowResetMod = useAppSelector(selectShouldShowResetMod);
+  // REDUX STATE -----------------------------------
 
+  const dispatch = useAppDispatch();
+  const editorSeed = useAppSelector(selectEditorSeed);
+  const editorMod = useAppSelector(selectEditorMod);
+  const editorAttunement = useAppSelector(selectEditorAttunement);
+  const isEditorModChanged = useAppSelector(selectIsEditorModChanged);
+  const isAttunementOverridden = useAppSelector(selectIsAttunementOverridden);
+  const selectedQueueIndex = useAppSelector(selectSelectedIndex);
+  const queueItems = useAppSelector((state: RootState) => state.newQueue.items);
+  
+  const displaySettings = useAppSelector(selectDisplaySettings);
+  const modValues = useAppSelector(selectModValues);
+  const [sliderValues, setSliderValues] = useState(modValues);
+  const [showAttunementName, setShowAttunementName] = useState(false);
 
   const [activeSelection, setActiveSelection] = useState(false);
   const startSelection = useCallback(() => setActiveSelection(true), []);
   const endSelection = useCallback(() => setActiveSelection(false), []);
 
+  const isDefault = useMemo(() => {
+    const defaultAttunement = calculateMostFrequentNumeral(BigInt(editorSeed))?.toString() ?? "0";
+    return !isAttunementOverridden && editorAttunement === defaultAttunement;
+  }, [editorSeed, editorAttunement, isAttunementOverridden]);
+
+
+  // Handle attunement changes
+  const handleAttunementChange = React.useCallback((changingAttunement: number) => {
+    if (!isNaN(changingAttunement)) {
+      const sanitizedAttunement = sanitizeAttunement((changingAttunement).toString())
+      dispatch(updateEditorState({ attunement: sanitizedAttunement.toString() }));
+    }
+  }, [dispatch]);
+
+  // Toggle attunement override state
+  const handleAttunementToggle = useCallback(() => {
+    const defaultAttunement = calculateMostFrequentNumeral(BigInt(editorSeed))?.toString() ?? "0";
+    if (isAttunementOverridden) {
+      // If attunement is overridden, reset it to the default value
+      dispatch(updateEditorState({ attunement: defaultAttunement }));
+      dispatch(resetAttunementOverride());
+    } else {
+      // If attunement is not overridden, set isAttunementOverridden to true
+      dispatch(updateEditorState({ attunement: editorAttunement }));
+    }
+  }, [dispatch, isAttunementOverridden, editorSeed, editorAttunement]);
+
+  // Handle increment/decrement of attunement
+  const handleAttunementIncrement = React.useCallback(() => {
+    handleAttunementChange((Number(editorAttunement) + 1) % 10);
+  }, [editorAttunement, handleAttunementChange]);
+
+  const handleAttunementDecrement = React.useCallback(() => {
+    handleAttunementChange((Number(editorAttunement) - 1 + 10) % 10);
+  }, [editorAttunement, handleAttunementChange]);
+
+  // Handle manual input of attunement
+  const handleAttunementInput = React.useCallback((e: React.FormEvent<HTMLSpanElement>) => {
+    const value = e.currentTarget.textContent;
+    if (value === '') {
+      handleAttunementChange(0);
+    } else {
+      handleAttunementChange(parseInt(value || "0", 10));
+    }
+  }, [handleAttunementChange]);
+
+  // Handle manual input of mod
+  const handleModInputChange = useCallback((value: string) => {
+    const sanitizedMod = sanitizeMod(value);
+    dispatch(updateEditorState({ mod: sanitizedMod }));
+  }, [dispatch]);
 
   // Reset the mod value
-  const handleResetMod = () => {
-    if (!isLocked && shouldShowResetMod) {
-      dispatch(resetEditorMod());
-    }
-  };
-
-  const handleResetAttunement = React.useCallback(() => {
-    if (!isLocked) {
-      dispatch(resetEditorAttunement());
-      setShowAttunementName(false);
-    }
-  }, [isLocked, dispatch]);
-
-  // Prevent strange behavior
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLSpanElement>) => {
-    if (e.ctrlKey && (e.key === 'z' || e.key === 'Z')) {
-      e.preventDefault();
-      // You may want to dispatch undo/redo actions here if needed
-    }
-  };
-
-  // Debounced function to update editor mod value
-  const debouncedUpdateEditorMod = useCallback(
-    debounce((mod: string, value: number) => {
-      dispatch(updateEditorMod({ mod, value, isSliding: false }));
-    }, 50),
-    [dispatch]
-  );
-
-  // Handle display settings toggle button interaction
-  const handleDisplaySettingToggle = useCallback((index: number) => {
-    if (!isLocked) {
-      const newDisplaySettings = displaySettings ^ (1 << index);
-      dispatch(updateDisplaySetting(index));
-    }
-  }, [isLocked, dispatch, displaySettings]);
-
-  // Handle display settings slider interaction
-  const handleSliderChange = (mod: string, value: number, isSliding: boolean) => {
-    if (!isLocked) {
-      if (mod === 'tint') {
-        if (value === 0) {
-          // If tint is set to 0, set tintPercent mod segment to 0 but keep slider position
-          dispatch(updateSliderValue({ name: 'tint', value: 0 }));
-          dispatch(updateTintPercentModSegment(0));
-        } else {
-          // If tint is non-zero, restore tintPercent mod segment based on slider position
-          dispatch(updateSliderValue({ name: 'tint', value }));
-          dispatch(updateTintPercentModSegment(modValues.tintPercent));
-        }
-      } else if (mod === 'tintPercent') {
-        if (modValues.tint === 0) {
-          // If tint is 0, only update the slider position, not the mod
-          dispatch(updateSliderValue({ name: 'tintPercent', value, updateMod: false }));
-        } else {
-          // If tint is non-zero, update both slider and mod
-          dispatch(updateSliderValue({ name: 'tintPercent', value }));
-        }
+  const handleResetMod = useCallback(() => {
+    if (selectedQueueIndex !== null && selectedQueueIndex < queueItems.length) {
+      const selectedItem = queueItems[selectedQueueIndex];
+      if (selectedItem.newValues.newMod !== null && editorMod !== selectedItem.newValues.newMod) {
+        dispatch(updateEditorState({ mod: selectedItem.newValues.newMod }));
+      } else if (selectedItem.initialMod !== null && editorMod !== selectedItem.initialMod) {
+        dispatch(updateEditorState({ mod: selectedItem.initialMod }));
       } else {
-        // For other sliders, update as normal
-        dispatch(updateSliderValue({ name: mod, value }));
+        dispatch(updateEditorState({ mod: '000000000000' }));
       }
-  
-      if (!isSliding) {
-        // Additional actions when sliding stops, if needed
-      }
+    } else {
+      dispatch(updateEditorState({ mod: '000000000000' }));
     }
-  };
+  }, [dispatch, editorMod, selectedQueueIndex, queueItems]);
 
   // Render display setting icons
   const renderDisplaySettingIcons = () => {
@@ -127,42 +143,27 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
     ));
   };
 
-  // Toggle individual animations on the SVG
-  const handleToggleColorAnimation = () => {
-    dispatch(toggleColorAnimationPause());
-  };
-  const handleToggleDepthAnimation = () => {
-    dispatch(toggleDepthAnimationPause());
-  };
-  const handleToggleSpinAnimation = () => {
-    dispatch(toggleSpinAnimationPause());
-  };
+  // Handle display setting toggle
+  const handleDisplaySettingToggle = useCallback((index: number) => {
+    dispatch(toggleDisplaySetting(index));
+  }, [dispatch]);  
 
-  useEffect(() => {
-    const attunementSelector = document.querySelector('.attunement-selector');
-    if (attunementSelector) {
-      if (isAttunementOverridden) {
-        attunementSelector.classList.remove('default');
-      } else {
-        attunementSelector.classList.add('default');
-      }
+  // Handle slider change
+  const handleSliderChange = useCallback((name: string, value: number) => {
+    dispatch(updateModValue({ name, value }));
+  }, [dispatch]);
+
+  // Prevent strange behavior
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLSpanElement>) => {
+    if (e.ctrlKey && (e.key === 'z' || e.key === 'Z')) {
+      e.preventDefault();
     }
-  }, [isAttunementOverridden]);
+  };
 
-  // Handle attunement chanes
-  const handleAttunementChange = React.useCallback((newAttunement: number) => {
-    if (!isLocked) {
-      if (!isNaN(newAttunement) && newAttunement >= 0 && newAttunement <= 9) {
-        dispatch(updateEditorAttunement({ attunementNumber: newAttunement, isOverride: true, updateChanges: true }));
-        setShowAttunementName(true);
-      }
-    }
-  }, [isLocked, dispatch]);
-
-  // Update the display settings buttons when editor mod changes
+  // Update local state when editorMod changes
   useEffect(() => {
-    dispatch(updateDisplaySettingsFromMod(editorMod ?? "000000000000000"));
-  }, [editorMod, dispatch]);
+    setSliderValues(modValues);
+  }, [editorMod]);
 
   // Update the Mod Input element with the editor mod state
   useEffect(() => {
@@ -173,46 +174,36 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
   }, [editorMod]);
 
 
+
+
   // STRUCTURE ---------------------------------------
 
   return (
     <div>
       {/* Attunement selector */}
-      <div className={`attunement-selector ${isAttunementOverridden ? '' : 'default'}`}>
-        <div className="attune-nav prev ui-element" onClick={() => !isLocked && handleAttunementChange((editorAttunement - 1 + 10) % 10)}>
+      <div className={`attunement-selector ${isDefault ? 'default' : ''}`}>
+        <div className="attune-nav prev ui-element" onClick={handleAttunementDecrement}>
           &lt;
         </div>
-        <div className="attunement-label-container ui-element" onClick={handleResetAttunement}>
+        <div className="attunement-label-container ui-element" onClick={handleAttunementToggle}>
           <div className="attunement-label ui-element">
             <span className="attunement-name">
-              { attunementNames[editorAttunement] + ":"}
+              {attunementNames[Number(editorAttunement)] + ":"}
             </span>
             <span
               className="attunement-input ui-element"
-              contentEditable={!isLocked}
+              contentEditable="true"
               inputMode="numeric"
               onClick={(e) => {
                 e.stopPropagation();
                 selectElementContents(e.currentTarget);
               }}
               suppressContentEditableWarning={true}
-              onInput={(e) => {
-                const value = e.currentTarget.textContent;
-                if (value === '') {
-                  handleResetAttunement();
-                } else {
-                  handleAttunementChange(parseInt(value || "0", 10));
-                }
-              }}
+              onInput={handleAttunementInput}
               onBlur={(e) => {
                 e.preventDefault();
-                if (e.currentTarget.textContent === '') {
-                  handleResetAttunement();
-                } else {
-                  handleAttunementChange(parseInt(e.currentTarget.textContent || "0", 10));
-                  clearSelection();
-                }
-                e.currentTarget.textContent = editorAttunement.toString();
+                handleAttunementInput(e);
+                e.currentTarget.textContent = editorAttunement;
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -231,7 +222,7 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
             </span>
           </div>
         </div>
-        <div className="attune-nav next ui-element" onClick={() => !isLocked && handleAttunementChange((editorAttunement + 1) % 10)}>
+        <div className="attune-nav next ui-element" onClick={handleAttunementIncrement}>
           &gt;
         </div>
       </div>
@@ -242,10 +233,10 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
         </div>
         <div className="mod-sliders">
           {/* Sliders */}
-          <RangeSlider name="color" value={modValues.color} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
-          <RangeSlider name="spin" value={modValues.spin} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
-          <RangeSlider name="depth" value={modValues.depth} onChange={handleSliderChange} min={0} max={999} defaultValue={0} disabled={isLocked} />
-          <RangeSlider name="tint" value={modValues.tint} onChange={handleSliderChange} min={0} max={99} step={1} defaultValue={0} disabled={isLocked} />
+          <RangeSlider name="color" value={modValues.color} onChange={handleSliderChange} min={0} max={99} defaultValue={0} />
+          <RangeSlider name="spin" value={modValues.spin} onChange={handleSliderChange} min={0} max={99} defaultValue={0} />
+          <RangeSlider name="depth" value={modValues.depth} onChange={handleSliderChange} min={0} max={99} defaultValue={0} />
+          <RangeSlider name="tint" value={modValues.tint} onChange={handleSliderChange} min={0} max={99} step={1} defaultValue={0} />
           <RangeSlider 
             name="tintPercent" 
             value={modValues.tintPercent}
@@ -253,7 +244,7 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
             min={10} 
             max={100}
             step={10} 
-            disabled={isLocked || modValues.tint === 0}
+            disabled={modValues.tint === 0}
             defaultValue={100}
             displayValue={(value) => `${value}%`}
             checkDefault={modValues.tint === 0}
@@ -277,7 +268,7 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
                   if (value === '') {
                     handleResetMod();
                   } else {
-                    dispatch(updateEditorMod({ mod: value, updateChanges: true }));
+                    handleModInputChange(value);
                     clearSelection();
                   }
                 }}
@@ -287,7 +278,7 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
                   if (value === '') {
                     handleResetMod();
                   } else {
-                    dispatch(updateEditorMod({ mod: value, updateChanges: true }));
+                    handleModInputChange(value);
                     clearSelection();
                   }
                   e.currentTarget.textContent = '.' + (editorMod || '');
@@ -300,10 +291,10 @@ const DisplaySettings: React.FC<{ isLocked: boolean }> = ({ isLocked }) => {
                 }}
                 onKeyDown={handleKeyDown}
               >
-                .{useAppSelector(state => state.seed.editorMod)}
+                .{useAppSelector(state => state.newEditor.editorMod)}
               </span>
               <span 
-                className={`mod-reset ${shouldShowResetMod ? 'show' : ''}`} 
+                className={`mod-reset ${isEditorModChanged ? 'show' : ''}`} 
                 onClick={handleResetMod}
               >
                 Reset

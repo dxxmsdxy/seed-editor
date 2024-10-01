@@ -111,15 +111,18 @@ const newEditorSlice = createSlice({
     },
     resetEditorState: (state) => {
       const currentVisibility = state.uiVisibility;
-      
-      // Push the current state to history before resetting
+
       pushToHistory(state);
-      
-      // Reset the state
       Object.assign(state, {
         ...initialState,
-        uiVisibility: currentVisibility,
-        history: state.history, // Preserve the history
+        uiVisibility: currentVisibility === 'displaySettings' ? 'none' : currentVisibility,
+        history: state.history,
+        urlSeed: state.urlSeed,
+        urlMod: state.urlMod,
+        urlAttunement: state.urlAttunement,
+        isColorAnimationPaused: state.isColorAnimationPaused,
+        isSpinAnimationPaused: state.isSpinAnimationPaused,
+        isDepthAnimationPaused: state.isDepthAnimationPaused,
       });
       
       // Push the reset state to history
@@ -255,7 +258,7 @@ const newEditorSlice = createSlice({
 // UTILITY FUNCTIONS -------------------------------
 
 // Push current state to history
-const MAX_HISTORY_LENGTH = 25;
+const MAX_HISTORY_LENGTH = 20;
 const pushToHistory = (state: EditorState) => {
   const lastHistoryState = state.history.past[state.history.past.length - 1];
   const isNewStateDifferent = !lastHistoryState ||
@@ -264,7 +267,7 @@ const pushToHistory = (state: EditorState) => {
     state.editorAttunement !== lastHistoryState.attunement ||
     !state.bitsArray.every((bit, index) => bit === lastHistoryState.bitsArray[index]);
 
-  if (isNewStateDifferent) {
+  if (isNewStateDifferent && state.editorSeed !== '0') {
     const newHistoryState: EditorHistoryState = {
       seed: state.editorSeed,
       mod: state.editorMod,
@@ -303,6 +306,7 @@ export const selectEditorAttunement = createSelector(
     }
   }
 );
+
 export const selectIsAttunementOverridden = (state: RootState) => state.newEditor.isAttunementOverridden;
 
 export const selectBitsArray = (state: RootState) => state.newEditor.bitsArray;
@@ -333,11 +337,24 @@ export const selectModValuesAndDisplaySettings = createSelector(
   (modValues, displaySettings) => ({ modValues, displaySettings })
 );
 
-export const selectHasEditorChanges = (state: RootState, originalState: { seed: string; mod: string; attunement: string }) => {
-  return state.newEditor.editorSeed !== originalState.seed ||
-         state.newEditor.editorMod !== originalState.mod ||
-         state.newEditor.editorAttunement !== originalState.attunement;
-};
+export const selectHasEditorChanges = createSelector(
+  [
+    selectEditorSeed,
+    selectEditorMod,
+    selectEditorAttunement,
+    selectSelectedIndex,
+    selectQueueItems
+  ],
+  (editorSeed, editorMod, editorAttunement, selectedIndex, queueItems) => {
+    if (selectedIndex === null) return false;
+    const selectedItem = queueItems[selectedIndex];
+    return (
+      editorSeed !== (selectedItem.newValues.newSeed || selectedItem.initialSeed) ||
+      editorMod !== (selectedItem.newValues.newMod || selectedItem.initialMod || '000000000000') ||
+      editorAttunement !== (selectedItem.newValues.newAttunement?.toString() || selectedItem.initialAttunement?.toString() || calculateMostFrequentNumeral(BigInt(selectedItem.initialSeed))?.toString())
+    );
+  }
+);
 
 export const selectIsEditorModChanged = createSelector(
   [selectEditorMod, selectSelectedIndex, selectQueueItems],

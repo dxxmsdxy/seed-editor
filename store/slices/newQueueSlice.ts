@@ -14,7 +14,6 @@ export interface QueueItem {
   initialSeed: string;
   initialMod: string | null;
   initialAttunement: number | null;
-  locked: boolean;
   isSet: boolean;
   newValues: {
     newSeed: string | null;
@@ -75,10 +74,24 @@ const newQueueSlice = createSlice({
           newMod: null,
           newAttunement: null,
         };
+        state.items[index].isSet = false;
       }
     },
     setSelectedIndex: (state, action: PayloadAction<number | null>) => {
       state.selectedIndex = action.payload;
+    },
+    updateQueueItemWithDragDrop: (state, action: PayloadAction<{ 
+      index: number; 
+      newValues: Partial<QueueItem['newValues']> 
+    }>) => {
+      const { index, newValues } = action.payload;
+      if (index >= 0 && index < state.items.length) {
+        state.items[index].newValues = {
+          ...state.items[index].newValues,
+          ...newValues,
+        };
+        state.selectedIndex = index;
+      }
     },
     setCurrentPage: (state, action: PayloadAction<number>) => {
       state.currentPage = action.payload;
@@ -91,7 +104,13 @@ const newQueueSlice = createSlice({
       state.items.sort((a, b) => {
         const priorityA = getPriority(a);
         const priorityB = getPriority(b);
-        return priorityA - priorityB || state.items.indexOf(a) - state.items.indexOf(b);
+        if (priorityA !== priorityB) {
+          return priorityA - priorityB;
+        }
+        // If priorities are the same, sort by seed in descending order
+        const seedA = BigInt(a.newValues.newSeed || a.initialSeed);
+        const seedB = BigInt(b.newValues.newSeed || b.initialSeed);
+        return seedB < seedA ? -1 : seedB > seedA ? 1 : 0;
       });
     
       if (selectedItemId !== null) {
@@ -105,10 +124,12 @@ const newQueueSlice = createSlice({
 // UTILITY FUNCTIONS -------------------------------
 
 const getPriority = (item: QueueItem) => {
-  if (item.isSet) return 0;
-  if (item.locked && !item.isSet) return 1;
-  if ((item.initialSeed !== '0' || item.newValues.newSeed !== null) && !item.isSet) return 2;
-  return 3;
+  if (item.isSet || item.newValues.newSeed !== null || item.newValues.newMod !== null || item.newValues.newAttunement !== null) {
+    // Set items: priority 0, then sorted by seed
+    return 0;
+  }
+  // Unset items: priority 1, then sorted by seed
+  return 1;
 };
 
 
@@ -176,6 +197,7 @@ export const {
   updateQueueItem,
   resetQueueItem,
   setSelectedIndex,
+  updateQueueItemWithDragDrop,
   setCurrentPage,
   updateQueueOrder,
 } = newQueueSlice.actions;
