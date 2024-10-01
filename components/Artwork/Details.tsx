@@ -35,8 +35,8 @@ const Details: React.FC<DetailsProps> = ({
   const seedState = editorMod === "000000000000" && editorAttunement == naturalAttunement ? "Natural" : "Modified";
 
   // Get the selected queue item and its kind
-  const selectedIndex = useAppSelector(state => state.queue.selectedIndex);
-  const queueItems = useAppSelector(state => state.queue.items);
+  const selectedIndex = useAppSelector(state => state.newQueue.selectedIndex);
+  const queueItems = useAppSelector(state => state.newQueue.items);
   const selectedItem = selectedIndex !== null ? queueItems[selectedIndex] : null;
   const selectedKind = selectedItem ? selectedItem.kind : "--";
  

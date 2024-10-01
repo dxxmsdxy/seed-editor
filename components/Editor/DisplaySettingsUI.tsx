@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { RootState } from '@/store';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { 
@@ -10,14 +10,13 @@ import {
   selectIsEditorModChanged,
   updateModValue, 
   selectIsAttunementOverridden, 
-  setHasEditorChanges, 
+  setIsAttunementOverridden,
   resetAttunementOverride,
   selectEditorSeed,
   selectEditorAttunement
 } from '@/store/slices/newEditorSlice';
 import { selectElementContents, clearSelection, attunementNames, sanitizeMod, sanitizeAttunement, calculateMostFrequentNumeral } from '@/lib/newUtils';
 import { selectSelectedIndex } from '@/store/slices/newQueueSlice';
-import { flipLayers } from '@/lib/utils/artwork/updateSVGWithMod';
 import RangeSlider from './RangeSlider';
 
 
@@ -47,7 +46,6 @@ const DisplaySettings: React.FC = () => {
   const displaySettings = useAppSelector(selectDisplaySettings);
   const modValues = useAppSelector(selectModValues);
   const [sliderValues, setSliderValues] = useState(modValues);
-  const [showAttunementName, setShowAttunementName] = useState(false);
 
   const [activeSelection, setActiveSelection] = useState(false);
   const startSelection = useCallback(() => setActiveSelection(true), []);
@@ -77,6 +75,7 @@ const DisplaySettings: React.FC = () => {
     } else {
       // If attunement is not overridden, set isAttunementOverridden to true
       dispatch(updateEditorState({ attunement: editorAttunement }));
+      dispatch(setIsAttunementOverridden(true));
     }
   }, [dispatch, isAttunementOverridden, editorSeed, editorAttunement]);
 
@@ -213,6 +212,7 @@ const DisplaySettings: React.FC = () => {
                 e.preventDefault();
                 handleAttunementInput(e);
                 e.currentTarget.textContent = editorAttunement;
+                clearSelection();
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {

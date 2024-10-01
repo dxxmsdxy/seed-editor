@@ -1,28 +1,23 @@
-"use client";
-import { RootState } from '@/store';
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useArtwork } from "@/context";
 import Image from "next/image";
-import { useAppSelector, useAppDispatch } from '@/app/hooks';
+import { useAppDispatch } from '@/app/hooks';
 import { setShowInscribeModal } from '@/store/slices/modalSlice';
 import { QueueItem } from '@/store/slices/queueSlice';
-import { selectOTCAddress } from '@/store/slices/otcSlice';
 
 interface InscribeModalProps {
   show: boolean;
   queueItems: QueueItem[];
-  isOTC: boolean;
 }
 
-const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems, isOTC }) => {
+const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems }) => {
   const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(false);
   const [loadingIndex, setLoadingIndex] = useState(0);
   const { getArtworkUrls } = useArtwork();
   const router = useRouter();
   const [itemsWithUrls, setItemsWithUrls] = useState<QueueItem[]>([]);
-  const otcAddress = useAppSelector((state: RootState) => state.otc.address);
   
   const purchaseSeeds = () => {}
 
@@ -45,96 +40,6 @@ const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems, isOTC }
     }
   }, [show, queueItems, getArtworkUrls]);
 
-  
-  
-  if (isOTC) {
-    /* // Handle OTC transaction
-    const response = await fetch('/api/otc', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        address: otcAddress,
-        newSeed: queueItems[0].newSeed,
-        newMod: queueItems[0].newMod,
-        newAttunement: queueItems[0].newAttunement,
-      }),
-    });
-    if (response.ok) {
-      // Handle successful OTC inscription
-      // show a success message or redirect user
-    } else {
-      // Handle error
-    } */
-  } else {
-    // Existing logic for non-OTC inscriptions
-  }
-
-  
-  
-  /* const purchaseSeeds = async () => {
-    setLoading(true);
-
-    let wal = wallets;
-
-    if (!wal) {
-      wal = await initWallet();
-    }
-
-    const seeds = [];
-    for (const item of queueItems) {
-      setLoadingIndex((ind) => ind + 1);
-
-      const { commit_txid, reveal_txid, inscription_id } = await inscribe(
-        item.newSeed,
-        wal
-      );
-
-      const pngUrl = await getArtworkUrls(item.newSeed);
-      const walletAddress = wal.info[0].address;
-
-      const seedObj = {
-        seedNumber: item.newSeed,
-        pngUrl,
-        wallet: walletAddress,
-        inscriptionId: inscription_id,
-        commitTxId: commit_txid,
-        revealTxId: reveal_txid,
-        modNumber: item.modNumber,
-        attunementNumber: item.attunementNumber,
-      };
-      console.log(seedObj);
-
-      seeds.push(seedObj);
-    }
-
-    await fetch("/api/seeds", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ seeds }),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log(data);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
-
-    setLoading(false);
-    setLoadingIndex(0);
-    dispatch(setShowInscribeModal(false));
-    router.push("/collection?tab=mine");
-  }; */
-
   return (
     <section
       className={`modal mint-modal ${show ? "show" : ""}`}
@@ -152,11 +57,11 @@ const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems, isOTC }
         </h3>
         <div
           id="z-node-63ba5078"
-          className="z-layout-layout quick-stack wf-layout-layout"
+          className="z-layout-layout quick-stack wf-layout-layout inscribe-preview"
         >
           <div
             id="z-node-63ba5078"
-            className="z-layout-cell"
+            className="z-layout-cell inscribe-collection-info"
             style={{ position: "relative" }}
           >
             {itemsWithUrls.map((item, index) => (

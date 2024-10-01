@@ -23,7 +23,7 @@ import { selectElementContents, clearSelection, randomizeBits, hideMouseCursor, 
 
 
 
-//=================================================//
+//============================================//
 
 const Home: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -567,7 +567,6 @@ const Home: React.FC = () => {
             <div className="artwork-preview">
               <div
                 style={{
-                opacity: 1,
                 transform: "translate3d(0px, 0px, 0px) scale3d(1, 1, 1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg)",
                 transformStyle: "preserve-3d"}}
                 className="svg-aspect-ratio"
@@ -633,7 +632,7 @@ const Home: React.FC = () => {
                       style={{
                       fill: "none",
                       stroke: "#000",
-                      strokeWidth: 31,
+                      strokeWidth: 26,
                       strokeMiterlimit: 10}}
                     >
                       <path d="m17.5 123.8 162.2 156.6L426.6 16.1" />
@@ -693,11 +692,11 @@ const DragPreview: React.FC<{
         left: position.x,
         top: position.y,
         transform: 'translate(-50%, -50%)',
-        padding: '5px',
         borderRadius: '3px',
         pointerEvents: 'none',
         zIndex: 9999,
         cursor: "grabbing",
+        opacity: 0,
       }}
     >
       {seed}.{mod}:{attunement}

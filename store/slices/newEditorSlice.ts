@@ -134,7 +134,6 @@ const newEditorSlice = createSlice({
         isSpinAnimationPaused: state.isSpinAnimationPaused,
         isDepthAnimationPaused: state.isDepthAnimationPaused,
       });
-      
       // Push the reset state to history
       pushToHistory(state);
     },
@@ -183,6 +182,7 @@ const newEditorSlice = createSlice({
     },
     setIsAttunementOverridden: (state, action: PayloadAction<boolean>) => {
       state.isAttunementOverridden = action.payload;
+      pushToHistory(state);
     },
     resetAttunementOverride: (state) => {
       state.isAttunementOverridden = false;

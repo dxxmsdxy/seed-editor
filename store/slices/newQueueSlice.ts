@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit';
 import { RootState } from '@/store';
-import { calculateMostFrequentNumeral } from '@/lib/utils/artwork/helpers';
+import { calculateMostFrequentNumeral } from '@/lib/newUtils';
 
 
 

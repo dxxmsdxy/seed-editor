@@ -1,6 +1,5 @@
-"use client";
 import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
-import NewArtworkHandling from './NewArtworkHandling';
+import ArtTransformer from './ArtTransformer';
 
 
 
@@ -49,11 +48,9 @@ const Artwork = forwardRef<{ updateArtwork: () => void }, ArtworkProps>((props, 
 
   return (
     <>
-      <NewArtworkHandling
+      <ArtTransformer
         svgRef={svgRef}
         updateArtworkRef={updateArtworkRef}
-        isColorAnimationPaused={!props.isPlaying}
-        isDepthAnimationPaused={!props.isPlaying}
         isSpinAnimationPaused={!props.isPlaying}
       />
       <svg

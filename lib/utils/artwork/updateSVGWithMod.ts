@@ -114,7 +114,7 @@ function applySpinMod(elements: Element[], spinModValue: number): void {
       adjustedDelay = originalDelay;
     } else {
       // Adjust duration multiplier to range
-      const durationMultiplier = Math.pow(5, 1 - 2 * normalizedPosition * elementT);
+      const durationMultiplier = Math.pow(10, 1 - 2 * normalizedPosition * elementT);
       adjustedDuration = originalDuration * durationMultiplier;
       
       // Adjust delay based on the normalized position and element index

@@ -355,9 +355,11 @@ export const themeColorsRGB = {
 };
  
 export const updateThemeColor = (theme) => {
-    const color = themeColors[theme];
-    const themeBkg = document.querySelector('.theme-bkg');
-    themeBkg.style.background = color;
+  const color = themeColors[theme];
+  const themeBkg = document.querySelector('.theme-bkg');
+  themeBkg.style.background = color;
+  
+  document.documentElement.style.setProperty('--theme-color', color);
 };
 
 // ============  EXTRERNAL  ============== //

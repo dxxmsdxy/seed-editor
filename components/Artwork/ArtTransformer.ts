@@ -12,21 +12,17 @@ import { attunementNames, updateThemeColor, checkPalindrome, calculateMostFreque
 //===============================================//
 
 // Artwork preview SVG state
-interface NewArtworkHandlingProps {
+interface ArtTransformerProps {
     svgRef: React.RefObject<SVGSVGElement>;
     updateArtworkRef: React.MutableRefObject<(() => void) | undefined>;
-    isColorAnimationPaused: boolean;
-    isDepthAnimationPaused: boolean;
     isSpinAnimationPaused: boolean;
 }
 
 // LOGIC -----------------------------------------
 
-const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
+const ArtTransformer: React.FC<ArtTransformerProps> = ({
     svgRef,
     updateArtworkRef,
-    isColorAnimationPaused,
-    isDepthAnimationPaused,
     isSpinAnimationPaused,
 }) => {
 
@@ -70,12 +66,8 @@ const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
             resetLayers(svg);
             updateSVGWithSeed(BigInt(editorSeed), svg, bitsArray);
     
-            svg.classList.add('seedartwork');
-            svg?.classList.add("js");
-            svg?.classList.add("reveal");
-            svg?.classList.add("pauseColor");
-            svg?.classList.add("pauseDepth");
-            svg?.classList.add("spin");
+            const classesToAdd = ['seedartwork', 'js', 'reveal', 'pauseColor', 'pauseDepth', 'spin'];
+            svg.classList.add(...classesToAdd);
         
             svg?.setAttribute("width", "100%");
             svg?.setAttribute("height", "100%");
@@ -85,44 +77,38 @@ const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
             displayClasses.forEach((className, index) => {
                 const isActive = index === 0 ? (displaySettings.value & (1 << 0)) === 0 : (displaySettings.value & (1 << index)) !== 0;
                 svg.classList.toggle(className, isActive);
-                    
                 if (className === 'flip') {
                     flipLayers(svg, isActive);
                 }
             });
         
-            const isPalindrome = checkPalindrome(BigInt(editorSeed))
-            const isSingleDigit = editorSeed.length === 1
+            const isPalindrome = checkPalindrome(BigInt(editorSeed));
+            const isSingleDigit = editorSeed.length === 1;
             svg.classList.toggle('palindrome', isPalindrome && !isSingleDigit);
+            svg.classList.toggle('depth', modValues.depth > 0);
+            svg.classList.toggle('pauseSpin', isSpinAnimationPaused);
             
-            if (svgRef.current) {
-                const artwork = svgRef.current
-                
-                const colorElements = document.querySelectorAll('.seedartwork,.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline,.sub.on path,.sub.on polygon,.sub.on circle,.sub.on ellipse,.sub.on line,.sub.on rect,.sub.on polyline,.sub.on .fx')
-                memoizedApplyModValueToElements(colorElements, modValues.color, 'color')
-            
-                const spinElements = artwork.querySelectorAll('.lr.on, .sub.on')
-                memoizedApplyModValueToElements(spinElements, modValues.spin, 'spin')
-            
-                const depthElements = artwork.querySelectorAll('.lr.on .fx, .sub.on .fx')
-                memoizedApplyModValueToElements(depthElements, modValues.depth, 'depth')
-            
-                const rgblens = document.querySelector('.rgblens') as HTMLElement
-                if (rgblens) {
-                    if (modValues.tint === 0) {
-                        rgblens.style.backgroundColor = 'transparent'
-                        rgblens.style.opacity = '0'
-                    } else {
-                        const hue = (modValues.tint - 1) * (360 / 98)
-                        rgblens.style.backgroundColor = `hsl(${hue}, 100%, 50%)`
-                        rgblens.style.opacity = modValues.tintPercent === 100 ? '1' : (modValues.tintPercent / 100).toString()
-                    }
+            const colorElements = document.querySelectorAll('.seedartwork,.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline,.sub.on path,.sub.on polygon,.sub.on circle,.sub.on ellipse,.sub.on line,.sub.on rect,.sub.on polyline,.sub.on .fx');
+            const spinElements = svg.querySelectorAll('.lr.on, .sub.on');
+            const depthElements = svg.querySelectorAll('.lr.on .fx, .sub.on .fx');
+
+            memoizedApplyModValueToElements(colorElements, modValues.color, 'color');
+            memoizedApplyModValueToElements(spinElements, modValues.spin, 'spin');
+            memoizedApplyModValueToElements(depthElements, modValues.depth, 'depth');
+        
+            const rgblens = document.querySelector('.rgblens') as HTMLElement;
+            if (rgblens) {
+                if (modValues.tint === 0) {
+                    rgblens.style.backgroundColor = 'transparent';
+                    rgblens.style.opacity = '0';
+                } else {
+                    const hue = (modValues.tint - 1) * (360 / 98);
+                    rgblens.style.backgroundColor = `hsl(${hue}, 100%, 50%)`
+                    rgblens.style.opacity = modValues.tintPercent === 100 ? '1' : (modValues.tintPercent / 100).toString();
                 }
-                svg.classList.toggle('depth', modValues.depth > 0);
-                svg.classList.toggle('pauseSpin', isSpinAnimationPaused);
             }
         });
-    }, [displaySettings, editorSeed, modValues, editorMod, editorAttunement, isColorAnimationPaused, isDepthAnimationPaused, isSpinAnimationPaused]);
+    }, [editorSeed, modValues, editorMod, editorAttunement, isSpinAnimationPaused]);
 
     // Update the artwork attunement with editor state
     const updateAttunement = useCallback(() => {
@@ -179,4 +165,4 @@ const NewArtworkHandling: React.FC<NewArtworkHandlingProps> = ({
     return null
 }
 
-export default React.memo(NewArtworkHandling)
+export default React.memo(ArtTransformer)

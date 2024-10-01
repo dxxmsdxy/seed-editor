@@ -37,12 +37,23 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
   const editorMod = useSelector(selectEditorMod);
   const editorAttunement = useSelector(selectEditorAttunement);
   
-  const currentPageItems = useAppSelector(selectCurrentPageItems);
   const totalPages = useAppSelector(selectTotalPages);
   const currentPage = useAppSelector(selectCurrentPage);
   const itemsPerPage = useAppSelector(selectItemsPerPage);
   const isQueueModified = useAppSelector(selectIsQueueModified);
   const selectedQueueIndex = useAppSelector(selectSelectedIndex);
+
+  
+  // UTILITIES -------------------------------------
+
+  const customEqual = (a, b) => {
+    return a.length === b.length && a.every((item, index) => {
+      return item.id === b[index].id && 
+             item.isSet === b[index].isSet && 
+             item.displaySeed === b[index].displaySeed;
+    });
+  };
+  const currentPageItems = useAppSelector(selectCurrentPageItems, customEqual);
   
 
   // EVENT HANDLERS --------------------------------
@@ -113,7 +124,6 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
   // Store divider index
   const dividerIndex = useMemo(() => getDividerIndex(currentPageItems), [currentPageItems, getDividerIndex]);
 
-
   
 
   // STRUCTURE -------------------------------------
@@ -179,7 +189,7 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
             <React.Fragment key={item.id}>
               {index === dividerIndex && <span className="queue-divider"></span>}
               <li
-                className={`queue-item ${item.isSelected ? "selected" : ""} ${item.isSet ? 'set' : ''}`}
+                className={`queue-item ${item.index === selectedQueueIndex ? "selected" : ""} ${item.isSet ? 'set' : ''}`}
                 onClick={() => handleQueueItemSelect(item.index)}
                 data-index={item.index}
                 data-dropping={isDropping}

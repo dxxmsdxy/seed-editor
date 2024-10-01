@@ -7,7 +7,6 @@ import { connectWalletAndLoadData, disconnectWalletAndClearQueue } from '@/store
 import { MenuDesktop } from "./MenuDesktop";
 import { MenuMobileContent, MenuMobileTrigger } from "./MenuMobile";
 import { DropdownMenu } from "@/components/UI/dropdownMenu";
-import { selectOTCMode } from "@/store/slices/otcSlice";
 
 
 
@@ -19,7 +18,6 @@ export const Navbar = () => {
   const { connected, loading, error } = useSelector((state) => state.wallet);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(null);
-  const isOTC = useAppSelector(selectOTCMode);
 
   const handleConnect = async () => {
     try {
@@ -91,18 +89,16 @@ export const Navbar = () => {
               />
             )}
             <div className="navbar-connect">
-              {!isOTC && (
-                loading ? (
-                  <span className="ui-button">Loading</span>
-                ) : (
-                  <Link
-                    href="#"
-                    onClick={connected ? handleDisconnect : handleConnect}
-                    className={`ui-button ${connected ? 'disconnect' : 'connect'}`}
-                  >
-                    {connected ? 'D/C' : 'Connect'}
-                  </Link>
-                )
+              {loading ? (
+                <span className="ui-button">Loading</span>
+              ) : (
+                <Link
+                  href="#"
+                  onClick={connected ? handleDisconnect : handleConnect}
+                  className={`ui-button ${connected ? 'disconnect' : 'connect'}`}
+                >
+                  {connected ? 'D/C' : 'Connect'}
+                </Link>
               )}
             </div>
           </div>
