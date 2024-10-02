@@ -1,12 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useAppSelector } from '@/app/hooks';
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
 import { connectWalletAndLoadData, disconnectWalletAndClearQueue } from '@/store/slices/walletSlice';
 import { MenuDesktop } from "./MenuDesktop";
 import { MenuMobileContent, MenuMobileTrigger } from "./MenuMobile";
-import { DropdownMenu } from "@/components/UI/dropdownMenu";
+import { DropdownMenu } from "@/components/UI/DropdownMenu";
 
 
 

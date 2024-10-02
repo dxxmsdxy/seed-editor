@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { selectEditorSeed, selectEditorMod, selectEditorAttunement, selectModValues } from '@/store/slices/newEditorSlice';
-import { selectSelectedIndex, selectQueueItems } from '@/store/slices/newQueueSlice';
+import { selectEditorSeed, selectEditorMod, selectEditorAttunement, selectModValues } from '@/store/slices/editorSlice';
+import { selectSelectedIndex, selectQueueItems } from '@/store/slices/queueSlice';
 
 
 

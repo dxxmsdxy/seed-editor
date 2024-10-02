@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import {
@@ -11,12 +11,13 @@ import {
   updateQueueItem,
   updateQueueOrder,
   resetQueueItem,
+  selectQueueItems,
   setSelectedIndex,
   setCurrentPage,
-} from '@/store/slices/newQueueSlice';
+} from '@/store/slices/queueSlice';
 import { setShowInscribeModal } from '@/store/slices/modalSlice';
-import { selectElementContents, clearSelection } from '@/lib/utils';
-import { updateEditorState, resetEditorState, selectEditorSeed, selectEditorMod, selectEditorAttunement } from '@/store/slices/newEditorSlice';
+import { selectElementContents, clearSelection } from '@/lib/utils/global';
+import { updateEditorState, resetEditorState, selectEditorSeed, selectEditorMod, selectEditorAttunement } from '@/store/slices/editorSlice';
 
 
 
@@ -40,20 +41,18 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
   const totalPages = useAppSelector(selectTotalPages);
   const currentPage = useAppSelector(selectCurrentPage);
   const itemsPerPage = useAppSelector(selectItemsPerPage);
-  const isQueueModified = useAppSelector(selectIsQueueModified);
-  const selectedQueueIndex = useAppSelector(selectSelectedIndex);
-
-  
-  // UTILITIES -------------------------------------
-
   const customEqual = (a, b) => {
     return a.length === b.length && a.every((item, index) => {
       return item.id === b[index].id && 
              item.isSet === b[index].isSet && 
-             item.displaySeed === b[index].displaySeed;
+             item.displaySeed === b[index].displaySeed &&
+             item.index === b[index].index;  // Add this line
     });
   };
+  const queueItems = useAppSelector(selectQueueItems);
   const currentPageItems = useAppSelector(selectCurrentPageItems, customEqual);
+  const isQueueModified = useAppSelector(selectIsQueueModified);
+  const selectedQueueIndex = useAppSelector(selectSelectedIndex);
   
 
   // EVENT HANDLERS --------------------------------
@@ -79,14 +78,16 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
       dispatch(resetEditorState());
     } else {
       dispatch(setSelectedIndex(index));
-      const selectedItem = currentPageItems[index];
-      dispatch(updateEditorState({
-        seed: selectedItem.newValues.newSeed || selectedItem.initialSeed,
-        mod: selectedItem.newValues.newMod || selectedItem.initialMod || '000000000000000',
-        attunement: selectedItem.newValues.newAttunement ?? selectedItem.initialAttunement ?? 0,
-      }));
+      const selectedItem = queueItems[index]; // Use queueItems instead of currentPageItems
+      if (selectedItem) {
+        dispatch(updateEditorState({
+          seed: selectedItem.newValues.newSeed || selectedItem.initialSeed,
+          mod: selectedItem.newValues.newMod || selectedItem.initialMod || '000000000000000',
+          attunement: selectedItem.newValues.newAttunement?.toString() ?? selectedItem.initialAttunement?.toString() ?? '0',
+        }));
+      }
     }
-  }, [dispatch, currentPageItems, selectedQueueIndex])
+  }, [dispatch, queueItems, selectedQueueIndex]);
 
   // Reset a queue item to its initial state
   const handleQueueItemReset = useCallback((e: React.MouseEvent, index: number) => {
@@ -123,6 +124,13 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
 
   // Store divider index
   const dividerIndex = useMemo(() => getDividerIndex(currentPageItems), [currentPageItems, getDividerIndex]);
+
+
+  // EFFECTS --------------------------------------
+
+  useEffect(() => {
+    // This effect will run whenever the queue items change
+  }, [queueItems.length]);
 
   
 

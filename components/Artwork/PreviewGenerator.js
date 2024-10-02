@@ -1,12 +1,12 @@
 "use client";
-import { useState, useEffect } from "react";import { calculateMostFrequentNumeral, attunementNames } from "@/lib/utils/artwork/newUtils";
+import { useState, useEffect } from "react";import { calculateMostFrequentNumeral, attunementNames } from "@/lib/utils/artwork/utils/global";
 
 
 
 
 //==================================================//
 
-const ArtworkPreview = ({ seed, imgRef, index }) => {
+const PreviewGenerator = ({ seed, imgRef, index }) => {
   const [isFocused, setIsFocused] = useState(index === 0);
   const [lrCount, setLrCount] = useState(0);
 
@@ -1629,4 +1629,4 @@ const ArtworkPreview = ({ seed, imgRef, index }) => {
   );
 };
 
-export default ArtworkPreview;
+export default PreviewGenerator;

@@ -1,9 +1,9 @@
-import React, { useLayoutEffect, useEffect, useRef, useCallback } from 'react'
-import { useAppSelector } from '@/app/hooks'
+import React, { useLayoutEffect, useEffect, useRef, useCallback } from 'react';
+import { useAppSelector } from '@/app/hooks';
 import { updateSVGWithSeed } from "@/lib/utils/artwork/updateSVGWithSeed";
-import { applyModValueToElements, resetLayers, flipLayers } from '@/lib/utils/artwork/updateSVGWithMod'
-import { selectEditorSeed, selectEditorMod, selectEditorAttunement, selectBitsArray, selectIsAttunementOverridden, selectModValues, selectDisplaySettings } from '@/store/slices/newEditorSlice'
-import { attunementNames, updateThemeColor, checkPalindrome, calculateMostFrequentNumeral } from '@/lib/newUtils'
+import { applyModValueToElements, resetLayers, flipLayers } from '@/lib/utils/artwork/updateSVGWithMod';
+import { selectEditorSeed, selectEditorMod, selectEditorAttunement, selectBitsArray, selectIsAttunementOverridden, selectModValues, selectDisplaySettings } from '@/store/slices/editorSlice';
+import { attunementNames, updateThemeColor, checkPalindrome, calculateMostFrequentNumeral } from '@/lib/utils/global';
 
 
 
@@ -35,9 +35,9 @@ const ArtTransformer: React.FC<ArtTransformerProps> = ({
     const isAttunementOverridden = useAppSelector(selectIsAttunementOverridden);
     const modValues = useAppSelector(selectModValues);
     const displaySettings = useAppSelector(selectDisplaySettings);
-    const urlSeed = useAppSelector((state) => state.newEditor.urlSeed);
-    const urlMod = useAppSelector((state) => state.newEditor.urlMod);
-    const urlAttunement = useAppSelector((state) => state.newEditor.urlAttunement);
+    const urlSeed = useAppSelector((state) => state.editor.urlSeed);
+    const urlMod = useAppSelector((state) => state.editor.urlMod);
+    const urlAttunement = useAppSelector((state) => state.editor.urlAttunement);
 
 
     // CALLBACKS ----------------------------------
@@ -137,7 +137,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = ({
             updateArtwork();
             updateAttunement();
         }
-    }, [svgRef, editorSeed, editorAttunement, isAttunementOverridden]);
+    }, [svgRef, editorSeed, editorAttunement, isAttunementOverridden, isSpinAnimationPaused]);
 
     useEffect(() => {
         if (svgRef.current) {

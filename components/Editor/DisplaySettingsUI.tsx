@@ -14,9 +14,9 @@ import {
   resetAttunementOverride,
   selectEditorSeed,
   selectEditorAttunement
-} from '@/store/slices/newEditorSlice';
-import { selectElementContents, clearSelection, attunementNames, sanitizeMod, sanitizeAttunement, calculateMostFrequentNumeral } from '@/lib/newUtils';
-import { selectSelectedIndex } from '@/store/slices/newQueueSlice';
+} from '@/store/slices/editorSlice';
+import { selectElementContents, clearSelection, attunementNames, sanitizeMod, sanitizeAttunement, calculateMostFrequentNumeral } from '@/lib/utils/global';
+import { selectSelectedIndex } from '@/store/slices/queueSlice';
 import RangeSlider from './RangeSlider';
 
 
@@ -41,7 +41,7 @@ const DisplaySettings: React.FC = () => {
   const isEditorModChanged = useAppSelector(selectIsEditorModChanged);
   const isAttunementOverridden = useAppSelector(selectIsAttunementOverridden);
   const selectedQueueIndex = useAppSelector(selectSelectedIndex);
-  const queueItems = useAppSelector((state: RootState) => state.newQueue.items);
+  const queueItems = useAppSelector((state: RootState) => state.queue.items);
   
   const displaySettings = useAppSelector(selectDisplaySettings);
   const modValues = useAppSelector(selectModValues);
@@ -96,6 +96,7 @@ const DisplaySettings: React.FC = () => {
     } else {
       handleAttunementChange(parseInt(value || "0", 10));
     }
+    clearSelection();
   }, [handleAttunementChange]);
 
   // Handle manual input of mod
@@ -152,13 +153,6 @@ const DisplaySettings: React.FC = () => {
   const handleSliderChange = useCallback((name: string, value: number) => {
     dispatch(updateModValue({ name, value }));
   }, [dispatch]);
-
-  // Prevent strange behavior
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLSpanElement>) => {
-    if (e.ctrlKey && (e.key === 'z' || e.key === 'Z')) {
-      e.preventDefault();
-    }
-  };
 
   // Update local state when editorMod changes
   useEffect(() => {
@@ -225,7 +219,7 @@ const DisplaySettings: React.FC = () => {
               {editorAttunement}
             </span>
             <span 
-              className={`attunement-reset`}
+              className={`reset-attunement`}
             >
               Reset
             </span>
@@ -272,13 +266,11 @@ const DisplaySettings: React.FC = () => {
                 }}
                 contentEditable="true"
                 suppressContentEditableWarning={true}
-                onInput={(e) => {
-                  const value = e.currentTarget.textContent?.replace(/^\./, '') || '';
-                  if (value === '') {
-                    handleResetMod();
-                  } else {
-                    handleModInputChange(value);
-                    clearSelection();
+                inputMode="numeric"
+                onFocus={(e) => {
+                  const textContent = e.currentTarget.textContent;
+                  if (textContent && textContent.startsWith('.')) {
+                    e.currentTarget.textContent = textContent.slice(1);
                   }
                 }}
                 onBlur={(e) => {
@@ -292,18 +284,18 @@ const DisplaySettings: React.FC = () => {
                   }
                   e.currentTarget.textContent = '.' + (editorMod || '');
                 }}
-                onFocus={(e) => {
-                  const textContent = e.currentTarget.textContent;
-                  if (textContent && textContent.startsWith('.')) {
-                    e.currentTarget.textContent = textContent.slice(1);
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                    clearSelection();
                   }
                 }}
-                onKeyDown={handleKeyDown}
               >
-                .{useAppSelector(state => state.newEditor.editorMod)}
+                .{useAppSelector(state => state.editor.editorMod)}
               </span>
               <span 
-                className={`mod-reset ${isEditorModChanged ? 'show' : ''}`} 
+                className={`reset-mod ${isEditorModChanged && editorMod !== '000000000000' || editorMod !== '000000000000' ? 'show' : ''}`}
                 onClick={handleResetMod}
               >
                 Reset

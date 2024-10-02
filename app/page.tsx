@@ -14,10 +14,12 @@ import DisplaySettings from '@/components/Editor/DisplaySettingsUI';
 import InscribeModal from "@/components/Editor/InscribeModal";
 import DiagnosticsPanel from "@/components/Editor/DiagnosticsPanel";
 
-import { updateEditorState, resetEditorState, undo, redo, selectEditorSeed, selectEditorMod, updateModValue, selectEditorAttunement, selectIsAttunementOverridden, setIsAttunementOverridden, selectBitsArray, selectModValues, selectDisplaySettings, selectHasEditorChanges, setUrlParams, setUIVisibility, selectUIVisibility, setSpinAnimationPaused, setDepthAnimationPaused, parseMod } from '@/store/slices/newEditorSlice';
-import { setSelectedIndex, updateQueueItem, updateQueueOrder, selectSetQueueItems, updateQueueItemWithDragDrop } from '@/store/slices/newQueueSlice';
+import { updateEditorState, resetEditorState, undo, redo, selectEditorSeed, selectEditorMod, updateModValue, selectEditorAttunement, selectIsAttunementOverridden, setIsAttunementOverridden, selectBitsArray, selectModValues, selectDisplaySettings, selectHasEditorChanges, setUIVisibility, selectUIVisibility, setSpinAnimationPaused, parseMod } from '@/store/slices/editorSlice';
+import { setSelectedIndex, updateQueueItem, updateQueueOrder, selectSetQueueItems, updateQueueItemWithDragDrop } from '@/store/slices/queueSlice';
 import { connectWalletAndLoadData } from '@/store/slices/walletSlice';
-import { selectElementContents, clearSelection, randomizeBits, hideMouseCursor, calculateMostFrequentNumeral, sanitizeSeed, sanitizeMod, sanitizeAttunement } from '@/lib/newUtils';
+import { selectElementContents, clearSelection, randomizeBits, hideMouseCursor, calculateMostFrequentNumeral, sanitizeSeed, sanitizeMod, sanitizeAttunement } from '@/lib/utils/global';
+import { generateName } from '@/lib/utils/nameGenerator';
+import { startAudio, playAudio, pauseAudio, stopAudio, setTempo, modulateSound, isAudioPlaying } from '@/lib/utils/soundGenerator';
 
 
 
@@ -41,12 +43,14 @@ const Home: React.FC = () => {
   const displaySettings = useSelector(selectDisplaySettings);
   const hasEditorChanges = useSelector(selectHasEditorChanges);
   const uiVisibility = useSelector(selectUIVisibility);
-  const isSpinAnimationPaused = useSelector((state: RootState) => state.newEditor.isSpinAnimationPaused)
-  const isDepthAnimationPaused = useSelector((state: RootState) => state.newEditor.isDepthAnimationPaused)
+  const isSpinAnimationPaused = useSelector((state: RootState) => state.editor.isSpinAnimationPaused)
+  const isDepthAnimationPaused = useSelector((state: RootState) => state.editor.isDepthAnimationPaused)
   const walletConnected = useSelector((state: RootState) => state.wallet.connected);
-  const { items: queueItems, selectedIndex: selectedQueueIndex} = useAppSelector((state: RootState) => state.newQueue);
+  const { items: queueItems, selectedIndex: selectedQueueIndex} = useAppSelector((state: RootState) => state.queue);
   const getSetQueueItems = useAppSelector(selectSetQueueItems);
   const showInscribeModal = useAppSelector((state) => state.modal.showInscribeModal);
+  // Generate the seed's name
+  const generatedName = useMemo(() => generateName(Number(editorSeed)), [editorSeed]);
 
 
   // REFS -------------------------------------------
@@ -65,10 +69,11 @@ const Home: React.FC = () => {
   const [isArtworkReady, setIsArtworkReady] = useState(false);
   const [isArtworkFocused, setIsArtworkFocused] = useState(false);
   const [isOverlayToggled, setIsOverlayToggled] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isPotentialDrag, setIsPotentialDrag] = useState(false);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isAudioInitialized, setIsAudioInitialized] = useState(false);
 
 
   // CALLBACKS --------------------------------------
@@ -139,17 +144,17 @@ const Home: React.FC = () => {
 
   // Toggle artwork play/pause state
   const togglePlay = useCallback(() => {
-    dispatch(setSpinAnimationPaused(!isSpinAnimationPaused));
-
     const artwork = document.querySelector('.seedartwork') as SVGSVGElement
     if (artwork) {
-      if (!isSpinAnimationPaused || !isDepthAnimationPaused) {
+      if (!isSpinAnimationPaused) {
+        dispatch(setSpinAnimationPaused(true));
         artwork.classList.remove('spin', 'depth')
         if (artRef.current && artRef.current.resetLayersCallback) {
           artRef.current.resetLayersCallback()
         }
       } else {
-        artwork.classList.add('spin', 'depth')
+        dispatch(setSpinAnimationPaused(false));
+        artwork.classList.add('spin', 'depth');
       }
     }
     setIsPlaying(prev => !prev)
@@ -451,6 +456,73 @@ const Home: React.FC = () => {
     }
   }, [isArtworkReady]);
 
+  // SOUND GEN ------------------------------
+
+  /* const [effectsSettings, setEffectsSettings] = useState({
+    reverbWetLevel: 0.7,
+    delayTime: 0.3,
+    delayFeedback: 0.4,
+    delayWetLevel: 0.5,
+    chorusWetLevel: 0.6,
+    distortionAmount: 50,
+    compressionThreshold: -30,
+    compressionKnee: 25,
+    compressionRatio: 10,
+    compressionAttack: 0.005,
+    compressionRelease: 0.3,
+  });
+  const [soundDesignSettings, setSoundDesignSettings] = useState({
+    spatialSpread: 1.0, // Default spatial spread
+    frequencyGainScale: -0.05, // Default frequency gain scaling
+  });
+
+  // Initialize audio when the component mounts or when the seed changes
+  useEffect(() => {
+    if (editorSeed && !isNaN(parseInt(String(editorSeed), 10))) {
+      startAudio(String(editorSeed));
+      setIsAudioInitialized(true);
+      // Do not call playAudio here; playback is controlled by isSpinAnimationPaused state
+    } else {
+      stopAudio();
+      setIsAudioInitialized(false);
+    }
+  }, [editorSeed]);
+
+  // Handle play/pause state changes
+  useEffect(() => {
+    if (isAudioInitialized) {
+      if (!isSpinAnimationPaused) {
+        playAudio();
+        setIsPlaying(true);
+      } else {
+        pauseAudio();
+        setIsPlaying(false);
+      }
+    }
+  }, [isAudioInitialized, isSpinAnimationPaused]);
+
+  // Handle tempo changes
+  const handleTempoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTempo = parseInt(e.target.value, 10);
+    setTempoValue(newTempo);
+    setTempo(newTempo);
+  };
+
+  // Modulate sound with Editor mod values
+  useEffect(() => {
+
+    // Example parsing (you may need to adjust based on actual structure)
+    const newModValues = {
+      color: editorMod.slice(0, 2),       // AA
+      spin: editorMod.slice(2, 4),        // BB
+      depth: editorMod.slice(4, 6),       // CC
+      tint: editorMod.slice(6, 8),        // DD
+      tintPercent: editorMod.slice(8, 9), // E
+    };
+
+    modulateSound(newModValues); // Update modValues in soundGenerator
+  }, [editorMod]); */
+
   // MEMOIZED VALUES --------------------------------
 
   // Conditions for when editor seed can be reset
@@ -527,7 +599,7 @@ const Home: React.FC = () => {
                 }}
               >{editorSeed}</span>
               {enableSeedResetButton && (
-                <div className="reset-seed-button reset show" onClick={handleResetEditorSeed}>
+                <div className="reset-seed reset show" onClick={handleResetEditorSeed}>
                     Reset
                 </div>
               )}
@@ -592,6 +664,7 @@ const Home: React.FC = () => {
                       editorMod={editorMod ?? '000000000000'}
                       editorAttunement={editorAttunement ?? 0}
                       bitsArray={bitsArray}
+                      generatedName={generatedName}
                     />
                     <div className="toggle-overlay-wrapper">
                       <div
@@ -661,6 +734,7 @@ const Home: React.FC = () => {
                 editorMod={editorMod ?? '000000000000'}
                 editorAttunement={editorAttunement ?? 0}
                 bitsArray={bitsArray}
+                generatedName={generatedName}
               />
             </div>
           </>

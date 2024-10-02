@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import Image from "next/image";
-import ArtworkPreview from "@/components/Artwork/ArtworkPreview";
+import PreviewGenerator from "@/components/Artwork/PreviewGenerator";
 import CollectionItemModal from "./CollectionItemModal";
 import { getArtworkPlaceholderDataURL } from "@/lib/utils/artwork/helpers";
 
@@ -73,7 +73,7 @@ const CollectionItem = ({ seed, index }) => {
           ref={cardRef}
         >
           {displaySvg ? (
-            <ArtworkPreview seed={seed.seedNumber} index={index} />
+            <PreviewGenerator seed={seed.seedNumber} index={index} />
           ) : (
             <Image
               fill

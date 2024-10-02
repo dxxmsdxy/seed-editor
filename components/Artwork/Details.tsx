@@ -1,6 +1,6 @@
-import React from 'react';
 import { useAppSelector } from '@/app/hooks';
-import { getMintOrder, calculateRemainder, calculateMostFrequentNumeral } from '@/lib/newUtils';
+import { getMintOrder, calculateRemainder, calculateMostFrequentNumeral } from '@/lib/utils/global';
+import { generateName } from '@/lib/utils/nameGenerator';
 
 interface DetailsProps {
   isFocused: boolean;
@@ -9,6 +9,7 @@ interface DetailsProps {
   editorMod: string;
   editorAttunement: number;
   bitsArray: boolean[];
+  generatedName: string;
 }
 
 const getAttunementString = (attunement: number): string => {
@@ -27,6 +28,7 @@ const Details: React.FC<DetailsProps> = ({
   editorMod,
   editorAttunement,
   bitsArray,
+  generatedName,
 }) => {
   const activeBits = bitsArray.filter(bit => bit).length;
   const cardinalNumber = calculateRemainder(BigInt(editorSeed));
@@ -35,8 +37,8 @@ const Details: React.FC<DetailsProps> = ({
   const seedState = editorMod === "000000000000" && editorAttunement == naturalAttunement ? "Natural" : "Modified";
 
   // Get the selected queue item and its kind
-  const selectedIndex = useAppSelector(state => state.newQueue.selectedIndex);
-  const queueItems = useAppSelector(state => state.newQueue.items);
+  const selectedIndex = useAppSelector(state => state.queue.selectedIndex);
+  const queueItems = useAppSelector(state => state.queue.items);
   const selectedItem = selectedIndex !== null ? queueItems[selectedIndex] : null;
   const selectedKind = selectedItem ? selectedItem.kind : "--";
  
@@ -61,6 +63,10 @@ const Details: React.FC<DetailsProps> = ({
             <div className="metadata-title">
               Attributes
             </div>
+            <li className="metadata-item">
+              <span className="metadata-label">Name:</span>
+              <span className="metadata-value">{generatedName}</span>
+            </li>
             <ul className="metadata-list">
               <li className="metadata-item">
                 <span className="metadata-label">Kind:</span>
@@ -71,8 +77,8 @@ const Details: React.FC<DetailsProps> = ({
                 <span className="metadata-value">{seedState}</span>
               </li>
               <li className="metadata-item">
-              <span className="metadata-label">Attunement:</span>
-              <span className="metadata-value">{getAttunementString(editorAttunement)}</span>
+                <span className="metadata-label">Attunement:</span>
+                <span className="metadata-value">{getAttunementString(editorAttunement)}</span>
               </li>
               <li className="metadata-item">
                 <span className="metadata-label">Bits:</span>

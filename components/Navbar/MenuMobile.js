@@ -3,7 +3,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/UI/dropdownMenu";
+} from "@/components/UI/DropdownMenu";
 
 export const MenuMobileTrigger = () => {
   return (

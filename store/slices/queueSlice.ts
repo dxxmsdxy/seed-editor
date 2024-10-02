@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit';
 import { RootState } from '@/store';
-import { calculateMostFrequentNumeral } from '@/lib/newUtils';
+import { calculateMostFrequentNumeral } from '@/lib/utils/global';
 
 
 
@@ -42,8 +42,8 @@ const initialState: QueueState = {
 
 // STATE ACTIONS --------------------------------
 
-const newQueueSlice = createSlice({
-  name: 'newQueue',
+const queueSlice = createSlice({
+  name: 'queue',
   initialState,
   reducers: {
     initializeQueue: (state, action: PayloadAction<QueueItem[]>) => {
@@ -135,10 +135,10 @@ const getPriority = (item: QueueItem) => {
 
 // SELECTORS ---------------------------------------
 
-export const selectQueueItems = (state: RootState) => state.newQueue.items;
-export const selectSelectedIndex = (state: RootState) => state.newQueue.selectedIndex;
-export const selectCurrentPage = (state: RootState) => state.newQueue.currentPage;
-export const selectItemsPerPage = (state: RootState) => state.newQueue.itemsPerPage;
+export const selectQueueItems = (state: RootState) => state.queue.items;
+export const selectSelectedIndex = (state: RootState) => state.queue.selectedIndex;
+export const selectCurrentPage = (state: RootState) => state.queue.currentPage;
+export const selectItemsPerPage = (state: RootState) => state.queue.itemsPerPage;
 
 // Get queue items
 export const selectQueueItemsForRendering = createSelector(
@@ -165,7 +165,7 @@ export const selectIsQueueModified = createSelector(
 
 // Get all set queue items
 export const selectSetQueueItems = createSelector(
-  [(state: RootState) => state.newQueue.items],
+  [(state: RootState) => state.queue.items],
   (items) => items.filter(item => 
     (item.newValues.newSeed !== null && item.newSeed !== '0') || 
     (item.newValues.newMod !== null) || 
@@ -184,7 +184,7 @@ export const selectCurrentPageItems = createSelector(
   [selectQueueItemsForRendering, selectCurrentPage, selectItemsPerPage],
   (items, currentPage, itemsPerPage) => {
     const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = Math.min(startIndex + itemsPerPage, items.length);
+    const endIndex = startIndex + itemsPerPage;
     return items.slice(startIndex, endIndex);
   }
 );
@@ -200,6 +200,6 @@ export const {
   updateQueueItemWithDragDrop,
   setCurrentPage,
   updateQueueOrder,
-} = newQueueSlice.actions;
+} = queueSlice.actions;
 
-export default newQueueSlice.reducer;
+export default queueSlice.reducer;

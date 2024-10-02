@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 import { useSelector, useDispatch } from 'react-redux';
-import { toggleBit, selectBitsArray, selectReversedBitsArray } from '@/store/slices/newEditorSlice';
+import { toggleBit, selectBitsArray, selectReversedBitsArray } from '@/store/slices/editorSlice';
 
 
 

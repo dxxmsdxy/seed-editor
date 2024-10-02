@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { initializeQueue, QueueItem, updateQueueOrder, setSelectedIndex } from './newQueueSlice';
-import { resetEditorState } from './newEditorSlice';
+import { initializeQueue, QueueItem, updateQueueOrder, setSelectedIndex } from './queueSlice';
+import { resetEditorState } from './editorSlice';
 
 
 

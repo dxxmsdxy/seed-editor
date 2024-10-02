@@ -1,7 +1,7 @@
 import { createSlice, createSelector, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '@/store';
-import { selectSelectedIndex, selectQueueItems } from './newQueueSlice';
-import { seedToBits, sanitizeSeed, sanitizeMod, sanitizeAttunement, calculateMostFrequentNumeral } from "@/lib/newUtils";
+import { selectSelectedIndex, selectQueueItems } from './queueSlice';
+import { seedToBits, sanitizeSeed, sanitizeMod, sanitizeAttunement, calculateMostFrequentNumeral } from "@/lib/utils/global";
 
 
 
@@ -83,8 +83,8 @@ const initialState: EditorState = {
 
 // STATE ACTIONS --------------------------------
 
-const newEditorSlice = createSlice({
-  name: 'newEditor',
+const editorSlice = createSlice({
+  name: 'editor',
   initialState,
   reducers: {
     updateEditorState: (state, action: PayloadAction<{ seed?: string; mod?: string; attunement?: string; isAttunementOverridden?: boolean }>) => {
@@ -121,7 +121,6 @@ const newEditorSlice = createSlice({
     },
     resetEditorState: (state) => {
       const currentVisibility = state.uiVisibility;
-
       pushToHistory(state);
       Object.assign(state, {
         ...initialState,
@@ -152,7 +151,7 @@ const newEditorSlice = createSlice({
       const newDisplaySettingsValue = displaySettingsValue ^ (1 << bitIndex); // Toggle the bit
       const newDisplaySettingsString = newDisplaySettingsValue.toString(10).padStart(3, '0'); // Convert to string
       state.editorMod = state.editorMod.slice(0, -3) + newDisplaySettingsString; // Update editorMod
-      pushToHistory(state); // Maintain history
+      pushToHistory(state);
     },
     updateModValue: (state, action: PayloadAction<{ name: string; value: number }>) => {
       const { name, value } = action.payload;
@@ -191,12 +190,10 @@ const newEditorSlice = createSlice({
     },
     undo: (state) => {
       if (state.history.past.length > 0) {
-        let previous: EditorHistoryState | undefined;
-        do {
-          previous = state.history.past.pop();
-        } while (state.history.past.length > 0 && previous?.seed === state.editorSeed);
-    
+        let previous = state.history.past.pop();
+        
         if (previous) {
+          // Always consider the immediately previous state
           const currentState: EditorHistoryState = {
             seed: state.editorSeed,
             mod: state.editorMod,
@@ -206,6 +203,18 @@ const newEditorSlice = createSlice({
             modValues: { ...state.modValues },
           };
           state.history.future.push(currentState);
+    
+          // If the previous state is identical to the current state, find the next different state
+          while (state.history.past.length > 0 && 
+                 previous.seed === state.editorSeed && 
+                 previous.mod === state.editorMod && 
+                 previous.attunement === state.editorAttunement) {
+            const nextPrevious = state.history.past.pop();
+            if (nextPrevious) {
+              state.history.future.push(previous);
+              previous = nextPrevious;
+            }
+          }
     
           state.editorSeed = previous.seed;
           state.editorMod = previous.mod;
@@ -222,7 +231,10 @@ const newEditorSlice = createSlice({
         let next: EditorHistoryState | undefined;
         do {
           next = state.history.future.pop();
-        } while (state.history.future.length > 0 && next?.seed === state.editorSeed);
+        } while (state.history.future.length > 0 && 
+                 next?.seed === state.editorSeed && 
+                 next?.mod === state.editorMod && 
+                 next?.attunement === state.editorAttunement);
     
         if (next) {
           const currentState: EditorHistoryState = {
@@ -290,7 +302,7 @@ const newEditorSlice = createSlice({
 // UTILITY FUNCTIONS -------------------------------
 
 // Push current state to history
-const MAX_HISTORY_LENGTH = 20;
+const MAX_HISTORY_LENGTH = 25;
 const pushToHistory = (state: EditorState) => {
   const lastHistoryState = state.history.past[state.history.past.length - 1];
   const isNewStateDifferent = !lastHistoryState ||
@@ -332,13 +344,13 @@ export const parseMod = (mod: string) => {
 
 // SELECTORS -----------------------------------------
 
-export const selectEditorSeed = (state: RootState) => state.newEditor.editorSeed;
-export const selectEditorMod = (state: RootState) => state.newEditor.editorMod;
+export const selectEditorSeed = (state: RootState) => state.editor.editorSeed;
+export const selectEditorMod = (state: RootState) => state.editor.editorMod;
 export const selectEditorAttunement = createSelector(
   [
-    (state: RootState) => state.newEditor.editorAttunement,
-    (state: RootState) => state.newEditor.isAttunementOverridden,
-    (state: RootState) => state.newEditor.editorSeed
+    (state: RootState) => state.editor.editorAttunement,
+    (state: RootState) => state.editor.isAttunementOverridden,
+    (state: RootState) => state.editor.editorSeed
   ],
   (editorAttunement, isAttunementOverridden, editorSeed) => {
     if (isAttunementOverridden) {
@@ -349,9 +361,9 @@ export const selectEditorAttunement = createSelector(
   }
 );
 
-export const selectIsAttunementOverridden = (state: RootState) => state.newEditor.isAttunementOverridden;
+export const selectIsAttunementOverridden = (state: RootState) => state.editor.isAttunementOverridden;
 
-export const selectBitsArray = (state: RootState) => state.newEditor.bitsArray;
+export const selectBitsArray = (state: RootState) => state.editor.bitsArray;
 
 export const selectReversedBitsArray = createSelector(
   [selectBitsArray],
@@ -359,12 +371,12 @@ export const selectReversedBitsArray = createSelector(
 );
 
 export const selectModValues = createSelector(
-  [(state: RootState) => state.newEditor.modValues],
+  [(state: RootState) => state.editor.modValues],
   (modValues) => modValues
 );
 
 export const selectDisplaySettings = createSelector(
-  [(state: RootState) => state.newEditor.editorMod],
+  [(state: RootState) => state.editor.editorMod],
   (editorMod) => {
     const displaySettingsValue = parseInt(editorMod.slice(-3), 10);
     return {
@@ -428,7 +440,7 @@ export const selectIsEditorAttunementChanged = createSelector(
   }
 );
 
-export const selectUIVisibility = (state: RootState) => state.newEditor.uiVisibility;
+export const selectUIVisibility = (state: RootState) => state.editor.uiVisibility;
 
 
 // EXPORTED ACTIONS -------------------------------
@@ -448,6 +460,6 @@ export const {
   setUrlParams,
   setSpinAnimationPaused,
   setDepthAnimationPaused,
-} = newEditorSlice.actions;
+} = editorSlice.actions;
 
-export default newEditorSlice.reducer;
+export default editorSlice.reducer;
