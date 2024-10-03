@@ -35,7 +35,7 @@ export default function Info() {
           <img src="/seeds-collection-tall.jpg" loading="lazy" className="feature-image mobile" />
           <img src="/seeds-collection-wide.jpg" loading="lazy" className="feature-image" />
           <div className="content">
-            <h2>A permanent on-chain installation.</h2>
+            <h2>An eternal on-chain installation.</h2>
             <p>SEEDS is a collection of 9,999 interpretable, interactive, code-based artworks inscribed on the Bitcoin blockchain.</p>
             <p>Each seed's appearance is determined by its seed number, which is set by its holder, placing the composition of the SEEDS collection in the hands of its collectors.</p>
             <p>Collectors can endlessly re-inscribe on their seeds, allowing them to change its appearance as much as they wish, forever.</p>
@@ -58,12 +58,12 @@ export default function Info() {
             <p>There are several different kinds of seeds in the collection, each with their own scarcity and unique appeal:</p>
             <h2>🔳 100 <span className="lowercase">x</span> Archetype seeds</h2>
             <p>"Archetype seeds" each have just one single layer.</p>
-            <h2>🔲 500 <span className="lowercase">x</span> origin seeds</h2>
-            <p>"Origin seeds" were created with locked seed numbers that cannot be changed or duplicated (including the 100 archetype seeds).</p>
+            <h2>🔲 500 <span className="lowercase">x</span> Fossilized seeds</h2>
+            <p>"Fossilized seeds" have hard-coded seed numbers that cannot be changed or duplicated (including the 100 archetype seeds).</p>
             <h2>⬛ 1,000 <span className="lowercase">x</span> dxxmsdxy seeds</h2>
             <p>Seeds which were hand-set and locked by the artist prior to the release of the collection.</p>
             <h2>⬜ 8,500 <span className="lowercase">x</span> blank seeds</h2>
-            <p>Blank seeds, ready to be set by their holders. Who sets a seed, or when it is set, may be a source of interest.</p>
+            <p>Blank seeds, ready to be set by their holders. When a seed is set, or who set it, may be a source of interest.</p>
             <div className="docs-button-wrapper">
               <div className="cta-button-wrapper">
                 <a href="https://docs.seed.gallery/the-details/kinds" target="_blank" className="ui-button main">📔 Learn more</a>

@@ -47,12 +47,16 @@ const ArtTransformer: React.FC<ArtTransformerProps> = ({
     // Reset the SVG's layers to initial state
     const resetLayersCallback = useCallback(() => {
         if (svgRef.current) {
-        resetLayers(svgRef.current);
-        
-        const layers = svgRef.current.querySelectorAll('.lr');
-        memoizedApplyModValueToElements(layers, modValues.color, 'color');
-        memoizedApplyModValueToElements(layers, modValues.spin, 'spin');
-        memoizedApplyModValueToElements(layers, modValues.depth, 'depth');
+            const svg = svgRef.current;
+            resetLayers(svg);
+
+            const colorElements = document.querySelectorAll('.seedartwork,.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline,.sub.on path,.sub.on polygon,.sub.on circle,.sub.on ellipse,.sub.on line,.sub.on rect,.sub.on polyline,.sub.on .fx');
+            const spinElements = svg.querySelectorAll('.lr.on, .sub.on');
+            const depthElements = svg.querySelectorAll('.lr.on .fx, .sub.on .fx');
+            
+            memoizedApplyModValueToElements(colorElements, modValues.color, 'color');
+            memoizedApplyModValueToElements(spinElements, modValues.spin, 'spin');
+            memoizedApplyModValueToElements(depthElements, modValues.depth, 'depth');
         }
     }, [svgRef, memoizedApplyModValueToElements, modValues]);
 

@@ -61,7 +61,7 @@ const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems }) => {
         >
           <div
             id="z-node-63ba5078"
-            className="z-layout-cell inscribe-collection-info"
+            className="z-layout-cell inscribe-preview-art"
             style={{ position: "relative" }}
           >
             {itemsWithUrls.map((item, index) => (
@@ -103,7 +103,7 @@ const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems }) => {
               </div>
             ))}
           </div>
-          <div id="z-node-63ba5078" className="z-layout-cell cell">
+          <div id="z-node-63ba5078" className="z-layout-cell cell inscribe-collection-info">
             <div className="mint-preview-item-collection">
               Seeds&nbsp;Collection
             </div>

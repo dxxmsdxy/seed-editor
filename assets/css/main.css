@@ -1280,9 +1280,12 @@ body:not(.sleep-mode):has(.seed-details.focused) .mod-button span
   justify-content: stretch;
 }
 
+.inscribe-preview-art {
+  flex-shrink: 2;
+}
+
 .inscribe-collection-info {
   width: 100%;
-  flex-shrink: 2;
 }
 
 .mint-preview {
@@ -3200,11 +3203,11 @@ ul li + li.set::after
   transition: opacity 0.2s, border-color 0.2s, color 0.2s, background-color 0.2s;
 }
 
-.queue-container:has(.page-selector:not(.disabled)):hover .queue-item:last-child {
+.queue-container:has(.page-selector:not(.disabled)):hover .queue-item:last-child,.queue-container:has(.page-selector:not(.disabled)) .queue-item.set:last-child {
   border-top-color: var(--ui-color)
 }
 
-.queue-container:has(.page-selector:not(.disabled)) .queue-item:last-child, .queue-item.set:nth-of-type(1) {
+.queue-container:has(.page-selector:not(.disabled)) .queue-item:last-child {
   border-top:2px solid #0001
 }
 
@@ -4643,7 +4646,7 @@ body:has(.changed-mod) .mod-sliders
 }
 
 .grabbing .svg-container {
-  transform: scale3d(1.02,1.02,1.02);
+  transform: scale3d(1.01,1.01,1.01)translate3d(5px,0,3px);
   box-shadow: 0 0 1px 6px rgba(0,0,0,0.1);
   transition: transform 0.6s 0.15s, box-shadow 0.6s 0.15s;
 }
