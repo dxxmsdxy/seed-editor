@@ -65,7 +65,7 @@ const Details: React.FC<DetailsProps> = ({
             </div>
             <li className="metadata-item">
               <span className="metadata-label">Name:</span>
-              <span className="metadata-value">{generatedName}</span>
+              <span className="metadata-value">{generatedName !== '' ? generatedName : "--"}</span>
             </li>
             <ul className="metadata-list">
               <li className="metadata-item">
@@ -97,9 +97,12 @@ const Details: React.FC<DetailsProps> = ({
               D/L
             </div>
             <ul className="details-actions-list">
-              <li>PNG</li>
-              <li>SVG</li>
-              <li>Embed</li>
+              <li className="ui-element">PNG</li>
+              <li className="ui-element">SVG</li>
+              <span className="split-button">
+                <li className="ui-element">Embed</li>
+                <li className="ui-element">Raw</li>
+              </span>
             </ul>
           </div>
         </div>

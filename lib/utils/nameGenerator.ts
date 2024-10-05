@@ -1,13 +1,14 @@
 
 export const syllableBank: string[] = [
-  "aur", "ora", "iri", "elo", "elo", "ala", "ele", "ili", "olo", "ulu",
-  "lumi", "luma", "nora", "nori", "lora", "lori", "cora", "cori", "sora", "sori",
-  "kira", "kiri", "mira", "miri", "tira", "tiri", "vira", "viri", "zira", "ziri",
-  "pura", "puri", "dura", "duri", "gura", "guri", "bura", "buri", "fura", "furi",
-  "jura", "juri", "cura", "curi", "hura", "huri", "yura", "yuri", "wura", "wuri",
-  "ra", "re", "ri", "ro", "ru", "la", "le", "li", "lo", "lu",
-  "dia", "dio", "dea", "deo", "nia", "nio", "nea", "neo", "tia", "tio",
-  "kia", "kio", "zia", "zio", "via", "vio", "ria", "rio", "pia", "pio"
+  "la", "le", "li", "lo", "lu", "ma", "me", "mi", "mo", "mu",
+  "na", "ne", "ni", "no", "nu", "ra", "re", "ri", "ro", "ru",
+  "sa", "se", "si", "so", "su", "fa", "fe", "fi", "fo", "fu",
+  "ha", "he", "hi", "ho", "hu", "ya", "ye", "yi", "yo", "yu",
+  "ba", "be", "bi", "bo", "bu", "pa", "pe", "pi", "po", "pu",
+  "ca", "ce", "ci", "co", "cu", "da", "de", "di", "do", "du",
+  "ga", "ge", "gi", "go", "gu", "ja", "je", "ji", "jo", "ju",
+  "ka", "ke", "ki", "ko", "ku", "la", "le", "li", "lo", "lu",
+  "va", "ve", "vi", "vo", "vu", "za", "ze", "zi", "zo", "zu"
 ];
 
 export function generateName(seedNumber: number | bigint): string {

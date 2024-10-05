@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
 import { connectWalletAndLoadData, disconnectWalletAndClearQueue } from '@/store/slices/walletSlice';
 import { MenuDesktop } from "./MenuDesktop";
@@ -91,13 +90,13 @@ export const Navbar = () => {
               {loading ? (
                 <span className="ui-button">Loading</span>
               ) : (
-                <Link
+                <div
                   href="#"
                   onClick={connected ? handleDisconnect : handleConnect}
                   className={`ui-button ${connected ? 'disconnect' : 'connect'}`}
                 >
                   {connected ? 'D/C' : 'Connect'}
-                </Link>
+                </div>
               )}
             </div>
           </div>

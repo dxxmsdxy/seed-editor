@@ -53,7 +53,9 @@ const DisplaySettings: React.FC = () => {
 
   const isDefault = useMemo(() => {
     const defaultAttunement = calculateMostFrequentNumeral(BigInt(editorSeed))?.toString() ?? "0";
-    return !isAttunementOverridden && editorAttunement === defaultAttunement;
+    if (isAttunementOverridden) { return } else {
+      return !isAttunementOverridden && editorAttunement === defaultAttunement;
+    }
   }, [editorSeed, editorAttunement, isAttunementOverridden]);
 
 
@@ -232,6 +234,11 @@ const DisplaySettings: React.FC = () => {
       <div className="mod-container">
         {/* Display setting icons */}
         <div className="mod-controls ui-element">
+          <div className="mod-style-picker ui-element">
+            <span className="mod-style-picker-label">
+              Browse
+            </span>
+          </div>
           {renderDisplaySettingIcons()}
         </div>
         <div className="mod-sliders">

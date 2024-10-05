@@ -112,6 +112,10 @@
 .seedartwork.pauseColor {
   animation-play-state: paused !important;
 }
+
+.seedartwork.pauseColor .art > g.on .fx * {
+  animation-play-state: paused !important;
+}
 .seedartwork.pauseSpin .art > g.on {
   animation-play-state: paused !important;
 }
@@ -211,6 +215,9 @@
 }
 /*@container(max-height:720px){.seedartwork.reveal:has(g.on) .art g.on .fx *{animation:none;filter:blur(0.3px)}}*/
 @container (min-aspect-ratio:13.4/18) {
+  .seedartwork {
+    background: transparent;
+  }
   .seedartwork .wrap {
     transform: translate3d(0, 0, 0);
   }
@@ -2476,6 +2483,28 @@ body {
 .seedartwork.grayscale.hyper.reveal:has(g.on) .outline {
   filter: drop-shadow(0px 0px 25px rgba(255, 200, 117, 0.5)) grayscale(1)
     contrast(1.1);
+}
+
+.seedartwork.cmyk.hyper.reveal:has(g.on) g.on {
+  mix-blend-mode: soft-light;
+  fill-opacity: 0.5;
+}
+.seedartwork.cmyk.hyper.reveal:has(g.on) g.on:nth-last-of-type(2) {
+  mix-blend-mode: darken;
+}
+.seedartwork.cmyk.hyper.reveal:has(g.on) g.on:nth-last-of-type(3) {
+  mix-blend-mode: color;
+}
+.seedartwork.cmyk.hyper.reveal:has(g.on) g.on:nth-of-type(3) {
+  mix-blend-mode: normal;
+  fill-opacity: 0.2;
+}
+
+body:has(.seedartwork.cmyk.hyper.reveal) .rgblens,
+body:has(.seedartwork.cmyk.hyper.reveal) .overlay {
+  /* animation: cmykAnimation 60s linear infinite;
+  animation-play-state: paused; */
+  mix-blend-mode: difference;
 }
 
 .seedartwork.depth:has(g.on):not(.reveal) .art g.on {}

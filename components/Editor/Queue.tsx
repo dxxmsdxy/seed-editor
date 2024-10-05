@@ -73,17 +73,25 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
 
   // Select a queue item
   const handleQueueItemSelect = useCallback((index: number) => {
+    console.log('Selecting queue item:', index, queueItems[index]);
     if (selectedQueueIndex === index) {
       dispatch(setSelectedIndex(null));
       dispatch(resetEditorState());
     } else {
       dispatch(setSelectedIndex(index));
-      const selectedItem = queueItems[index]; // Use queueItems instead of currentPageItems
+      const selectedItem = queueItems[index];
       if (selectedItem) {
+        console.log('Updating editor state with:', {
+          seed: selectedItem.newValues.newSeed || selectedItem.initialSeed,
+          mod: selectedItem.newValues.newMod || selectedItem.initialMod || '000000000000',
+          attunement: selectedItem.newValues.newAttunement?.toString() ?? selectedItem.initialAttunement?.toString() ?? '0',
+          isAttunementOverridden: selectedItem.newValues.isAttunementOverridden ?? selectedItem.isAttunementOverridden
+        });
         dispatch(updateEditorState({
           seed: selectedItem.newValues.newSeed || selectedItem.initialSeed,
-          mod: selectedItem.newValues.newMod || selectedItem.initialMod || '000000000000000',
+          mod: selectedItem.newValues.newMod || selectedItem.initialMod || '000000000000',
           attunement: selectedItem.newValues.newAttunement?.toString() ?? selectedItem.initialAttunement?.toString() ?? '0',
+          isAttunementOverridden: selectedItem.newValues.isAttunementOverridden ?? selectedItem.isAttunementOverridden
         }));
       }
     }

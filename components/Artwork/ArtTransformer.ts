@@ -50,9 +50,9 @@ const ArtTransformer: React.FC<ArtTransformerProps> = ({
             const svg = svgRef.current;
             resetLayers(svg);
 
-            const colorElements = document.querySelectorAll('.seedartwork,.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline,.sub.on path,.sub.on polygon,.sub.on circle,.sub.on ellipse,.sub.on line,.sub.on rect,.sub.on polyline,.sub.on .fx');
-            const spinElements = svg.querySelectorAll('.lr.on, .sub.on');
-            const depthElements = svg.querySelectorAll('.lr.on .fx, .sub.on .fx');
+            const colorElements = document.querySelectorAll('.seedartwork,.lr path,.lr polygon, .lr circle, .lr .ellipse, .lr line, .lr rect, .lr .polyline,.sub path,.sub polygon,.sub circle,.sub ellipse,.sub line,.sub rect,.sub polyline,.sub .fx');
+            const spinElements = svg.querySelectorAll('.lr, .sub');
+            const depthElements = svg.querySelectorAll('.lr .fx, .sub .fx');
             
             memoizedApplyModValueToElements(colorElements, modValues.color, 'color');
             memoizedApplyModValueToElements(spinElements, modValues.spin, 'spin');

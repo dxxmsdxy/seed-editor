@@ -396,19 +396,35 @@ export const selectHasEditorChanges = createSelector(
     selectEditorSeed,
     selectEditorMod,
     selectEditorAttunement,
+    selectIsAttunementOverridden,
     selectSelectedIndex,
     selectQueueItems
   ],
-  (editorSeed, editorMod, editorAttunement, selectedIndex, queueItems) => {
+  (editorSeed, editorMod, editorAttunement, isAttunementOverridden, selectedIndex, queueItems) => {
     if (selectedIndex === null || !queueItems.length) return false;
     const selectedItem = queueItems[selectedIndex];
     if (!selectedItem) return false;
 
-    return (
-      editorSeed !== (selectedItem.newValues?.newSeed || selectedItem.initialSeed) ||
-      editorMod !== (selectedItem.newValues?.newMod || selectedItem.initialMod || '000000000000') ||
-      editorAttunement !== (selectedItem.newValues?.newAttunement?.toString() || selectedItem.initialAttunement?.toString() || calculateMostFrequentNumeral(BigInt(selectedItem.initialSeed))?.toString())
+    const itemSeed = selectedItem.newValues?.newSeed || selectedItem.initialSeed;
+    const itemMod = selectedItem.newValues?.newMod || selectedItem.initialMod || '000000000000';
+    const itemAttunement = selectedItem.newValues?.newAttunement?.toString() || selectedItem.initialAttunement?.toString() || calculateMostFrequentNumeral(BigInt(selectedItem.initialSeed))?.toString() || "0";
+    const itemIsAttunementOverridden = selectedItem.newValues?.isAttunementOverridden ?? selectedItem.isAttunementOverridden ?? false;
+
+    const hasChanges = (
+      editorSeed !== itemSeed ||
+      editorMod !== itemMod ||
+      editorAttunement !== itemAttunement ||
+      isAttunementOverridden !== itemIsAttunementOverridden
     );
+
+    console.log('Has editor changes:', hasChanges, {
+      editorSeed, itemSeed,
+      editorMod, itemMod,
+      editorAttunement, itemAttunement,
+      isAttunementOverridden, itemIsAttunementOverridden
+    });
+
+    return hasChanges;
   }
 );
 
@@ -419,9 +435,15 @@ export const selectIsEditorModChanged = createSelector(
       return editorMod !== '000000000000';
     }
     const selectedItem = queueItems[selectedIndex];
-    return selectedItem ? 
-      editorMod !== (selectedItem.newValues?.newMod || selectedItem.initialMod || '000000000000') : 
-      editorMod !== '000000000000';
+    if (!selectedItem) return editorMod !== '000000000000';
+
+    const initialMod = selectedItem.initialMod || '000000000000';
+    const newMod = selectedItem.newValues?.newMod;
+
+    if (newMod !== null && newMod !== undefined) {
+      return editorMod !== newMod;
+    }
+    return editorMod !== initialMod;
   }
 );
 

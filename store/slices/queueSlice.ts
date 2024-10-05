@@ -14,11 +14,13 @@ export interface QueueItem {
   initialSeed: string;
   initialMod: string | null;
   initialAttunement: number | null;
+  isAttunementOverridden: boolean;
   isSet: boolean;
   newValues: {
     newSeed: string | null;
     newMod: string | null;
     newAttunement: number | null;
+    isAttunementOverridden: boolean | null;
   };
   kind?: string;
 }
@@ -57,13 +59,16 @@ const queueSlice = createSlice({
         },
       }));
     },
-    updateQueueItem: (state, action: PayloadAction<{ index: number; newValues: Partial<QueueItem['newValues']> }>) => {
+    updateQueueItem: (state, action: PayloadAction<{ index: number; newValues: Partial<QueueItem['newValues']> & { isAttunementOverridden?: boolean } }>) => {
       const { index, newValues } = action.payload;
       if (index >= 0 && index < state.items.length) {
         state.items[index].newValues = {
           ...state.items[index].newValues,
           ...newValues,
         };
+        if (newValues.isAttunementOverridden !== undefined) {
+          state.items[index].isAttunementOverridden = newValues.isAttunementOverridden;
+        }
       }
     },
     resetQueueItem: (state, action: PayloadAction<number>) => {

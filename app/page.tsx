@@ -1,6 +1,6 @@
 "use client";
 import React, { useRef, useCallback, useEffect, useState, useMemo } from "react";
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { createPortal } from 'react-dom';
 import { useSelector } from 'react-redux';
@@ -30,7 +30,6 @@ import { startAudio, playAudio, pauseAudio, stopAudio, setTempo, modulateSound, 
 const Home: React.FC = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   // REDUX STATE ------------------------------------
 
@@ -162,19 +161,20 @@ const Home: React.FC = () => {
 
   // Set the selected queue item
   const handleSetQueueItem = useCallback(() => {
-    if (selectedQueueIndex !== null && hasEditorChanges) {
+    if (selectedQueueIndex !== null) {
       dispatch(updateQueueItem({
         index: selectedQueueIndex,
         newValues: {
           newSeed: editorSeed,
           newMod: editorMod,
-          newAttunement: editorAttunement,
-        },
+          newAttunement: parseInt(editorAttunement),
+          isAttunementOverridden: isAttunementOverridden
+        }
       }));
       dispatch(updateQueueOrder());
       dispatch(setUIVisibility('none'));
     }
-  }, [dispatch, selectedQueueIndex, hasEditorChanges, editorSeed, editorMod, editorAttunement]);
+  }, [dispatch, selectedQueueIndex, editorSeed, editorMod, editorAttunement, isAttunementOverridden]);
 
   // Handle artwork preview mouse interactions
   const handleArtworkInteraction = useCallback(() => {
@@ -246,15 +246,29 @@ const Home: React.FC = () => {
   useEffect(() => {
     if (selectedQueueIndex !== null && selectedQueueIndex < queueItems.length) {
       const selectedItem = queueItems[selectedQueueIndex];
+      console.log('Selected queue item:', selectedItem);
+      console.log('Current editor state:', {
+        editorSeed,
+        editorMod,
+        editorAttunement,
+        isAttunementOverridden
+      });
       if (!hasEditorChanges) {
+        console.log('Updating editor state with:', {
+          seed: selectedItem.newValues.newSeed || selectedItem.initialSeed,
+          mod: selectedItem.newValues.newMod || selectedItem.initialMod || '000000000000',
+          attunement: selectedItem.newValues.newAttunement?.toString() || selectedItem.initialAttunement?.toString(),
+          isAttunementOverridden: selectedItem.isAttunementOverridden
+        });
         dispatch(updateEditorState({
           seed: selectedItem.newValues.newSeed || selectedItem.initialSeed,
           mod: selectedItem.newValues.newMod || selectedItem.initialMod || '000000000000',
           attunement: selectedItem.newValues.newAttunement?.toString() || selectedItem.initialAttunement?.toString(),
+          isAttunementOverridden: selectedItem.isAttunementOverridden
         }));
       }
     }
-  }, [selectedQueueIndex, queueItems, hasEditorChanges, dispatch]);
+  }, [selectedQueueIndex, queueItems, hasEditorChanges, dispatch, editorSeed, editorMod, editorAttunement, isAttunementOverridden]);
 
   // Toggle changes flags on Editor element
   useEffect(() => {
@@ -299,11 +313,12 @@ const Home: React.FC = () => {
       const navbar = document.querySelector('.navbar');
       const inscribeModal = document.querySelector('.mint-modal'); 
       const artworkContainer = document.querySelector('.svg-container');
+      const gardenButton = document.querySelector('.garden-button');
       
       if (
         editorWrapper && 
         navbar && 
-        !editorWrapper.contains(event.target as Node) && 
+        !editorWrapper.contains(event.target as Node) && !gardenButton.contains(event.target as Node) && 
         !navbar.contains(event.target as Node) && 
         (!inscribeModal || !inscribeModal.contains(event.target as Node)) && 
         (!artworkContainer || !artworkContainer.contains(event.target as Node)) &&
@@ -396,32 +411,23 @@ const Home: React.FC = () => {
     }
   }, []);
 
+  useEffect(() => {
+    console.log('Has editor changes:', hasEditorChanges);
+  }, [hasEditorChanges]);
+
 
   // URL PARAMETERS ------------------------------
 
-  // Update the url parameters with the editor state
-  useEffect(() => {
-    if (editorSeed || editorMod) {
-      let urlValue = editorSeed;
-      if (editorMod !== '000000000000') {
-        // Ensure tintPercent is correctly represented in the URL
-        const modForUrl = editorMod.slice(0, 8) + 
-          (modValues.tintPercent === 100 ? '0' : (modValues.tintPercent / 10).toString()) +
-          editorMod.slice(9);
-        urlValue += `.${modForUrl}`;
-      }
-      if (isAttunementOverridden) {
-        urlValue += `:${editorAttunement}`;
-      }
-      
-      const newUrl = `${window.location.pathname}${urlValue ? '?seed=' + urlValue : ''}`;
-      window.history.replaceState({}, '', newUrl);
+  const [urlParams, setUrlParams] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      return searchParams.get('seed');
     }
-  }, [editorSeed, editorMod, editorAttunement, isAttunementOverridden, modValues.tintPercent]);
+    return null;
+  });
 
   // Initialize editor state from URL parameters
   useEffect(() => {
-    const urlParams = searchParams.get('seed');
     if (urlParams) {
       const [seedPart, attunementPart] = urlParams.split(':');
       const [seedRaw, modRaw] = seedPart.split('.');
@@ -445,16 +451,27 @@ const Home: React.FC = () => {
         dispatch(updateModValue({ name: key, value }));
       });
     }
-  }, []);
+  }, [urlParams, dispatch]);
 
-  // Trigger artwork update when ready and initialized from URL
+  // Update the url parameters with the editor state
   useEffect(() => {
-    if (isArtworkReady && searchParams.toString()) {
-      if (artRef.current && artRef.current.updateArtwork) {
-        artRef.current.updateArtwork();
+    if (editorSeed || editorMod) {
+      let urlValue = editorSeed;
+      if (editorMod !== '000000000000') {
+        const modForUrl = editorMod.slice(0, 8) + 
+          (modValues.tintPercent === 100 ? '0' : (modValues.tintPercent / 10).toString()) +
+          editorMod.slice(9);
+        urlValue += `.${modForUrl}`;
       }
+      if (isAttunementOverridden) {
+        urlValue += `:${editorAttunement}`;
+      }
+      const newUrl = `${window.location.pathname}${urlValue ? '?seed=' + urlValue : ''}`;
+      window.history.replaceState({}, '', newUrl);
     }
-  }, [isArtworkReady]);
+  }, [editorSeed, editorMod, editorAttunement, isAttunementOverridden, modValues.tintPercent]);
+
+
 
   // SOUND GEN ------------------------------
 
@@ -741,9 +758,29 @@ const Home: React.FC = () => {
           <div 
             className={`reset-editor ${
               uiVisibility === 'layers' || displaySettings ? "" : "hidden"}`}
-            onClick={() => {dispatch(setUIVisibility('none'))}}
-          ></div>
+            onClick={() => {
+              dispatch(setUIVisibility('none'));
+              setIsOverlayToggled(false);
+            }}
+          >
+            <svg
+              data-name="icon_right"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 90.67 210.1"
+              width="18px"
+              height="auto">
+                <path d="m5.34 5.11 77.33 99.94-77.33 99.94"/>
+              </svg>
+          </div>
         </div>
+      </div>
+      <div
+        className="garden-button ui-element"
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+      >
+        <svg data-name="icon-spiral" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 105.96 105.96"><path className="cls-1" d="M83.35 92.75c22.48-19.86 22.39-52.41 3.25-71.55-18.49-18.49-47.33-19.81-66.85-.29-17.77 17.77-17.77 45.21-.76 62.22 16.17 16.17 41.7 16.85 57.87.68 15.25-15.25 15.19-39.05.48-53.76s-34.67-14.77-49.44 0c-12.18 12.18-12.18 32.9 0 45.08 12.1 12.1 29.54 10.61 40.63-.48a25.84 25.84 0 0 0 0-36.54c-9.18-9.18-23.73-8.84-32.91.34-8.35 8.35-8.21 21.08.14 29.44 7.36 7.36 18.64 7.17 25.96-.16a15.83 15.83 0 0 0 .03-22.36c-4.83-4.83-13.69-4.51-18.43.23s-4.81 10.98-.72 15.07c3.28 3.28 8.51 3.75 12.28-.02a6.05 6.05 0 0 0 .7-8.2c-1.34-1.57-4.07-2.11-5.76-.44"/></svg>
       </div>
       <InscribeModal show={showInscribeModal} queueItems={getSetQueueItems} />
     </>

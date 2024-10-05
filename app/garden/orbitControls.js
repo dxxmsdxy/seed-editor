@@ -1,7 +1,5 @@
 import * as THREE from 'three';
 
-( function () {
-
 	// Unlike TrackballControls, it maintains the "up" direction object.up (+Y by default).
 	//
 	//    Orbit - left mouse / touch: one-finger move
@@ -1040,8 +1038,4 @@ import * as THREE from 'three';
 		}
 
 	}
-
-	THREE.MapControls = MapControls;
-	THREE.OrbitControls = OrbitControls;
-
-} )();
+export { OrbitControls, MapControls };

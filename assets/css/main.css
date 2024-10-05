@@ -1244,6 +1244,14 @@ body:not(.sleep-mode):has(.seed-details.focused) .mod-button span
 	box-shadow:0 0 0 2px var(--ui-color)
 }
 
+.split-button {
+	display: flex;
+	flex-direction: row;
+	grid-column-gap: 10px;
+    grid-row-gap: 10px;
+    justify-content: center;
+}
+
 .ui-button.advanced.shrink
 {
 	width:auto
@@ -1886,10 +1894,27 @@ body:has(.theme-bkg)
 	grid-auto-columns:1fr;
 	grid-column-gap:0;
 	grid-row-gap:0;
-	grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+	grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
 	grid-template-rows:auto;
 	margin-bottom:25px;
 	overflow:hidden
+}
+
+.mod-style-picker {
+  display: flex;
+  font-size:14px;
+	font-weight:700;
+	justify-content:center;
+  align-content: center;
+  justify-items: center;
+  align-items: center;
+	letter-spacing:1px;
+	line-height:0;
+  border:1px solid var(--ui-color);
+	color:var(--ui-color);
+  cursor: pointer;
+  transition:color .2s ease-in-out,background-color .2s ease-in-out;
+  display: none;
 }
 
 .btn-display-setting
@@ -1901,20 +1926,14 @@ body:has(.theme-bkg)
 	color:var(--ui-color);
 	cursor:pointer;
 	display:flex;
-	font-family:Inconsolata,monospace;
-	font-size:14px;
-	font-weight:700;
 	justify-content:center;
-	letter-spacing:1px;
-	line-height:0;
 	transition:color .2s ease-in-out,background-color .2s ease-in-out
 }
 
-.btn-display-setting:active,.btn-display-setting.selected
+.btn-display-setting:active,.btn-display-setting.selected,.mod-style-picker.selected,.mod-style-picker:active
 {
 	background-color:var(--ui-color);
 	color:var(--theme-color);
-	text-align:center
 }
 
 .btn-display-setting:active .cls-1,.btn-display-setting.selected .cls-1
@@ -2674,32 +2693,117 @@ input::-moz-focus-inner,input::-moz-focus-outer
 {
 	letter-spacing:0;
 	margin-bottom:8px;
-	text-transform:none
+	text-transform:none;
 }
 
 .seed-indicator-text
 {
 	align-items:center;
 	display:flex;
-	justify-content:center
+	justify-content:center;
 }
+
+.garden-button
+{
+  width: 60px;
+  height: 60px;
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  padding: 5px;
+  border-radius: 60px;
+  background-color: transparent;
+  border: solid 2px #0000;
+  cursor: pointer;
+  transition: opacity 0.3s, border-color 0.3s, background-color 0.3s;
+  opacity: 0;
+  pointer-events: none;
+}
+
+body:has(.display-settings-wrap:not(.show)):has(.layer-grid-wrap:not(.show)) .garden-button
+{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.garden-button:hover
+{
+  background-color: var(--theme-color);
+  border-color: var(--ui-color);
+}
+
+.garden-button:active {
+  background-color: var(--ui-color);
+  box-shadow: 0 0 2px 0 var(--theme-color);
+}
+
+.garden-button .cls-1
+{
+  fill:none;
+  stroke:var(--ui-color);
+  stroke-linecap:round;
+  stroke-miterlimit:10;
+  stroke-width:3.5px;
+  transition: opacity 0.3s, fill 0.3s, stroke 0.3s;
+}
+
+.garden-button:active .cls-1
+{
+  stroke: var(--theme-color)
+}
+
+body:has(.seed-details.focused):not(.sleep-mode) .garden-button.ui-element {
+  border-color: #0000;
+}
+
+body:has(.seed-details.focused):not(.sleep-mode) .garden-button.ui-element:active
+{
+  border-color: var(--theme-color);
+}
+
+body:has(.seed-details.focused) .garden-button:hover .cls-1
+{
+  stroke: var(--ui-color);
+}
+
+body:has(.seed-details.focused) .garden-button .cls-1,
+body:has(.seed-details.focused) .garden-button:active .cls-1
+{
+  stroke: var(--theme-color);
+}
+
 
 .reset-editor
 {
+  display: flex;
+  align-content: center;
+  align-items:center;
+	justify-content:center;
+  justify-items: center;
 	background-color:#0000;
-	background-image:url(/icons/icon_arrow-right_black.svg);
 	background-position:center;
 	background-repeat:no-repeat;
 	background-size:18px auto;
 	bottom:0;
 	cursor:pointer;
-	opacity:.1;
+	opacity:.2;
 	pointer-events:auto;
 	position:fixed;
 	right:0;
 	top:0;
 	transition:opacity .2s ease-in-out,transform .2s ease-in-out,background-color .2s;
 	width:10vw
+}
+.reset-editor svg {
+  fill:none;
+  stroke: var(--ui-color);
+  stroke-miterlimit:10;
+  stroke-width:11.44px;
+}
+body:has(.seed-details.focused) .reset-editor svg
+{
+  stroke: var(--theme-color);
+  opacity: 1;
 }
 
 .reset-editor:hover
@@ -2769,7 +2873,7 @@ input::-moz-focus-inner,input::-moz-focus-outer
 	overflow:hidden;
 	position:absolute;
 	top:0;
-	transition:transform 1s 0.25s,box-shadow 1s .25s;
+	transition:transform 1s 0.15s,box-shadow 1s .15s;
 	width:100%;
 	z-index:9999
 }
@@ -3633,22 +3737,150 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover
 	text-align:center
 }
 
+.garden-container {
+	width: 100%;
+	height: 100%;
+	position: relative;
+}
+
 .garden-composition
 {
-	background-color:#f5f5f5cc;
+	background-color: var(--theme-color);
 	border:2px solid var(--ui-color);
 	border-radius:2px;
-	bottom:25px;
+	left:20px;
+	bottom:20px;
 	display:flex;
 	flex-flow:column;
 	font-size:12px;
 	font-weight:700;
-	grid-column-gap:12px;
-	grid-row-gap:12px;
-	left:30px;
-	padding:12px 20px;
+	grid-column-gap:7px;
+	grid-row-gap:7px;
+	padding:30px 20px 12px;
 	pointer-events:none;
 	position:fixed
+}
+
+.featured-configs {
+    pointer-events: auto;
+    position: fixed;
+    top: 120px;
+    left: 20px;
+}
+
+.ui-list {
+	grid-column-gap: 8px;
+    grid-row-gap: 8px;
+    flex-flow: column;
+    display: flex;
+	padding-left: 0;
+	margin-top: 0;
+	margin-bottom: 0;
+	list-style: none;
+}
+
+.recent-seeds {
+    grid-column-gap: 7px;
+    grid-row-gap: 7px;
+    pointer-events: auto;
+    flex-flow: column;
+    display: flex;
+    position: fixed;
+    top: 120px;
+    right: 20px;
+}
+
+.attunement-list-label {
+    color: var(--theme-color);
+    letter-spacing: 2px;
+    background-color: var(--ui-color);
+    margin-bottom: 7px;
+    padding: 4px 6px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 12px;
+    position: absolute;
+    inset: 0% 0% auto;
+}
+
+.config-list-label {
+    color: var(--theme-color);
+    letter-spacing: 2px;
+    background-color: var(--ui-color);
+    margin-bottom: 7px;
+    padding: 4px 6px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 12px;
+}
+
+.recent-seeds-list-label {
+    color: var(--theme-color);
+    text-align: right;
+    letter-spacing: 2px;
+    background-color: var(--ui-color);
+    padding: 4px 6px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 12px;
+}
+
+.config-item {
+    grid-column-gap: 12px;
+    grid-row-gap: 12px;
+    pointer-events: auto;
+    cursor: pointer;
+    background-color: var(--theme-color);
+    border: 2px solid var(--ui-color);
+    border-radius: 3px;
+    justify-content: flex-start;
+    align-items: center;
+    height: 42px;
+    padding-left: 10px;
+    display: flex;
+	color: var(--ui-color);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 12px;
+	transition: transform 0.25s ease-out 0.05s, opacity 0.25s ease-out 0.05s;
+}
+
+.config-item:hover {
+	transform: translate(3px,0);
+}
+
+.add-config-button {
+    aspect-ratio: 1;
+    opacity: .1;
+    background-image: url("https://cdn.prod.website-files.com/64b75d7…/6700866…_icon-add_black.svg");
+    background-position: 50%;
+    background-repeat: no-repeat;
+    background-size: 35%;
+    border-left: 2px solid var(--ui-color);
+    height: 100%;
+}
+
+.recent-seeds-item {
+    grid-column-gap: 15px;
+    grid-row-gap: 15px;
+    aspect-ratio: 3 / 4;
+    pointer-events: auto;
+    cursor: pointer;
+    background-color: var(--theme-color);
+    border-radius: 5px;
+    flex-flow: column;
+    justify-content: center;
+    align-items: center;
+    max-width: 175px;
+    max-height: 22vh;
+    display: flex;
+    overflow: hidden;
+    box-shadow: 0 1px 4px #00000047;
+	transition: transform 0.25s ease-out 0.1s, opacity 0.25s ease-out 0.1s;
+}
+
+.recent-seeds-item:hover {
+	transform: translate(-3px,0);
 }
 
 #scene-container
@@ -4186,8 +4418,9 @@ body:has(.seed-details.focused) .seed-indicator,body:has(.seed-details.focused) 
 	opacity:1
 }
 
-body:has(.display-settings-wrap.show) .queue-container,body:has(.display-settings-wrap.show) .app-pane.right,body:has(.layer-grid-wrap.show) .app-pane.right,body:has(.layer-grid-wrap.show) .queue-container,body:has(.display-settings-wrap:not(.show)):has(.layer-grid-wrap:not(.show)) .reset-editor
+body:has(.display-settings-wrap.show) .queue-container,body:has(.display-settings-wrap.show) .app-pane.right,body:has(.layer-grid-wrap.show) .app-pane.right,body:has(.layer-grid-wrap.show) .queue-container,body:has(.seed-details.focused):has(.display-settings-wrap.show) .app-pane.right,body:has(.seed-details.focused):has(.layer-grid-wrap.show) .app-pane.right,body:has(.layer-grid-wrap.show) .queue-container,body:has(.seed-details.focused):has(.display-settings-wrap:not(.show)):has(.layer-grid-wrap:not(.show)) .artwork-preview .seed-details,body:has(.display-settings-wrap:not(.show)):has(.layer-grid-wrap:not(.show)) .reset-editor
 {
+  display:none;
 	opacity:0;
 	pointer-events:none;
 	transition:transform 0s,opacity 0s
@@ -4226,8 +4459,12 @@ body:has(.seed-details.focused) .app-pane.right .seed-details
 	padding:0
 }
 
-body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected
+body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected,
+body:has(.seed-details.focused):not(.sleep-mode) .mod-style-picker.selected,
+body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting:active,
+body:has(.seed-details.focused):not(.sleep-mode) .mod-style-picker:active
 {
+  color: var(--ui-color);
 	background-color:var(--theme-color);
 	stroke:var(--ui-color)
 }
@@ -4270,11 +4507,6 @@ body:has(.seed-details.focused):not(.sleep-mode) .mod-sliders
 body.sleep-mode:has(.seed-details.focused) .app-pane,body.sleep-mode:has(.seed-details.focused) .basic-actions,body.sleep-mode:has(.seed-details.focused) .ui-button,body.sleep-mode:has(.seed-details.focused) .app-pane.left,body.sleep-mode:has(.seed-details.focused) .app-pane.right
 {
 	transition:opacity 1s,color 1s,background-color 1s,border-color 1s
-}
-
-body:has(.seed-details.focused) .reset-editor
-{
-	background-image:url(/icons/icon_arrow-right_white.svg)
 }
 
 .queue-item.set .queued-seed-number strong,.queue-item.set:active .queued-seed-number strong,.queued-seed-number.set strong,.queue-item.set:active .queue-reset,li.queue-item.selected:has(.queue-lock.locked):hover .queue-lock:hover,li.queue-item.selected:hover .queue-lock.locked,li.queue-item.selected:hover .queue-lock:hover,li.queue-item.set .queue-lock:hover,li.queue-item.set .queue-lock.locked,li.queue-item.selected.set .queue-lock:hover,li.queue-item.set:hover .queue-reset,li.queue-item.set:hover .queue-reset:hover,.svg-container:hover .play-button,.seed-overlay-container:hover .toggle-details-button,.seed-overlay-container:has(.seed-details.show) .toggle-details-button{
@@ -4393,11 +4625,6 @@ body:has(.seed-details.focused) .basic-actions .ui-button:hover,body:has(.seed-d
 	color:var(--theme-color)
 }
 
-body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting svg .cls-1,body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting svg .cls-2,body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting svg .cls-x,body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting svg .cls-y
-body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected svg .cls-1,body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected svg .cls-2,body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected svg .cls-y
-{
-	stroke:var(--theme-color)
-}
 body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected svg .cls-0
 {
 	fill:var(--ui-color)
@@ -4408,14 +4635,24 @@ body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting svg .cls-0
 	fill:var(--theme-color)
 }
 
-body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting:active svg .cls-1,body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected svg .cls-1,body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected svg .cls-x
+body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting:active svg .cls-1,body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected svg .cls-1,body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected svg .cls-x,body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting:active svg .cls-x
 {
 	stroke:var(--ui-color)
+}
+
+body.sleep-mode:has(.seed-details.focused) .btn-display-setting:not(.selected) svg .cls-0,body.sleep-mode:has(.seed-details.focused) .btn-display-setting:not(.selected) svg .cls-1,body.sleep-mode:has(.seed-details.focused) .btn-display-setting:not(.selected) svg .cls-x,body.sleep-mode:has(.seed-details.focused) .btn-display-setting:not(.selected) svg .cls-y{
+  fill: #0000;
+  stroke: #0000;
 }
 
 body:has(.seed-details.focused):not(.sleep-mode) .attunement-selector,body:has(.seed-details.focused):has(.changed-mod):not(.sleep-mode) .mod-sliders
 {
 	border-color:var(--theme-color)
+}
+
+body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting svg .cls-1,body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting svg .cls-2,body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting svg .cls-x,body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting.selected svg .cls-y
+{
+	stroke:var(--theme-color)
 }
 
 @media screen and (max-width: 991px) {
@@ -4550,19 +4787,23 @@ body:has(.seed-details.focused):not(.sleep-mode) .attunement-selector,body:has(.
 	transition:none
 }
 
-.mod-controls:has(.btn-display-setting:nth-child(3).selected) #icon-red rect.cls-1
+.mod-controls:has(.btn-display-setting:nth-child(3).selected) #icon-red .cls-1.icon-special-color
 {
-	fill:#00ffff3a!important
+	fill:#00ffff3a
 }
 
-.mod-controls:has(.btn-display-setting:nth-child(3).selected) #icon-green rect.cls-1
+.mod-controls:has(.btn-display-setting:nth-child(3).selected) #icon-green .cls-1.icon-special-color
 {
-	fill:#ff00ff3a!important
+	fill:#ff00ff3a
 }
 
-.mod-controls:has(.btn-display-setting:nth-child(3).selected) #icon-blue rect.cls-1
+.mod-controls:has(.btn-display-setting:nth-child(3).selected) #icon-blue .cls-1.icon-special-color
 {
-	fill:#ffff003a!important
+	fill:#ffff003a
+}
+
+body.sleep-mode:has(.seed-details.focused) .btn-display-setting .icon-special-color {
+  fill: #0000 !important;
 }
 
 .reset-attunement,.reset-mod
@@ -4642,13 +4883,13 @@ body:has(.changed-mod) .mod-sliders
 .grabbing .queue-item:hover
 {
 	background-color:#eee1;
-  cursor: grabbing;
+  	cursor: grabbing;
 }
 
 .grabbing .svg-container {
-  transform: scale3d(1.01,1.01,1.01)translate3d(5px,0,3px);
+  transform: scale3d(1.01,1.01,1)translate3d(4px,0,0);
   box-shadow: 0 0 1px 6px rgba(0,0,0,0.1);
-  transition: transform 0.6s 0.15s, box-shadow 0.6s 0.15s;
+  transition: transform 0.6s 0.1s, box-shadow 0.6s 0.1s;
 }
 
 .diagnostic:hover,.ui-button.select.loading .previewloader_previewLoader__zqz_4
@@ -4674,6 +4915,10 @@ body:has(.changed-mod) .mod-sliders
 	}
 }
 
+.garden-composition a {
+  pointer-events: auto;
+}
+
 .list
 {
 	display:grid;
@@ -4681,7 +4926,7 @@ body:has(.changed-mod) .mod-sliders
 	grid-auto-columns:1fr;
 	grid-column-gap:40px;
 	grid-row-gap:4px;
-	grid-template:. . / 1fr 1fr;
+	grid-template: "." "." / 1fr 1fr;
 	list-style-type:none;
 	margin-bottom:0;
 	margin-top:0;

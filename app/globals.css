@@ -101,6 +101,11 @@ p *,
   pointer-events: auto;
 }
 
+div[data-radix-popper-content-wrapper] {
+  z-index: 10!important;
+}
+
+
 .seed {
   outline: none;
   text-overflow: ellipsis;
