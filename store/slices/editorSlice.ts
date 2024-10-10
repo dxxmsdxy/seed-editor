@@ -87,7 +87,12 @@ const editorSlice = createSlice({
   name: 'editor',
   initialState,
   reducers: {
-    updateEditorState: (state, action: PayloadAction<{ seed?: string; mod?: string; attunement?: string; isAttunementOverridden?: boolean }>) => {
+    updateEditorState: (state, action: PayloadAction<{
+      seed?: string;
+      mod?: string;
+      attunement?: string;
+      isAttunementOverridden?: boolean
+    }>) => {
       const { seed, mod, attunement, isAttunementOverridden } = action.payload;
       if (seed !== undefined) {
         state.editorSeed = sanitizeSeed(seed);
@@ -186,6 +191,9 @@ const editorSlice = createSlice({
     resetAttunementOverride: (state) => {
       state.isAttunementOverridden = false;
       state.editorAttunement = calculateMostFrequentNumeral(BigInt(state.editorSeed))?.toString() ?? "0";
+      pushToHistory(state);
+    },
+    pushCurrentStateToHistory: (state) => {
       pushToHistory(state);
     },
     undo: (state) => {
@@ -410,18 +418,23 @@ export const selectHasEditorChanges = createSelector(
     const itemAttunement = selectedItem.newValues?.newAttunement?.toString() || selectedItem.initialAttunement?.toString() || calculateMostFrequentNumeral(BigInt(selectedItem.initialSeed))?.toString() || "0";
     const itemIsAttunementOverridden = selectedItem.newValues?.isAttunementOverridden ?? selectedItem.isAttunementOverridden ?? false;
 
-    const hasChanges = (
+    const hasContentChanges = 
       editorSeed !== itemSeed ||
       editorMod !== itemMod ||
-      editorAttunement !== itemAttunement ||
-      isAttunementOverridden !== itemIsAttunementOverridden
-    );
+      editorAttunement !== itemAttunement;
+
+    const hasAttunementOverrideChange = 
+      hasContentChanges && isAttunementOverridden !== itemIsAttunementOverridden;
+
+    const hasChanges = hasContentChanges || hasAttunementOverrideChange;
 
     console.log('Has editor changes:', hasChanges, {
       editorSeed, itemSeed,
       editorMod, itemMod,
       editorAttunement, itemAttunement,
-      isAttunementOverridden, itemIsAttunementOverridden
+      isAttunementOverridden, itemIsAttunementOverridden,
+      hasContentChanges,
+      hasAttunementOverrideChange
     });
 
     return hasChanges;
@@ -482,6 +495,7 @@ export const {
   setUrlParams,
   setSpinAnimationPaused,
   setDepthAnimationPaused,
+  pushCurrentStateToHistory,
 } = editorSlice.actions;
 
 export default editorSlice.reducer;

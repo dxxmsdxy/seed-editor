@@ -215,9 +215,6 @@
 }
 /*@container(max-height:720px){.seedartwork.reveal:has(g.on) .art g.on .fx *{animation:none;filter:blur(0.3px)}}*/
 @container (min-aspect-ratio:13.4/18) {
-  .seedartwork {
-    background: transparent;
-  }
   .seedartwork .wrap {
     transform: translate3d(0, 0, 0);
   }
@@ -1750,7 +1747,7 @@
 }
 .seedartwork.depth:has(g.on):not(.reveal) .art g.on,
 .seedartwork.depth:has(g.on):not(.reveal) #ornate-frame {
-  filter: drop-shadow(0px 4px 15px rgb(0 0 0/0.5));
+  filter: drop-shadow(0px 4px 15px rgb(0 0 0/0.15));
 }
 .seedartwork.depth.reveal:has(g.on) .outline,
 .seedartwork.depth.reveal:has(g.on) text {
@@ -1936,7 +1933,6 @@ html,
 body {
   color: #ffffff00;
 }
-.seedartwork.cmyk,
 .seedartwork {
   background: #f7f7f7;
 }
@@ -1951,7 +1947,7 @@ body {
 .seedartwork.cmyk text {
   fill: #000000;
 }
-.seedartwork.cmyk:has(g.on) {
+.seedartwork.cmyk:not(.reveal):has(g.on) {
   background: #f7f7f7;
   animation-duration: 18s;
 }
@@ -2489,6 +2485,12 @@ body {
   mix-blend-mode: soft-light;
   fill-opacity: 0.5;
 }
+
+.seedartwork.cmyk.hyper:not(.reveal):has(g.on) g.on,
+.seedartwork.cmyk.hyper:not(.reveal):has(g.on) g.on .fx {
+  filter: none;
+}
+
 .seedartwork.cmyk.hyper.reveal:has(g.on) g.on:nth-last-of-type(2) {
   mix-blend-mode: darken;
 }

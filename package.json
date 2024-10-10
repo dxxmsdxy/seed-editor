@@ -29,6 +29,7 @@
     "lucide-react": "^0.302.0",
     "next": "^14.0.4",
     "next-redux-wrapper": "^8.1.0",
+    "next-view-transitions": "^0.3.2",
     "react": "^18",
     "react-dom": "^18",
     "react-redux": "^9.1.2",

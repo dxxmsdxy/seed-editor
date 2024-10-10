@@ -54,6 +54,33 @@ const walletSlice = createSlice({
 
 // UTILITY FUNCTIONS -------------------------------
 
+// Fetch seedList data
+const fetchSeedList = async () => {
+  const response = await fetch('/seedList.json');
+  if (!response.ok) {
+    throw new Error('Failed to fetch seed list data');
+  }
+  return await response.json();
+};
+
+// Merge wallet data with seedList data
+const mergeWalletDataWithSeedList = (walletData: any[], seedList: any[]) => {
+  const seedMap = new Map(seedList.map((item, index) => [item.id, { ...item, mintOrder: index }]));
+  
+  return walletData.map(item => {
+    const seedItem = seedMap.get(item.id);
+    if (seedItem) {
+      return {
+        ...item,
+        kind: seedItem.kind,
+        sat: seedItem.sat,
+        mintOrder: seedItem.mintOrder
+      };
+    }
+    return item;
+  });
+};
+
 // Transform wallet data
 const transformWalletData = (data: any[]): QueueItem[] => {
   return data.map((item: any) => ({
@@ -68,7 +95,9 @@ const transformWalletData = (data: any[]): QueueItem[] => {
       newMod: null,
       newAttunement: null,
     },
-    kind: item.kind || undefined,
+    kind: item.kind,
+    sat: item.sat,
+    mintOrder: item.mintOrder,
   }));
 };
 
@@ -77,14 +106,21 @@ export const connectWalletAndLoadData = createAsyncThunk(
   'wallet/connectAndLoadData',
   async (_, { dispatch }) => {
     try {
-      const response = await fetch('/simulatedWalletData.json');
-      if (!response.ok) {
-        throw new Error('Failed to fetch simulated wallet data');
-      }
-      const data = await response.json();
-      console.log('Fetched data:', data);
+      const [walletData, seedList] = await Promise.all([
+        fetch('/simulatedWalletData.json').then(response => {
+          if (!response.ok) throw new Error('Failed to fetch simulated wallet data');
+          return response.json();
+        }),
+        fetchSeedList()
+      ]);
+
+      console.log('Fetched wallet data:', walletData);
+      console.log('Fetched seed list:', seedList);
       
-      const transformedData = transformWalletData(data);
+      const mergedData = mergeWalletDataWithSeedList(walletData, seedList);
+      console.log('Merged data:', mergedData);
+
+      const transformedData = transformWalletData(mergedData);
       await dispatch(initializeQueue(transformedData));
       await dispatch(updateQueueOrder());
       

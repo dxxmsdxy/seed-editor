@@ -2,6 +2,7 @@ import { ReduxProvider } from '../context/ReduxProvider';
 import type { Metadata } from "next";
 import Script from "next/script";
 import { SeedProvider, ArtworkProvider } from "@/context";
+import { ViewTransitions } from 'next-view-transitions'
 import { Navbar } from "@/components/Navbar";
 
 import { Inconsolata } from "next/font/google";
@@ -41,39 +42,41 @@ export default function RootLayout({
   //   strategy="beforeInteractive"
   // ></script>
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <ViewTransitions>
+      <html lang="en">
+        <head>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
 
-        <Script src="https://seeds.mintapi.bestinslot.xyz/static/combined_dependencies.js"></Script>
-        <Script src="https://seeds.mintapi.bestinslot.xyz/static/mint_api.min.js"></Script>
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          // crossOrigin="true"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          rel="stylesheet"
-          href="https://seeds.mintapi.bestinslot.xyz/static/connect_wallet.css"
-        />
-        {/*
-         */}
-      </head>
-      <ReduxProvider>
-        <SeedProvider>
-          <ArtworkProvider>
-            <body className={`body ${inconsolata.className}`}>
-              <div className="theme-bkg"></div>
-              <Navbar />
-              {children}
-            </body>
-          </ArtworkProvider>
-        </SeedProvider>
-      </ReduxProvider>
-    </html>
+          <Script src="https://seeds.mintapi.bestinslot.xyz/static/combined_dependencies.js"></Script>
+          <Script src="https://seeds.mintapi.bestinslot.xyz/static/mint_api.min.js"></Script>
+          <link
+            rel="preconnect"
+            href="https://fonts.gstatic.com"
+            // crossOrigin="true"
+          />
+          <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap"
+            rel="stylesheet"
+          />
+          <link
+            rel="stylesheet"
+            href="https://seeds.mintapi.bestinslot.xyz/static/connect_wallet.css"
+          />
+          {/*
+          */}
+        </head>
+        <ReduxProvider>
+          <SeedProvider>
+            <ArtworkProvider>
+              <body className={`body ${inconsolata.className}`}>
+                <div className="theme-bkg"></div>
+                <Navbar />
+                {children}
+              </body>
+            </ArtworkProvider>
+          </SeedProvider>
+        </ReduxProvider>
+      </html>
+    </ViewTransitions>
   );
 }

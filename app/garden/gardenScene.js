@@ -55,7 +55,7 @@ export function init(container, setLabel) {
   let points = getSpiralPoints();
 
   let spiralPath = new THREE.CatmullRomCurve3(points);
-  let spiralGeometry = new THREE.TubeGeometry(spiralPath, 10000, 0.5, 8, false);
+  let spiralGeometry = new THREE.TubeGeometry(spiralPath, 9999, 0.5, 8, false);
   let spiralMaterial = new THREE.MeshBasicMaterial({ color: 0x111111, side: THREE.DoubleSide });
   spiral = new THREE.Mesh(spiralGeometry, spiralMaterial);
   scene.add(spiral);
@@ -122,9 +122,9 @@ export function onMouseMove(event, container, setLabel, setLabelPosition) {
 function getSpiralPoints() {
   let points = [];
   let t = 2 * Math.PI;
-  for (let n = 0; n <= 10000; n++) {
+  for (let n = 0; n <= 9999; n++) {
     let exponent = 0.9;
-    let normalizedN = n / 10000;
+    let normalizedN = n / 9999;
     let i = Math.sqrt(80 * t) * Math.pow(normalizedN, exponent);
     let o = 50 * Math.sqrt((i * i) / 80);
     let r = (i * i) / 2;
@@ -147,7 +147,7 @@ function getCumulativeDistances(points) {
 }
 
 function getPositionForItemNumber(points, distances, itemNumber) {
-  let normalized = Math.pow(itemNumber / 10000, 1.5) * distances[distances.length - 1];
+  let normalized = Math.pow(itemNumber / 9999, 1.5) * distances[distances.length - 1];
   for (let o = 1; o < distances.length; o++) {
     if (distances[o] >= normalized) {
       let r = points[o - 1];

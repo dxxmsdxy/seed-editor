@@ -21,6 +21,19 @@ const getAttunementString = (attunement: number): string => {
   return `(${attunements[attunement]}) ${attunement}`;
 };
 
+const getKindClass = (kind: string): string => {
+  switch (kind.toLowerCase()) {
+    case 'archetype':
+      return 'kind-archetype';
+    case 'fossil':
+      return 'kind-fossil';
+    case 'doomsday':
+      return 'kind-doomsday';
+    default:
+      return '';
+  }
+};
+
 const Details: React.FC<DetailsProps> = ({
   isFocused,
   showOverlay,
@@ -36,16 +49,24 @@ const Details: React.FC<DetailsProps> = ({
 
   const seedState = editorMod === "000000000000" && editorAttunement == naturalAttunement ? "Natural" : "Modified";
 
-  // Get the selected queue item and its kind
-  const selectedIndex = useAppSelector(state => state.queue.selectedIndex);
-  const queueItems = useAppSelector(state => state.queue.items);
-  const selectedItem = selectedIndex !== null ? queueItems[selectedIndex] : null;
-  const selectedKind = selectedItem ? selectedItem.kind : "--";
- 
-  // Get the mint order
-  const mintOrder = selectedItem ? getMintOrder(selectedItem.id) : null;
-  const mintOrderDisplay = mintOrder !== null ? mintOrder.toString() : "--";
+  // Get the selected queue item and its properties
+  const selectedItem = useAppSelector(state => {
+    const selectedIndex = state.queue.selectedIndex;
+    return selectedIndex !== null ? state.queue.items[selectedIndex] : null;
+  });
 
+  // Handle cases where the item might not have seedList data
+  // Determine the kind based on the selected item
+  let selectedKind = "--";
+  if (selectedItem) {
+    selectedKind = selectedItem.kind || "Wild";
+  }
+
+  const mintOrder = selectedItem?.mintOrder ?? null;
+  const mintOrderDisplay = mintOrder !== null ? (mintOrder + 1).toString() : "--";
+
+  // Determine if the item is from the seedList
+  const isFromSeedList = selectedItem?.id !== undefined && selectedItem?.kind !== undefined;
 
   return (
     <div className={`seed-details ${isFocused ? 'focused' : ''} ${showOverlay ? 'show' : ''}`}>
@@ -70,7 +91,18 @@ const Details: React.FC<DetailsProps> = ({
             <ul className="metadata-list">
               <li className="metadata-item">
                 <span className="metadata-label">Kind:</span>
-                <span className="metadata-value">{selectedKind}</span>
+                <span className={`metadata-value ${getKindClass(selectedKind)}`}>
+                  <span className="metadata-icon">
+                    <svg className="icon_triangle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 94.72 94.72"><path d="M47.36 14.53 9.45 80.19h75.82L47.36 14.53z"/></svg>
+                  </span>
+                  <span className="metadata-icon">
+                    <svg className="icon_circle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 94.72 94.72"><circle cx="47.36" cy="47.79" r="33.71"/></svg>
+                  </span>
+                  <span className="metadata-icon">
+                    <svg className="icon_square" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 94.72 94.72"><path d="M15.57 16h63.58v63.58H15.57z"/></svg>
+                  </span>
+                  {selectedKind}
+                </span>
               </li>
               <li className="metadata-item">
                 <span className="metadata-label">State:</span>

@@ -175,7 +175,7 @@ function applyDepthMod(elements: Element[], depthModValue: number): void {
 
 
 function applyDropShadowFilter(svg: SVGSVGElement, depthModValue: number) {
-  const minShadow = { x: 0, y: 0, blur: 1, alpha: 0.01 };
+  const minShadow = { x: 0, y: 0, blur: 1, alpha: 0.25 };
   const maxShadow = { x: 0, y: 4, blur: 999, alpha: 1 };
 
   const elements = svg.querySelectorAll('g.on .fx');

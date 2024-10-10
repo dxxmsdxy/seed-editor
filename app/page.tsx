@@ -1,5 +1,6 @@
 "use client";
 import React, { useRef, useCallback, useEffect, useState, useMemo } from "react";
+import TransitionLink from '@/components/TransitionLink';
 import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { createPortal } from 'react-dom';
@@ -120,17 +121,13 @@ const Home: React.FC = () => {
 
   // Reset the editor seed number
   const handleResetEditorSeed = useCallback(() => {
-    
-      dispatch(resetEditorState());
-    
+    dispatch(resetEditorState());
   }, [dispatch]);
 
   // Randomize the editor seed number
   const handleRandomizeBits = useCallback(() => {
-   
       const { bitArray, newSeed } = randomizeBits();
       dispatch(updateEditorState({ seed: newSeed }));
-    
   }, [dispatch]);
 
   // Toggle the editor UI sections
@@ -239,6 +236,7 @@ const Home: React.FC = () => {
   useEffect(() => {
     if (walletConnected) {
       dispatch(connectWalletAndLoadData());
+      dispatch(setUIVisibility('none'));
     }
   }, [walletConnected, dispatch]);
 
@@ -625,7 +623,7 @@ const Home: React.FC = () => {
           <>
             <div className="app-pane left">
               <div className="editor-controls">
-                <div style={{ opacity: 1 }} className="basic-actions">
+                <div className="basic-actions">
                   <a
                     className={`ui-button randomize z-button}`}
                     onClick={handleRandomizeBits}
@@ -774,14 +772,13 @@ const Home: React.FC = () => {
           </div>
         </div>
       </div>
-      <div
-        className="garden-button ui-element"
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-      >
-        <svg data-name="icon-spiral" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 105.96 105.96"><path className="cls-1" d="M83.35 92.75c22.48-19.86 22.39-52.41 3.25-71.55-18.49-18.49-47.33-19.81-66.85-.29-17.77 17.77-17.77 45.21-.76 62.22 16.17 16.17 41.7 16.85 57.87.68 15.25-15.25 15.19-39.05.48-53.76s-34.67-14.77-49.44 0c-12.18 12.18-12.18 32.9 0 45.08 12.1 12.1 29.54 10.61 40.63-.48a25.84 25.84 0 0 0 0-36.54c-9.18-9.18-23.73-8.84-32.91.34-8.35 8.35-8.21 21.08.14 29.44 7.36 7.36 18.64 7.17 25.96-.16a15.83 15.83 0 0 0 .03-22.36c-4.83-4.83-13.69-4.51-18.43.23s-4.81 10.98-.72 15.07c3.28 3.28 8.51 3.75 12.28-.02a6.05 6.05 0 0 0 .7-8.2c-1.34-1.57-4.07-2.11-5.76-.44"/></svg>
-      </div>
+      <TransitionLink href='/garden' className="garden-button ui-element">
+        <div onClick={(e) => e.stopPropagation()}>
+          <svg data-name="icon-spiral" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 105.96 105.96">
+            <path className="cls-1" d="M83.35 92.75c22.48-19.86 22.39-52.41 3.25-71.55-18.49-18.49-47.33-19.81-66.85-.29-17.77 17.77-17.77 45.21-.76 62.22 16.17 16.17 41.7 16.85 57.87.68 15.25-15.25 15.19-39.05.48-53.76s-34.67-14.77-49.44 0c-12.18 12.18-12.18 32.9 0 45.08 12.1 12.1 29.54 10.61 40.63-.48a25.84 25.84 0 0 0 0-36.54c-9.18-9.18-23.73-8.84-32.91.34-8.35 8.35-8.21 21.08.14 29.44 7.36 7.36 18.64 7.17 25.96-.16a15.83 15.83 0 0 0 .03-22.36c-4.83-4.83-13.69-4.51-18.43.23s-4.81 10.98-.72 15.07c3.28 3.28 8.51 3.75 12.28-.02a6.05 6.05 0 0 0 .7-8.2c-1.34-1.57-4.07-2.11-5.76-.44"/>
+          </svg>
+        </div>
+      </TransitionLink>
       <InscribeModal show={showInscribeModal} queueItems={getSetQueueItems} />
     </>
   );

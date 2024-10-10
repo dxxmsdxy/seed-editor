@@ -17,7 +17,7 @@ import {
 } from '@/store/slices/queueSlice';
 import { setShowInscribeModal } from '@/store/slices/modalSlice';
 import { selectElementContents, clearSelection } from '@/lib/utils/global';
-import { updateEditorState, resetEditorState, selectEditorSeed, selectEditorMod, selectEditorAttunement } from '@/store/slices/editorSlice';
+import { updateEditorState, resetEditorState, selectEditorSeed, selectEditorMod, selectEditorAttunement, pushCurrentStateToHistory } from '@/store/slices/editorSlice';
 
 
 
@@ -28,6 +28,23 @@ import { updateEditorState, resetEditorState, selectEditorSeed, selectEditorMod,
 interface QueueProps {
   isDropping: boolean;
 }
+
+const getKindClass = (kind: string): string => {
+  switch (kind?.toLowerCase()) {
+    case 'archetype':
+      return 'kind-archetype';
+    case 'fossil':
+      return 'kind-fossil';
+    case 'doomsday':
+      return 'kind-doomsday';
+    case 'wild':
+    case undefined:
+    case null:
+      return 'kind-wild';
+    default:
+      return '';
+  }
+};
 
 
 // COMPONENT ---------------------------------------
@@ -78,6 +95,7 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
       dispatch(setSelectedIndex(null));
       dispatch(resetEditorState());
     } else {
+      dispatch(pushCurrentStateToHistory());
       dispatch(setSelectedIndex(index));
       const selectedItem = queueItems[index];
       if (selectedItem) {
@@ -205,11 +223,20 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
             <React.Fragment key={item.id}>
               {index === dividerIndex && <span className="queue-divider"></span>}
               <li
-                className={`queue-item ${item.index === selectedQueueIndex ? "selected" : ""} ${item.isSet ? 'set' : ''}`}
+                className={`queue-item ${item.index === selectedQueueIndex ? "selected" : ""} ${item.isSet ? 'set' : ''} ${getKindClass(item.kind)}`}
                 onClick={() => handleQueueItemSelect(item.index)}
                 data-index={item.index}
                 data-dropping={isDropping}
               >
+                <span className="metadata-icon">
+                  <svg className="icon_triangle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 94.72 94.72"><path d="M47.36 14.53 9.45 80.19h75.82L47.36 14.53z"/></svg>
+                </span>
+                <span className="metadata-icon">
+                  <svg className="icon_circle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 94.72 94.72"><circle cx="47.36" cy="47.79" r="33.71"/></svg>
+                </span>
+                <span className="metadata-icon">
+                  <svg className="icon_square" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 94.72 94.72"><path d="M15.57 16h63.58v63.58H15.57z"/></svg>
+                </span>
                 <div className={`queued-seed-number`}>
                   <span className="queue-item-style-preview"></span>
                   <strong>{item.displaySeed}</strong>
@@ -217,6 +244,9 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
                     className="queue-reset"
                     onClick={(e) => handleQueueItemReset(e, item.index)}
                   ></span>
+                </div>
+                <div className="tooltip">
+                  {item.kind || 'Unknown'}
                 </div>
               </li>
             </React.Fragment>

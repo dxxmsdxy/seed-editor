@@ -136,14 +136,14 @@ const ArtTransformer: React.FC<ArtTransformerProps> = ({
     // EFFECTS ----------------------------------------
 
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (svgRef.current) {
             updateArtwork();
             updateAttunement();
         }
     }, [svgRef, editorSeed, editorAttunement, isAttunementOverridden, isSpinAnimationPaused]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (svgRef.current) {
             resetLayersCallback();
             updateArtwork();

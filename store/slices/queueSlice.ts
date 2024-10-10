@@ -23,6 +23,8 @@ export interface QueueItem {
     isAttunementOverridden: boolean | null;
   };
   kind?: string;
+  sat?: number;
+  mintOrder?: number;
 }
 
 // Queue state
