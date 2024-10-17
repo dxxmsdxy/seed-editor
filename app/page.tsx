@@ -730,7 +730,7 @@ const Home: React.FC = () => {
             <div className={`app-pane right $ ${
                 uiVisibility === 'layers' || 'displaySettings' ? "deactivated" : ""
             }`}>
-              <Queue/>
+              <Queue isDropping={false}/>
               <Details
                 isFocused={isArtworkFocused}
                 showOverlay={isOverlayToggled}
