@@ -5532,7 +5532,6 @@ body:has(.changed-mod) .mod-sliders
 
 	.ui-button.randomize
 	{
-		font-size:21px;
 		padding-bottom:13px;
 		padding-top:13px
 	}
@@ -5545,7 +5544,6 @@ body:has(.changed-mod) .mod-sliders
 
 	.ui-button.advanced.shrink
 	{
-		font-size:21px;
 		padding:13px 18px
 	}
 
@@ -5617,16 +5615,15 @@ body:has(.changed-mod) .mod-sliders
 		max-width:none
 	}
 
-	.seed.seed-input
+	.seed-input
 	{
 		padding-left:10px;
-		padding-right:10px
+		padding-right:10px;
 	}
 
 	.seed-indicator
 	{
-		display:none;
-		top:0
+		top: 0;
 	}
 
 	.seed-indicator.mobile
@@ -5742,9 +5739,15 @@ body:has(.changed-mod) .mod-sliders
 		padding-top:15px;
 		text-align:center
 	}
-  .dropdown-link.social:nth-of-type(2) {
-    border-left: none;
-  }
+	
+	.dropdown-link.social:nth-of-type(2) {
+		border-left: none;
+	}
+
+	.svg-aspect-ratio
+	{
+		min-height:65vh
+	}
 
 	.svg-image-container
 	{
@@ -5867,7 +5870,7 @@ body:has(.changed-mod) .mod-sliders
 		flex-direction:column;
 		justify-content:space-between;
 		padding-bottom:10px;
-		padding-top:90px
+		padding-top: 13vh;
 	}
 
 	.app-pane.right
@@ -6017,10 +6020,10 @@ body:has(.changed-mod) .mod-sliders
 
 	.ui-button.randomize,.ui-button.advanced.shrink
 	{
-		font-size:19px;
-		padding-bottom:10px;
-		padding-top:10px;
-		position:relative
+		font-size: 15px;
+		padding-bottom: 10px;
+		padding-top: 10px;
+		position: relative;
 	}
 
 	.collection-name
@@ -6111,10 +6114,11 @@ body:has(.changed-mod) .mod-sliders
 		padding-left: 20px;
 	}
 
-	.seed.seed-input
+	.seed-input
 	{
-		max-width:90%;
-		width:100%
+		max-width: 90%;
+		width: 100%;
+		font-size: 16px;
 	}
 
 	.seed-indicator.mobile
