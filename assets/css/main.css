@@ -2727,6 +2727,7 @@ input::-moz-focus-inner,input::-moz-focus-outer
   transition: opacity 0.3s, border-color 0.3s, background-color 0.3s;
   opacity: 0;
   pointer-events: none;
+  display: none;
 }
 
 body:has(.display-settings-wrap:not(.show)):has(.layer-grid-wrap:not(.show)) .garden-button,body:has(#garden) .garden-button

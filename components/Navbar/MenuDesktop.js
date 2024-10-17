@@ -91,17 +91,6 @@ export const MenuDesktop = ({ dropdownOpen, setDropdownOpen }) => {
           >
             Collection
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={(e) => {
-              router.push("/garden");
-              document.querySelector('.theme-bkg').style.background = "#f5f5f5";
-            }}
-            className={`uppercase font-bold rounded-none ${
-              pathname === "/garden" ? "z--current" : ""
-            }`}
-          >
-            Garden Map
-          </DropdownMenuItem>
           <a
               href="https://docs.seed.gallery/"
               className="dropdown-link z-dropdown-link"
