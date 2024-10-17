@@ -4159,7 +4159,9 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover
 .editor .artwork-preview #seedsArtwork
 {
 	border-radius:6px;
-	overflow:hidden
+	overflow:hidden;
+	aspect-ratio: 3 / 4;
+    width: auto;
 }
 
 .seed-details
@@ -5972,7 +5974,7 @@ body:has(.changed-mod) .mod-sliders
 		justify-content:center;
 		margin-left:0;
 		margin-right:0;
-		margin-top:20px;
+		margin-top:0px;
 		order:1;
 		width:auto
 	}
@@ -6481,14 +6483,9 @@ body:has(.changed-mod) .mod-sliders
 	.artwork-preview.successful
 	{
 		justify-content:center;
-		justify-content:center;
-		margin-bottom:10px;
 		margin-bottom:10px;
 		margin-top:0;
-		margin-top:0;
 		max-height:52vh;
-		max-height:52vh;
-		width:58vw;
 		width:58vw
 	}
 
