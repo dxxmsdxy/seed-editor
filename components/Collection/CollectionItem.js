@@ -3,7 +3,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import Image from "next/image";
 import PreviewGenerator from "@/components/Artwork/PreviewGenerator";
 import CollectionItemModal from "./CollectionItemModal";
-import { getArtworkPlaceholderDataURL } from "@/lib/utils/artwork/helpers";
+import { getArtworkPlaceholderDataURL } from "@/lib/utils/global";
 
 const CollectionItem = ({ seed, index }) => {
   const displaySvg = false;

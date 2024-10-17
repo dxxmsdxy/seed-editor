@@ -1,7 +1,7 @@
 import Image from "next/image";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useState } from "react";
-import { getArtworkPlaceholderDataURL } from "@/lib/utils/artwork/helpers";
+import { getArtworkPlaceholderDataURL } from "@/lib/utils/global";
 
 const CollectionItemModal = ({ seed }) => {
   const [isCheckingStatus, setIsChecking] = useState(false);
