@@ -40,7 +40,7 @@ export default function Garden() {
   }, []);
 
   const handleItemNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setItemNumber(parseInt(e.target.value));
+    setItemNumber(parseInt(e.target.value) as unknown as null);
   };
 
   const handleUpdateVisualization = () => {
@@ -174,25 +174,25 @@ export default function Garden() {
             </div>
             <ul role="list" className="ui-list disable-scrollbars">
               <li>
-                <div className="recent-seeds-item"><Image src="/seeds/seed999.png" alt="seed-1" loading="lazy"/></div>
+                <div className="recent-seeds-item"><Image fill sizes="100vw" style={{ objectFit: 'contain' }} src="/seeds/seed999.png" alt="seed-1" loading="lazy"/></div>
               </li>
               <li>
-                <div className="recent-seeds-item"><Image src="/seeds/seed7615014902.png" alt="seed-1" loading="lazy"/></div>
+                <div className="recent-seeds-item"><Image fill sizes="100vw" style={{ objectFit: 'contain' }} src="/seeds/seed7615014902.png" alt="seed-1" loading="lazy"/></div>
               </li>
               <li>
-                <div className="recent-seeds-item"><Image src="/seeds/seed2203320320000.png" alt="seed-1" loading="lazy"/></div>
+                <div className="recent-seeds-item"><Image fill sizes="100vw" style={{ objectFit: 'contain' }} src="/seeds/seed2203320320000.png" alt="seed-1" loading="lazy"/></div>
               </li>
               <li>
-                <div className="recent-seeds-item"><Image src="/seeds/seed1239187122883187151293600392.png" alt="seed-1" loading="lazy"/></div>
+                <div className="recent-seeds-item"><Image fill sizes="100vw" style={{ objectFit: 'contain' }} src="/seeds/seed1239187122883187151293600392.png" alt="seed-1" loading="lazy"/></div>
               </li>
               <li>
-                <div className="recent-seeds-item"><Image src="/seeds/seed85418030059554038646478733380.png" alt="seed-1" loading="lazy"/></div>
+                <div className="recent-seeds-item"><Image fill sizes="100vw" style={{ objectFit: 'contain' }} src="/seeds/seed85418030059554038646478733380.png" alt="seed-1" loading="lazy"/></div>
               </li>
               <li>
-                <div className="recent-seeds-item"><Image src="/seeds/seed99035203142830599563062018304.png" alt="seed-1" loading="lazy"/></div>
+                <div className="recent-seeds-item"><Image fill sizes="100vw" style={{ objectFit: 'contain' }} src="/seeds/seed99035203142830599563062018304.png" alt="seed-1" loading="lazy"/></div>
               </li>
               <li>
-                <div className="recent-seeds-item"><Image src="/seeds/seed973175613425012973423561801761.png" alt="seed-1" loading="lazy"/></div>
+                <div className="recent-seeds-item"><Image fill sizes="100vw" style={{ objectFit: 'contain' }} src="/seeds/seed973175613425012973423561801761.png" alt="seed-1" loading="lazy"/></div>
               </li>
               <a href="https://docs.seed.gallery/the-garden" target="_blank" className="ui-button small w-button">more</a>
             </ul>
