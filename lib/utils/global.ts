@@ -61,9 +61,9 @@ export const bitsToSeed = (bitsArray: number[]) => {
 };
 
 // Seed number to bits
-export function seedToBits(seed: bigint): boolean[] {
+export const seedToBits = memoize((seed: bigint): boolean[] => {
   return seed.toString(2).padStart(100, '0').split('').reverse().map(bit => bit === '1');
-}
+});
 
 // Generate a random number
 export const getRandomNumber = (min: number, max: number) => {

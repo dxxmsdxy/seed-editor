@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useEffect, useRef, useCallback } from 'react';
+import React, { useLayoutEffect, useEffect, useMemo, useCallback } from 'react';
 import { useAppSelector } from '@/app/hooks';
 import { updateSVGWithSeed } from "@/lib/utils/artwork/updateSVGWithSeed";
 import { applyModValueToElements, resetLayers, flipLayers } from '@/lib/utils/artwork/updateSVGWithMod';
@@ -60,6 +60,15 @@ const ArtTransformer: React.FC<ArtTransformerProps> = ({
         }
     }, [svgRef, memoizedApplyModValueToElements, modValues]);
 
+    const artworkState = useMemo(() => ({
+        editorSeed,
+        modValues,
+        editorMod,
+        editorAttunement,
+        isSpinAnimationPaused
+    }), [editorSeed, modValues, editorMod, editorAttunement, isSpinAnimationPaused]);
+      
+
     // Update the artwork with editor state
     const updateArtwork = useCallback(() => {
         if (!svgRef.current) return;
@@ -112,7 +121,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = ({
                 }
             }
         });
-    }, [editorSeed, modValues, editorMod, editorAttunement, isSpinAnimationPaused]);
+    }, [artworkState]);
 
     // Update the artwork attunement with editor state
     const updateAttunement = useCallback(() => {
