@@ -53,7 +53,7 @@ const Home: React.FC = () => {
     setIsArtworkReady(true);
   }, []);
   // Generate the seed's name
-  const generatedName = useMemo(() => generateName(Number(editorSeed)), [editorSeed, modValues, handleArtworkReady]);
+  const generatedName = useMemo(() => generateName(Number(editorSeed)), [editorSeed]);
 
 
   // REFS -------------------------------------------
