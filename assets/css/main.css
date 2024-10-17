@@ -3977,6 +3977,7 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover
 }
 
 .recent-seeds-item {
+	position: relative;
     grid-column-gap: 15px;
     grid-row-gap: 15px;
     aspect-ratio: 3 / 4;
@@ -3989,7 +3990,7 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover
     align-items: center;
     max-width: 175px;
     max-height: 22vh;
-	width: 175px;
+	width: 100%;
     display: flex;
     overflow: hidden;
     box-shadow: 0 1px 4px #00000047;

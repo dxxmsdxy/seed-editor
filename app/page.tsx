@@ -312,16 +312,8 @@ const Home: React.FC = () => {
       const artworkContainer = document.querySelector('.svg-container');
       const gardenButton = document.querySelector('.garden-button');
       
-      if (
-        editorWrapper && 
-        navbar && 
-        !editorWrapper.contains(event.target as Node) && !gardenButton.contains(event.target as Node) && 
-        !navbar.contains(event.target as Node) && 
-        (!inscribeModal || !inscribeModal.contains(event.target as Node)) && 
-        (!artworkContainer || !artworkContainer.contains(event.target as Node)) &&
-        event.target !== editorWrapper &&
-        !isArtworkFocused
-      ) {
+      if (editorWrapper && navbar && (!editorWrapper.contains(event.target as Node)) && (!gardenButton || !gardenButton.contains(event.target as Node)) && !navbar.contains(event.target as Node) && (!inscribeModal || !inscribeModal.contains(event.target as Node)) && (!artworkContainer || !artworkContainer.contains(event.target as Node)) && event.target !== editorWrapper && !isArtworkFocused) 
+      {
         dispatch(setSelectedIndex(null));
         dispatch(resetEditorState());
         setIsOverlayToggled(false);
