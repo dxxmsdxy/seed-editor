@@ -20,6 +20,7 @@ interface ArtworkProps {
 }
 
 const Artwork = forwardRef<{ updateArtwork: () => void }, ArtworkProps>((props, ref) => {
+  Artwork.displayName = 'Artwork';
   const svgRef = useRef<SVGSVGElement>(null);
   const updateArtworkRef = useRef<(() => void) | undefined>(undefined);
   const currentDate = new Date();
