@@ -1267,13 +1267,13 @@ body:not(.sleep-mode):has(.seed-details.focused) .mod-button span
 .ui-button.disabled
 {
 	opacity:.1;
-  pointer-events:none;
+	pointer-events:none;
 }
 
 .ui-button.inscribe.disabled
 {
 	border-radius:2px;
-  pointer-events:none;
+	pointer-events:none;
 }
 
 .modal .svg-aspect-ratio {
@@ -5173,13 +5173,6 @@ body:has(.changed-mod) .mod-sliders
 	#seedsArtwork
 	{
 		pointer-events:auto
-	}
-
-	.ui-button
-	{
-		font-size:19px;
-		padding-bottom:12px;
-		padding-top:12px
 	}
 
 	.ui-button.main
