@@ -530,7 +530,7 @@ const Home: React.FC = () => {
   const enableSeedResetButton = useMemo(() => {
     const isNonZeroSeed = editorSeed !== '0';
     const isNonDefaultMod = editorMod !== '000000000000';
-    const isNonDefaultAttunement = editorAttunement !== calculateMostFrequentNumeral(BigInt(editorSeed));
+    const isNonDefaultAttunement = (editorAttunement ?? 0).toString() !== calculateMostFrequentNumeral(BigInt(editorSeed)).toString();
     
     return isNonZeroSeed && isNonDefaultMod || isNonZeroSeed && isNonDefaultAttunement;
   }, [editorSeed, editorMod, editorAttunement]);
