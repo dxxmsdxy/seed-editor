@@ -7,7 +7,7 @@ import { init, animate, updateVisualization, onWindowResize, onMouseMove } from 
 
 export default function Garden() {
   const sceneContainerRef = useRef<HTMLDivElement>(null);
-  const [itemNumber, setItemNumber] = useState(null);
+  const [itemNumber, setItemNumber] = useState<number | null>(null);
   const [label, setLabel] = useState('');
   const [labelPosition, setLabelPosition] = useState({ x: 0, y: 0 });
   const [minimizedPanels, setMinimizedPanels] = useState({
