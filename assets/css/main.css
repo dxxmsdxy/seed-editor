@@ -4338,13 +4338,13 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover
 
 .seed-details-header
 {
-	align-content:start;
-	align-items:start;
+	align-content:flex-start;
+	align-items:flex-start;
 	display:flex;
 	flex-direction:row;
 	font-size:24px;
-	justify-content:start;
-	justify-items:start;
+	justify-content:flex-start;
+	justify-items:flex-start;
 	letter-spacing:4px;
 	line-height:24px;
 	margin-bottom:7px;
@@ -6108,7 +6108,7 @@ body:has(.changed-mod) .mod-sliders
 	}
 
 	.seed-touchable {
-		justify-content: start;
+		justify-content: flex-start;
 	}
 
 	.seed-indicator {
