@@ -42,7 +42,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = ({
 
     // CALLBACKS ----------------------------------
 
-    const memoizedApplyModValueToElements = useCallback(applyModValueToElements, []);
+    const memoizedApplyModValueToElements = useCallback(applyModValueToElements, [bitsArray, displaySettings.value]);
 
     // Reset the SVG's layers to initial state
     const resetLayersCallback = useCallback(() => {
@@ -141,7 +141,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = ({
             updateArtwork();
             updateAttunement();
         }
-    }, [svgRef, editorSeed, editorAttunement, isAttunementOverridden, isSpinAnimationPaused]);
+    }, [svgRef, editorSeed, editorAttunement, isAttunementOverridden, isSpinAnimationPaused, memoizedApplyModValueToElements]);
 
     useLayoutEffect(() => {
         if (svgRef.current) {

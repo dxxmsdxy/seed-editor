@@ -31,7 +31,7 @@ const Home: React.FC = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-  // REDUX STATE ------------------------------------
+  // STATE ----------------------------------------
 
   const editorSeed = useSelector(selectEditorSeed);
   const editorMod = useSelector(selectEditorMod);
@@ -48,8 +48,12 @@ const Home: React.FC = () => {
   const { items: queueItems, selectedIndex: selectedQueueIndex} = useAppSelector((state: RootState) => state.queue);
   const getSetQueueItems = useAppSelector(selectSetQueueItems);
   const showInscribeModal = useAppSelector((state) => state.modal.showInscribeModal);
+
+  const handleArtworkReady = useCallback(() => {
+    setIsArtworkReady(true);
+  }, []);
   // Generate the seed's name
-  const generatedName = useMemo(() => generateName(Number(editorSeed)), [editorSeed]);
+  const generatedName = useMemo(() => generateName(Number(editorSeed)), [editorSeed, modValues, handleArtworkReady]);
 
 
   // REFS -------------------------------------------
@@ -219,10 +223,6 @@ const Home: React.FC = () => {
       onMouseUp: handleMouseUp,
     };
   }, [setIsArtworkFocused, setIsOverlayToggled]);
-
-  const handleArtworkReady = useCallback(() => {
-    setIsArtworkReady(true);
-  }, []);
 
   // Toggle the SVG Details overlay element
   const toggleArtworkOverlay = useCallback(() => {
