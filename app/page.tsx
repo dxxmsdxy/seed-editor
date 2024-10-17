@@ -58,7 +58,7 @@ const Home: React.FC = () => {
 
   // REFS -------------------------------------------
 
-  const artRef = useRef<{ updateArtwork: () => void } | null>(null)
+  const artRef = useRef<{ resetLayersCallback: () => void } | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const seedInputRef = useRef<HTMLDivElement>(null);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -178,7 +178,7 @@ const Home: React.FC = () => {
 
   // Handle artwork preview mouse interactions
   const handleArtworkInteraction = useCallback(() => {
-    const handleMouseDown = (event: React.MouseEvent<SVGSVGElement>) => {
+    const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
       event.preventDefault();
       dragStartPositionRef.current = { x: event.clientX, y: event.clientY };
       dragTimeoutRef.current = setTimeout(() => {
@@ -188,7 +188,7 @@ const Home: React.FC = () => {
       }, 100);
     };
 
-    const handleMouseMove = (event: React.MouseEvent<SVGSVGElement>) => {
+    const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
       if (dragStartPositionRef.current) {
         const dx = event.clientX - dragStartPositionRef.current.x;
         const dy = event.clientY - dragStartPositionRef.current.y;
@@ -204,7 +204,7 @@ const Home: React.FC = () => {
       }
     };
 
-    const handleMouseUp = (event: React.MouseEvent<SVGSVGElement>) => {
+    const handleMouseUp = (event: React.MouseEvent<HTMLDivElement>) => {
       if (dragTimeoutRef.current) {
         clearTimeout(dragTimeoutRef.current);
         dragTimeoutRef.current = null;
