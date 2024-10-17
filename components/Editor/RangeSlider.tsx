@@ -37,6 +37,7 @@ const RangeSlider: React.FC<RangeSliderProps> = React.memo(({
   checkDefault = true,
   label
 }) => {
+  RangeSlider.displayName = 'RangeSlider';
   const isDefault = checkDefault ? value === defaultValue : false;
   const [isActive, setIsActive] = useState(false);
   const [localValue, setLocalValue] = useState(value);
