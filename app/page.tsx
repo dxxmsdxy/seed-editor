@@ -58,7 +58,7 @@ const Home: React.FC = () => {
 
   // REFS -------------------------------------------
 
-  const artRef = useRef<{ resetLayersCallback: () => void } | null>(null)
+  const artRef = useRef<{ updateArtwork: () => void } | null>(null)
   const editorRef = useRef<HTMLDivElement>(null);
   const seedInputRef = useRef<HTMLDivElement>(null);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
