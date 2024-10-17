@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";import { calculateMostFrequentNumeral, attunementNames } from "@/lib/utils/artwork/utils/global";
+import { useState, useEffect } from "react";import { calculateMostFrequentNumeral, attunementNames } from "@/lib/utils/global";
 
 
 
