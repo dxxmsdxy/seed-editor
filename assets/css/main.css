@@ -5617,6 +5617,7 @@ body:has(.changed-mod) .mod-sliders
 
 	.seed-input
 	{
+		display: block;
 		padding-left:10px;
 		padding-right:10px;
 	}
@@ -6119,6 +6120,10 @@ body:has(.changed-mod) .mod-sliders
 		max-width: 90%;
 		width: 100%;
 		font-size: 16px;
+		white-space:nowrap;
+		word-break:break-all;
+		text-overflow: ellipsis;
+		overflow: hidden;
 	}
 
 	.seed-indicator.mobile
@@ -6372,6 +6377,7 @@ body:has(.changed-mod) .mod-sliders
 	{
 		bottom:0;
 		display:flex;
+		padding-left: 5px;
 		padding-bottom:16px;
 		padding-right:70px;
 		position:relative;
@@ -6541,8 +6547,8 @@ body:has(.changed-mod) .mod-sliders
 
 	.ui-button.randomize,.ui-button.advanced.shrink
 	{
-		font-size:18px;
-		line-height:18px;
+		font-size:15px;
+		line-height:15px;
 		padding-bottom:8px;
 		padding-top:8px
 	}
@@ -6591,13 +6597,14 @@ body:has(.changed-mod) .mod-sliders
 		opacity:1
 	}
 
-	.seed.seed-input
+	.seed-input
 	{
 		flex:0 auto;
 		max-width:84%;
 		opacity:1;
 		white-space:nowrap;
-		word-break:break-all
+		word-break:break-all;
+		text-overflow: ellipsis;
 	}
 
 	.seed.seed-input:hover
@@ -6605,13 +6612,10 @@ body:has(.changed-mod) .mod-sliders
 		background-color:var(--highlight-color);
 	}
 
-	.seed-indicator.mobile
+	.seed-indicator
 	{
 		justify-content:flex-start;
-		justify-content:flex-start;
 		padding-left:5px;
-		padding-left:5px;
-		padding-right:40px;
 		padding-right:40px;
 		position:relative
 	}
