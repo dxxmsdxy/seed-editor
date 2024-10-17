@@ -20,7 +20,6 @@ import { setSelectedIndex, updateQueueItem, updateQueueOrder, selectSetQueueItem
 import { connectWalletAndLoadData } from '@/store/slices/walletSlice';
 import { selectElementContents, clearSelection, randomizeBits, hideMouseCursor, calculateMostFrequentNumeral, sanitizeSeed, sanitizeMod, sanitizeAttunement } from '@/lib/utils/global';
 import { generateName } from '@/lib/utils/nameGenerator';
-import { startAudio, playAudio, pauseAudio, stopAudio, setTempo, modulateSound, isAudioPlaying } from '@/lib/utils/soundGenerator';
 
 
 
@@ -154,7 +153,7 @@ const Home: React.FC = () => {
       }
     }
     setIsPlaying(prev => !prev)
-  }, [dispatch, isSpinAnimationPaused, isDepthAnimationPaused]);
+  }, [dispatch, isSpinAnimationPaused]);
 
   // Set the selected queue item
   const handleSetQueueItem = useCallback(() => {
@@ -344,11 +343,13 @@ const Home: React.FC = () => {
       } else if ((event.key === 'r' || event.key === 'R') && !event.ctrlKey) {
         event.preventDefault();
         handleRandomizeBits();
+      } else if (event.code === 'Space' && event.target === document.body) {
+        togglePlay();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [dispatch, handleRandomizeBits]);
+  }, [dispatch, handleRandomizeBits, togglePlay]);
 
   useEffect(() => {
     const handleGlobalMouseUp = (e: MouseEvent) => {
@@ -430,24 +431,17 @@ const Home: React.FC = () => {
       const [seedPart, attunementPart] = urlParams.split(':');
       const [seedRaw, modRaw] = seedPart.split('.');
       
-      const seed = sanitizeSeed(seedRaw || '0');
-      const mod = sanitizeMod(modRaw || '000000000000');
-      const attunement = sanitizeAttunement(attunementPart || '0');
+      const seed = seedRaw === '?' ? '?' : sanitizeSeed(seedRaw || '0');
+      const mod = modRaw === '?' ? '?' : sanitizeMod(modRaw || '000000000000');
+      const attunement = attunementPart === '?' ? '?' : sanitizeAttunement(attunementPart || '0');
       const isOverridden = attunementPart !== undefined;
-
-      const parsedModValues = parseMod(mod);
-
+  
       dispatch(updateEditorState({
         seed,
         mod,
-        attunement
+        attunement,
+        isAttunementOverridden: isOverridden
       }));
-      dispatch(setIsAttunementOverridden(isOverridden));
-      
-      // Update modValues separately to ensure correct tintPercent
-      Object.entries(parsedModValues).forEach(([key, value]) => {
-        dispatch(updateModValue({ name: key, value }));
-      });
     }
   }, [urlParams, dispatch]);
 

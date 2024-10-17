@@ -62,8 +62,7 @@ const DisplaySettings: React.FC = () => {
   // Handle attunement changes
   const handleAttunementChange = React.useCallback((changingAttunement: number) => {
     if (!isNaN(changingAttunement)) {
-      const sanitizedAttunement = sanitizeAttunement((changingAttunement).toString())
-      dispatch(updateEditorState({ attunement: sanitizedAttunement.toString() }));
+      dispatch(updateEditorState({ attunement: changingAttunement.toString() }));
     }
   }, [dispatch]);
 
@@ -95,6 +94,8 @@ const DisplaySettings: React.FC = () => {
     const value = e.currentTarget.textContent;
     if (value === '') {
       handleAttunementChange(0);
+    } else if (value === '?') {
+      dispatch(updateEditorState({ attunement: value }));
     } else {
       handleAttunementChange(parseInt(value || "0", 10));
     }
@@ -103,8 +104,7 @@ const DisplaySettings: React.FC = () => {
 
   // Handle manual input of mod
   const handleModInputChange = useCallback((value: string) => {
-    const sanitizedMod = sanitizeMod(value);
-    dispatch(updateEditorState({ mod: sanitizedMod }));
+    dispatch(updateEditorState({ mod: value }));
   }, [dispatch]);
 
   // Reset the mod value

@@ -94,6 +94,39 @@ export function shuffleArray<T>(array: T[]): T[] {
   return shuffledArray;
 }
 
+// Helper function to pad a number with leading zeros
+function padWithZeros(num: number, length: number): string {
+  return num.toString().padStart(length, '0');
+}
+
+export function randomizeMod(): string {
+  const segments: string[] = [];
+
+  // Generate 4 segments of 2 digits each (00-99)
+  for (let i = 0; i < 4; i++) {
+    const segment = padWithZeros(getRandomNumber(0, 99), 2);
+    segments.push(segment);
+    console.log(`Segment ${i + 1} (00-99): ${segment}`);
+  }
+
+  // Generate the 5th segment (0-9)
+  const segment5 = getRandomNumber(0, 9).toString();
+  segments.push(segment5);
+  console.log(`Segment 5 (0-9): ${segment5}`);
+
+  // Generate the 6th segment (9-bit array)
+  const bitArray = Array.from({ length: 9 }, () => Math.random() < 0.5);
+  const decimalValue = parseInt(bitArray.map(bit => bit ? '1' : '0').join(''), 2);
+  const segment6 = padWithZeros(decimalValue, 3);
+  segments.push(segment6);
+  console.log(`Segment 6 (000-511): ${segment6} (Binary: ${bitArray.map(b => b ? '1' : '0').join('')})`);
+
+  const finalMod = segments.join('');
+  console.log(`Final randomized mod: ${finalMod}`);
+
+  return finalMod;
+}
+
 export const calculateMostFrequentNumeral = memoize((seed) => {
     var seedStr = seed.toString();
     // @ts

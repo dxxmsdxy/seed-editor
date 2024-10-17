@@ -4038,7 +4038,6 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover
 {
 	align-items:center;
 	align-self:center;
-	background-color:#f5f5f5f5;
 	box-sizing:border-box;
 	display:flex;
 	gap:6px;
@@ -4049,7 +4048,12 @@ li.queue-item.selected:hover .queued-seed-number .queue-reset:hover
 	position:absolute;
 	top:0;
 	width:100%;
-	z-index:10
+	z-index:10;
+	background:#f5f5f5f5;
+	background: -moz-linear-gradient(180deg, rgba(245,245,245,0.98) 76%, rgba(245,245,245,0) 100%);
+	background: -webkit-linear-gradient(180deg, rgba(245,245,245,0.98) 76%, rgba(245,245,245,0) 100%);
+	background: linear-gradient(180deg, rgba(245,245,245,0.98) 76%, rgba(245,245,245,0) 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#f5f5f5",endColorstr="#f5f5f5",GradientType=1);
 }
 
 .number-ui-inner
@@ -4465,7 +4469,7 @@ body:has(.seed-details.focused) .app-pane.left {
 	stroke: var(--ui-color);
 	stroke-miterlimit: 10;
 	stroke-width: 10px;
-	transition: opacity 0.2s ease-in-out 0.25s;
+	transition: opacity 0.2s ease-in-out 0.1s;
 }
 
 .seed-details .metadata-icon svg {
@@ -4533,7 +4537,7 @@ body:has(.seed-details.focused) .app-pane.left {
 
 body:has(.seed-details.focused) .editor #seedsArtwork
 {
-	box-shadow:0 0 0 6px #0000 0 3px 18px 2px #0e0e0e1a
+	box-shadow:0 0 0 6px #0000, 0 3px 18px 2px #0e0e0e1a
 }
 
 .set-queue-item-container,body:has(.seed-details.focused) .ui-button,body:has(.seed-details.focused) .seed-input,body:has(.seed-details.focused) .seed-label,body:has(.seed-details.focused) .reset-seed,body:has(.seed-details.focused) .reset-mod,body:has(.seed-details.focused) .btn-layer,body:has(.seed-details.focused) .grid,body:has(.seed-details.focused) .ui-element,body:has(.seed-details.focused) .slider-ui,body:has(.seed-details.focused) .mod-sliders,body:has(.seed-details.focused) .attunement-label,body:has(.seed-details.focused) .page-label,body:has(.seed-details.focused) .attunement-selector,body:has(.seed-details.focused) .app-pane.right .details-actions-list li,body:has(.seed-details.focused) .app-pane.right .seed-details,body:has(.seed-details.focused) .attune-nav:has(*)
@@ -4764,7 +4768,7 @@ li.queue-item:has(.queue-lock.locked):hover .queue-lock,li.queue-item.set .queue
 	pointer-events:none
 }
 
-.editor-inner > div,body:has(.seed-details.focused) .app-pane.right .details-actions-container,.seed-overlay-container .seed-details.show .details-actions-list,.app-pane > .queue-container > *,.app-pane > .editor-controls > *,.soundPlay
+.editor-inner > div,body:has(.seed-details.focused) .app-pane.right .details-actions-container,.seed-overlay-container .seed-details.show .details-actions-list,:has(.seed-details:not(.focused)) .app-pane > .queue-container > *,.app-pane > .editor-controls > *,.soundPlay
 {
 	pointer-events:auto
 }
@@ -4844,6 +4848,22 @@ body:has(.seed-details.focused):not(.sleep-mode) .btn-display-setting svg .cls-1
 	.seed-details
 	{
 		display:none
+	}
+
+	.garden-button {
+		display: none;
+	}
+
+	.app-pane {
+		margin-bottom: 0;
+	}
+
+	.reset-editor {
+		display: none;
+	}
+
+	.navbar-connect {
+		display: none;
 	}
 }
 
@@ -6012,6 +6032,10 @@ body:has(.changed-mod) .mod-sliders
 		padding-left:0
 	}
 
+	.navbar-container {
+		justify-content: end;
+	}
+
 	.nav-menu-three
 	{
 		border-radius:20px;
@@ -6081,6 +6105,14 @@ body:has(.changed-mod) .mod-sliders
 	{
 		font-size:18px;
 		max-width:85%
+	}
+
+	.seed-touchable {
+		justify-content: start;
+	}
+
+	.seed-indicator {
+		padding-left: 20px;
 	}
 
 	.seed.seed-input

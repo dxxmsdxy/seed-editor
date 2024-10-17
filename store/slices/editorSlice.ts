@@ -1,7 +1,7 @@
 import { createSlice, createSelector, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '@/store';
 import { selectSelectedIndex, selectQueueItems } from './queueSlice';
-import { seedToBits, sanitizeSeed, sanitizeMod, sanitizeAttunement, calculateMostFrequentNumeral } from "@/lib/utils/global";
+import { seedToBits, sanitizeSeed, sanitizeMod, sanitizeAttunement, calculateMostFrequentNumeral, randomizeBits, randomizeMod, getRandomNumber } from "@/lib/utils/global";
 
 
 
@@ -93,7 +93,20 @@ const editorSlice = createSlice({
       attunement?: string;
       isAttunementOverridden?: boolean
     }>) => {
-      const { seed, mod, attunement, isAttunementOverridden } = action.payload;
+      let { seed, mod, attunement, isAttunementOverridden } = action.payload;
+      if (seed === '?') { // Randomize via URL parameter
+        const { newSeed } = randomizeBits();
+        seed = newSeed;
+      }
+      if (mod === '?') { // Randomize via URL parameter
+        const newMod = randomizeMod();
+        mod = newMod;
+      }
+      if (attunement === '?') {
+        const newAttunement = getRandomNumber(0, 9);
+        attunement = newAttunement.toString();
+        state.editorAttunement = attunement;
+      }
       if (seed !== undefined) {
         state.editorSeed = sanitizeSeed(seed);
         state.bitsArray = seedToBits(BigInt(state.editorSeed));
@@ -111,13 +124,7 @@ const editorSlice = createSlice({
       if (mod !== undefined) {
         state.editorMod = sanitizeMod(mod);
         // Update modValues when mod is changed
-        state.modValues = {
-          color: parseInt(state.editorMod.slice(0, 2), 10),
-          spin: parseInt(state.editorMod.slice(2, 4), 10),
-          depth: parseInt(state.editorMod.slice(4, 6), 10),
-          tint: parseInt(state.editorMod.slice(6, 8), 10),
-          tintPercent: parseInt(state.editorMod.slice(8, 9), 10) * 10 || 100,
-        };
+        state.modValues = parseMod(mod);
       }
       pushToHistory(state);
     },
@@ -341,11 +348,11 @@ const pushToHistory = (state: EditorState) => {
 
 export const parseMod = (mod: string) => {
   return {
-    color: parseInt(mod.slice(0, 2), 10),
-    spin: parseInt(mod.slice(2, 4), 10),
-    depth: parseInt(mod.slice(4, 6), 10),
-    tint: parseInt(mod.slice(6, 8), 10),
-    tintPercent: parseInt(mod.slice(8, 9), 10) * 10 || 100, // Use 100 if it's 0
+    color: parseInt(mod.slice(0, 2), 10) || 0,
+    spin: parseInt(mod.slice(2, 4), 10) || 0,
+    depth: parseInt(mod.slice(4, 6), 10) || 0,
+    tint: parseInt(mod.slice(6, 8), 10) || 0,
+    tintPercent: (parseInt(mod.slice(8, 9), 10) * 10) || 100,
   };
 };
 
