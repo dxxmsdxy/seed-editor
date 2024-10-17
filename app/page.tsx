@@ -541,7 +541,7 @@ const Home: React.FC = () => {
   // Memoized artwork component
   const memoizedArtwork = useMemo(() => (
     <Artwork 
-      ref={artRef}
+      ref={artRef as React.Ref<{ updateArtwork: () => void }> | undefined}
       seed={editorSeed}
       mod={editorMod}
       attunement={editorAttunement.toString()}
@@ -549,10 +549,10 @@ const Home: React.FC = () => {
       editorSeed={editorSeed}
       editorMod={editorMod}
       editorAttunement={editorAttunement}
-      modValues={modValues}
       onArtworkReady={handleArtworkReady}
+      selectedQueueIndex={selectedQueueIndex}
     />
-  ), [editorSeed, editorMod, editorAttunement, isPlaying]);
+  ), [editorSeed, editorMod, editorAttunement, isPlaying, selectedQueueIndex]);
 
 
   
@@ -666,7 +666,7 @@ const Home: React.FC = () => {
                       showOverlay={isOverlayToggled}
                       editorSeed={editorSeed ?? ''}
                       editorMod={editorMod ?? '000000000000'}
-                      editorAttunement={editorAttunement ?? 0}
+                      editorAttunement={parseInt(editorAttunement) ?? 0}
                       bitsArray={bitsArray}
                       generatedName={generatedName}
                     />
@@ -736,7 +736,7 @@ const Home: React.FC = () => {
                 showOverlay={isOverlayToggled}
                 editorSeed={editorSeed ?? ''}
                 editorMod={editorMod ?? '000000000000'}
-                editorAttunement={editorAttunement ?? 0}
+                editorAttunement={parseInt(editorAttunement) ?? 0}
                 bitsArray={bitsArray}
                 generatedName={generatedName}
               />
