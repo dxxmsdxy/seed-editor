@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import seedList from '@/public/seedList.json';
-import { memoize } from 'lodash';
+import { memoize, debounce } from 'lodash';
 
 
 
@@ -159,91 +159,93 @@ export function checkPalindrome(seed) {
 // Check if the seed number is a Prime
 export const checkPrime = memoize((seed) => {
   return new Promise((resolve) => {
-    function modPow(base, exponent, modulus) {
-      if (modulus === BigInt(1)) return BigInt(0);
-      let result = BigInt(1);
-      base = base % modulus;
-      while (exponent > 0) {
-        if (exponent % BigInt(2) === BigInt(1)) {
-          result = (result * base) % modulus;
+    requestIdleCallback(() => {
+      function modPow(base, exponent, modulus) {
+        if (modulus === BigInt(1)) return BigInt(0);
+        let result = BigInt(1);
+        base = base % modulus;
+        while (exponent > 0) {
+          if (exponent % BigInt(2) === BigInt(1)) {
+            result = (result * base) % modulus;
+          }
+          exponent = exponent >> BigInt(1);
+          base = (base * base) % modulus;
         }
-        exponent = exponent >> BigInt(1);
-        base = (base * base) % modulus;
+        return result;
       }
-      return result;
-    }
-    
-    function millerRabinTest(num, rounds = 5) {
-      if (num <= BigInt(3)) return num > BigInt(1);
-      if (num % BigInt(2) === BigInt(0)) return false;
-    
-      let r = BigInt(0);
-      let d = num - BigInt(1);
-      while (d % BigInt(2) === BigInt(0)) {
-        d = d / BigInt(2);
-        r++;
-      }
-    
-      for (let i = 0; i < rounds; i++) {
-        const maxVal = num - BigInt(4);
-        const randomFactor = BigInt(Math.floor(Math.random() * Number(maxVal)));
-        const a = BigInt(2) + randomFactor;
-        
-        let x = modPow(a, d, num);
-        if (x === BigInt(1) || x === num - BigInt(1)) continue;
-    
-        let j = BigInt(0);
-        while (j < r - BigInt(1)) {
-          x = modPow(x, BigInt(2), num);
-          if (x === num - BigInt(1)) break;
-          j++;
+      
+      function millerRabinTest(num, rounds = 5) {
+        if (num <= BigInt(3)) return num > BigInt(1);
+        if (num % BigInt(2) === BigInt(0)) return false;
+      
+        let r = BigInt(0);
+        let d = num - BigInt(1);
+        while (d % BigInt(2) === BigInt(0)) {
+          d = d / BigInt(2);
+          r++;
         }
-    
-        if (x !== num - BigInt(1)) return false;
-      }
-      return true;
-    }
-
-    const workerCode = `
-      onmessage = function(e) {
-        const num = BigInt(e.data);
-        const lowerBound = BigInt("999999999999999");
-        const upperBound = BigInt("1000000000000000000000000000000"); // 10^30
-
-        if (num <= lowerBound || num >= upperBound) {
-          postMessage(false); // Not in the desired range
-          return;
+      
+        for (let i = 0; i < rounds; i++) {
+          const maxVal = num - BigInt(4);
+          const randomFactor = BigInt(Math.floor(Math.random() * Number(maxVal)));
+          const a = BigInt(2) + randomFactor;
+          
+          let x = modPow(a, d, num);
+          if (x === BigInt(1) || x === num - BigInt(1)) continue;
+      
+          let j = BigInt(0);
+          while (j < r - BigInt(1)) {
+            x = modPow(x, BigInt(2), num);
+            if (x === num - BigInt(1)) break;
+            j++;
+          }
+      
+          if (x !== num - BigInt(1)) return false;
         }
+        return true;
+      }
 
-        const result = millerRabinTest(num, 5); // Increase rounds for better accuracy
+      const workerCode = `
+        onmessage = function(e) {
+          const num = BigInt(e.data);
+          const lowerBound = BigInt("999999999999999");
+          const upperBound = BigInt("1000000000000000000000000000000"); // 10^30
+
+          if (num <= lowerBound || num >= upperBound) {
+            postMessage(false); // Not in the desired range
+            return;
+          }
+
+          const result = millerRabinTest(num, 5); // Increase rounds for better accuracy
+        };
+
+        ${modPow.toString()}
+        ${millerRabinTest.toString()}
+      `;
+
+      const worker = new Worker(URL.createObjectURL(new Blob([workerCode], { type: 'application/javascript' })));
+
+      worker.onmessage = function(e) {
+          resolve(e.data);
+          worker.terminate();
       };
 
-      ${modPow.toString()}
-      ${millerRabinTest.toString()}
-    `;
+      worker.postMessage(seed.toString());
 
-    const worker = new Worker(URL.createObjectURL(new Blob([workerCode], { type: 'application/javascript' })));
+      // Use AbortController for better timeout handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-    worker.onmessage = function(e) {
-        resolve(e.data);
-        worker.terminate();
-    };
+      controller.signal.addEventListener('abort', () => {
+          worker.terminate();
+          resolve(false);
+      });
 
-    worker.postMessage(seed.toString());
-
-    // Use AbortController for better timeout handling
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-    controller.signal.addEventListener('abort', () => {
-        worker.terminate();
-        resolve(false);
-    });
-
-    worker.onerror = () => {
-        clearTimeout(timeoutId);
-        controller.abort();
-    };
+      worker.onerror = () => {
+          clearTimeout(timeoutId);
+          controller.abort();
+      };
+    }, { timeout: 1500 });
   });
 });
 
@@ -291,7 +293,6 @@ export function clearSelection() {
 
 // Hide mouse cursor after 5 seconds of inactivity and disable interactions
 export function hideMouseCursor() {
-  let timeout: NodeJS.Timeout;
   let isHidden = false;
   
   const hideCursor = () => {
@@ -299,20 +300,15 @@ export function hideMouseCursor() {
     isHidden = true;
   };
 
-  const showCursor = () => {
+  const showCursor = debounce(() => {
     if (isHidden) {
       document.body.classList.remove('sleep-mode');
       isHidden = false;
     }
-    clearTimeout(timeout);
-    timeout = setTimeout(hideCursor, 6000);
-  };
+  }, 100);
 
   const handleInteraction = (event: Event) => {
     showCursor();
-    
-    // If the cursor was hidden, prevent the current event from triggering
-    // This ensures that the first interaction after sleep mode doesn't accidentally trigger unwanted actions
     if (isHidden) {
       event.preventDefault();
       event.stopPropagation();
@@ -320,29 +316,23 @@ export function hideMouseCursor() {
   };
 
   const attachListeners = () => {
-    document.addEventListener('mousemove', handleInteraction, true);
-    document.addEventListener('mousedown', handleInteraction, true);
-    document.addEventListener('mouseup', handleInteraction, true);
-    document.addEventListener('keydown', handleInteraction, true);
-    document.addEventListener('touchstart', handleInteraction, true);
+    ['mousemove', 'mousedown', 'mouseup', 'keydown', 'touchstart'].forEach(eventType => {
+      document.addEventListener(eventType, handleInteraction, { passive: true, capture: true });
+    });
   };
 
   const removeListeners = () => {
-    document.removeEventListener('mousemove', handleInteraction, true);
-    document.removeEventListener('mousedown', handleInteraction, true);
-    document.removeEventListener('mouseup', handleInteraction, true);
-    document.removeEventListener('keydown', handleInteraction, true);
-    document.removeEventListener('touchstart', handleInteraction, true);
+    ['mousemove', 'mousedown', 'mouseup', 'keydown', 'touchstart'].forEach(eventType => {
+      document.removeEventListener(eventType, handleInteraction, { capture: true });
+    });
   };
 
-  // Initial setup
   attachListeners();
-  showCursor();
+  const timeoutId = setTimeout(hideCursor, 6000);
 
-  // Return a cleanup function
   return () => {
     removeListeners();
-    clearTimeout(timeout);
+    clearTimeout(timeoutId);
     document.body.classList.remove('sleep-mode');
   };
 }

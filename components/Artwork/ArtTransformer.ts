@@ -35,14 +35,20 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
     const isAttunementOverridden = useAppSelector(selectIsAttunementOverridden);
     const modValues = useAppSelector(selectModValues);
     const displaySettings = useAppSelector(selectDisplaySettings);
-    const urlSeed = useAppSelector((state) => state.editor.urlSeed);
-    const urlMod = useAppSelector((state) => state.editor.urlMod);
-    const urlAttunement = useAppSelector((state) => state.editor.urlAttunement);
 
 
     // CALLBACKS ----------------------------------
 
     const memoizedApplyModValueToElements = useMemo(() => applyModValueToElements, []);
+
+    const artworkDependencies = useMemo(() => ({
+        editorSeed,
+        editorAttunement,
+        isAttunementOverridden,
+        isSpinAnimationPaused,
+        modValuesString: JSON.stringify(modValues),
+        displaySettingsString: JSON.stringify(displaySettings),
+    }), [editorSeed, editorAttunement, isAttunementOverridden, isSpinAnimationPaused, modValues, displaySettings]);
 
     // Reset the SVG's layers to initial state
     const resetLayersCallback = useMemo(() => {
@@ -78,17 +84,19 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
 
         requestAnimationFrame(() => {
             const updates = () => {
+                
+                const classesToAdd = ['seedartwork', 'js', 'reveal', 'pauseColor', 'pauseDepth', 'spin'];
+                const displayClasses = ['reveal', 'flip', 'invert', 'hyper', 'grayscale', 'cmyk', 'accent-1', 'accent-2', 'accent-3'];
+                const isPalindrome = checkPalindrome(BigInt(editorSeed));
+                const isSingleDigit = editorSeed.length === 1;
+
                 resetLayers(svg);
                 updateSVGWithSeed(BigInt(editorSeed), svg, bitsArray);
-        
-                const classesToAdd = ['seedartwork', 'js', 'reveal', 'pauseColor', 'pauseDepth', 'spin'];
                 svg.classList.add(...classesToAdd);
-            
-                svg?.setAttribute("width", "100%");
-                svg?.setAttribute("height", "100%");
-                svg?.setAttribute("tabIndex", "0");
-            
-                const displayClasses = ['reveal', 'flip', 'invert', 'hyper', 'grayscale', 'cmyk', 'accent-1', 'accent-2', 'accent-3'];
+                svg.setAttribute("width", "100%");
+                svg.setAttribute("height", "100%");
+                svg.setAttribute("tabIndex", "0");
+
                 displayClasses.forEach((className, index) => {
                     const isActive = index === 0 ? (displaySettings.value & (1 << 0)) === 0 : (displaySettings.value & (1 << index)) !== 0;
                     svg.classList.toggle(className, isActive);
@@ -96,16 +104,17 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
                         flipLayers(svg, isActive);
                     }
                 });
-            
-                const isPalindrome = checkPalindrome(BigInt(editorSeed));
-                const isSingleDigit = editorSeed.length === 1;
+
                 svg.classList.toggle('palindrome', isPalindrome && !isSingleDigit);
                 svg.classList.toggle('depth', modValues.depth > 0);
                 svg.classList.toggle('pauseSpin', isSpinAnimationPaused);
                 
-                const colorElements = document.querySelectorAll('.seedartwork,.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline,.sub.on path,.sub.on polygon,.sub.on circle,.sub.on ellipse,.sub.on line,.sub.on rect,.sub.on polyline,.sub.on .fx');
-                const spinElements = svg.querySelectorAll('.lr.on, .sub.on');
-                const depthElements = svg.querySelectorAll('.lr.on .fx, .sub.on .fx');
+                const colorElements = [
+                    svg, // Include the SVG element itself
+                    ...Array.from(svg.querySelectorAll('.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline,.sub.on path,.sub.on polygon,.sub.on circle,.sub.on ellipse,.sub.on line,.sub.on rect,.sub.on polyline,.sub.on .fx'))
+                ];
+                const spinElements = Array.from(svg.querySelectorAll('.lr.on, .sub.on'));
+                const depthElements = Array.from(svg.querySelectorAll('.lr.on .fx, .sub.on .fx'));
 
                 if (editorMod !== '000000000000') {
                     memoizedApplyModValueToElements(colorElements, modValues.color, 'color');
@@ -116,12 +125,10 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
                 const rgblens = document.querySelector('.rgblens') as HTMLElement;
                 if (rgblens) {
                     if (modValues.tint === 0) {
-                        rgblens.style.backgroundColor = 'transparent';
-                        rgblens.style.opacity = '0';
+                        rgblens.style.cssText = 'background-color: transparent; opacity: 0;';
                     } else {
                         const hue = (modValues.tint - 1) * (360 / 98);
-                        rgblens.style.backgroundColor = `hsl(${hue}, 100%, 50%)`
-                        rgblens.style.opacity = modValues.tintPercent === 100 ? '1' : (modValues.tintPercent / 100).toString();
+                        rgblens.style.cssText = `background-color: hsl(${hue}, 100%, 50%); opacity: ${modValues.tintPercent === 100 ? '1' : (modValues.tintPercent / 100).toString()};`;
                     }
                 }
             };
@@ -149,15 +156,6 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
 
 
     // EFFECTS ----------------------------------------
-
-    const artworkDependencies = useMemo(() => ({
-        editorSeed,
-        editorAttunement,
-        isAttunementOverridden,
-        isSpinAnimationPaused,
-        modValuesString: JSON.stringify(modValues),
-        displaySettingsString: JSON.stringify(displaySettings),
-    }), [editorSeed, editorAttunement, isAttunementOverridden, isSpinAnimationPaused, modValues, displaySettings]);
 
     useLayoutEffect(() => {
         if (svgRef.current) {
