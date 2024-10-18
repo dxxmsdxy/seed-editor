@@ -1,6 +1,8 @@
 import { createSlice, createSelector, PayloadAction } from '@reduxjs/toolkit';
+import { produce } from 'immer';
 import { RootState } from '@/store';
 import { selectSelectedIndex, selectQueueItems } from './queueSlice';
+import { memoize } from 'lodash';
 import { seedToBits, sanitizeSeed, sanitizeMod, sanitizeAttunement, calculateMostFrequentNumeral, randomizeBits, randomizeMod, getRandomNumber } from "@/lib/utils/global";
 
 
@@ -93,40 +95,42 @@ const editorSlice = createSlice({
       attunement?: string;
       isAttunementOverridden?: boolean
     }>) => {
-      let { seed, mod, attunement, isAttunementOverridden } = action.payload;
-      if (seed === '?') { // Randomize via URL parameter
-        const { newSeed } = randomizeBits();
-        seed = newSeed;
-      }
-      if (mod === '?') { // Randomize via URL parameter
-        const newMod = randomizeMod();
-        mod = newMod;
-      }
-      if (attunement === '?') {
-        const newAttunement = getRandomNumber(0, 9);
-        attunement = newAttunement.toString();
-        state.editorAttunement = attunement;
-      }
-      if (seed !== undefined) {
-        state.editorSeed = sanitizeSeed(seed);
-        state.bitsArray = seedToBits(BigInt(state.editorSeed));
-        const calculatedAttunement = calculateMostFrequentNumeral(BigInt(state.editorSeed))?.toString() ?? "0";
-        if (attunement !== undefined) {
-          state.editorAttunement = sanitizeAttunement(attunement);
-          state.isAttunementOverridden = isAttunementOverridden !== undefined ? isAttunementOverridden : attunement !== calculatedAttunement;
-        } else if (!state.isAttunementOverridden) {
-          state.editorAttunement = calculatedAttunement;
+      return produce(state, draftState => {
+        let { seed, mod, attunement, isAttunementOverridden } = action.payload;
+        if (seed === '?') { // Randomize via URL parameter
+          const { newSeed } = randomizeBits();
+          seed = newSeed;
         }
-      } else if (attunement !== undefined) {
-        state.editorAttunement = sanitizeAttunement(attunement);
-        state.isAttunementOverridden = isAttunementOverridden !== undefined ? isAttunementOverridden : true;
-      }
-      if (mod !== undefined) {
-        state.editorMod = sanitizeMod(mod);
-        // Update modValues when mod is changed
-        state.modValues = parseMod(mod);
-      }
-      pushToHistory(state);
+        if (mod === '?') { // Randomize via URL parameter
+          const newMod = randomizeMod();
+          mod = newMod;
+        }
+        if (attunement === '?') {
+          const newAttunement = getRandomNumber(0, 9);
+          attunement = newAttunement.toString();
+          state.editorAttunement = attunement;
+        }
+        if (seed !== undefined) {
+          state.editorSeed = sanitizeSeed(seed);
+          state.bitsArray = seedToBits(BigInt(state.editorSeed));
+          const calculatedAttunement = calculateMostFrequentNumeral(BigInt(state.editorSeed))?.toString() ?? "0";
+          if (attunement !== undefined) {
+            state.editorAttunement = sanitizeAttunement(attunement);
+            state.isAttunementOverridden = isAttunementOverridden !== undefined ? isAttunementOverridden : attunement !== calculatedAttunement;
+          } else if (!state.isAttunementOverridden) {
+            state.editorAttunement = calculatedAttunement;
+          }
+        } else if (attunement !== undefined) {
+          state.editorAttunement = sanitizeAttunement(attunement);
+          state.isAttunementOverridden = isAttunementOverridden !== undefined ? isAttunementOverridden : true;
+        }
+        if (mod !== undefined) {
+          state.editorMod = sanitizeMod(mod);
+          // Update modValues when mod is changed
+          state.modValues = parseMod(mod);
+        }
+        pushToHistory(state);
+      });
     },
     setHasEditorChanges: (state, action: PayloadAction<boolean>) => {
         state.hasEditorChanges = action.payload;
@@ -321,28 +325,23 @@ const MAX_HISTORY_LENGTH = 25;
 const pushToHistory = (state: EditorState) => {
   const lastHistoryState = state.history.past[state.history.past.length - 1];
   const isNewStateDifferent = !lastHistoryState ||
-    state.editorSeed !== lastHistoryState.seed ||
-    state.editorMod !== lastHistoryState.mod ||
-    state.editorAttunement !== lastHistoryState.attunement ||
-    !state.bitsArray.every((bit, index) => bit === lastHistoryState.bitsArray[index]);
+      state.editorSeed !== lastHistoryState.seed ||
+      state.editorMod !== lastHistoryState.mod ||
+      state.editorAttunement !== lastHistoryState.attunement ||
+      !state.bitsArray.every((bit, index) => bit === lastHistoryState.bitsArray[index]);
 
   if (isNewStateDifferent && state.editorSeed !== '0') {
-    const newHistoryState: EditorHistoryState = {
-      seed: state.editorSeed,
-      mod: state.editorMod,
-      attunement: state.editorAttunement,
-      bitsArray: [...state.bitsArray],
-      isAttunementOverridden: state.isAttunementOverridden,
-      modValues: { ...state.modValues },
-    };
-    
-    state.history.past = [...state.history.past, newHistoryState];
-    
-    if (state.history.past.length > MAX_HISTORY_LENGTH) {
-      state.history.past = state.history.past.slice(-MAX_HISTORY_LENGTH);
-    }
-    
-    state.history.future = [];
+      const newHistoryState: EditorHistoryState = {
+          seed: state.editorSeed,
+          mod: state.editorMod,
+          attunement: state.editorAttunement,
+          bitsArray: state.bitsArray,
+          isAttunementOverridden: state.isAttunementOverridden,
+          modValues: state.modValues,
+      };
+      
+      state.history.past = [...state.history.past.slice(-MAX_HISTORY_LENGTH + 1), newHistoryState];
+      state.history.future = [];
   }
 };
 
@@ -407,44 +406,25 @@ export const selectModValuesAndDisplaySettings = createSelector(
 );
 
 export const selectHasEditorChanges = createSelector(
-  [
-    selectEditorSeed,
-    selectEditorMod,
-    selectEditorAttunement,
-    selectIsAttunementOverridden,
-    selectSelectedIndex,
-    selectQueueItems
-  ],
+  [selectEditorSeed, selectEditorMod, selectEditorAttunement, selectIsAttunementOverridden, selectSelectedIndex, selectQueueItems],
   (editorSeed, editorMod, editorAttunement, isAttunementOverridden, selectedIndex, queueItems) => {
-    if (selectedIndex === null || !queueItems.length) return false;
-    const selectedItem = queueItems[selectedIndex];
-    if (!selectedItem) return false;
+      if (selectedIndex === null || !queueItems.length) return false;
+      const selectedItem = queueItems[selectedIndex];
+      if (!selectedItem) return false;
 
-    const itemSeed = selectedItem.newValues?.newSeed || selectedItem.initialSeed;
-    const itemMod = selectedItem.newValues?.newMod || selectedItem.initialMod || '000000000000';
-    const itemAttunement = selectedItem.newValues?.newAttunement?.toString() || selectedItem.initialAttunement?.toString() || calculateMostFrequentNumeral(BigInt(selectedItem.initialSeed))?.toString() || "0";
-    const itemIsAttunementOverridden = selectedItem.newValues?.isAttunementOverridden ?? selectedItem.isAttunementOverridden ?? false;
+      const itemSeed = selectedItem.newValues?.newSeed || selectedItem.initialSeed;
+      const itemMod = selectedItem.newValues?.newMod || selectedItem.initialMod || '000000000000';
+      const itemAttunement = selectedItem.newValues?.newAttunement?.toString() || selectedItem.initialAttunement?.toString() || calculateMostFrequentNumeral(BigInt(selectedItem.initialSeed))?.toString() || "0";
+      const itemIsAttunementOverridden = selectedItem.newValues?.isAttunementOverridden ?? selectedItem.isAttunementOverridden ?? false;
 
-    const hasContentChanges = 
-      editorSeed !== itemSeed ||
-      editorMod !== itemMod ||
-      editorAttunement !== itemAttunement;
+      const hasContentChanges = 
+        editorSeed !== itemSeed ||
+        editorMod !== itemMod ||
+        editorAttunement !== itemAttunement;
 
-    const hasAttunementOverrideChange = 
-      hasContentChanges && isAttunementOverridden !== itemIsAttunementOverridden;
+      const hasAttunementOverrideChange = isAttunementOverridden !== itemIsAttunementOverridden;
 
-    const hasChanges = hasContentChanges || hasAttunementOverrideChange;
-
-    console.log('Has editor changes:', hasChanges, {
-      editorSeed, itemSeed,
-      editorMod, itemMod,
-      editorAttunement, itemAttunement,
-      isAttunementOverridden, itemIsAttunementOverridden,
-      hasContentChanges,
-      hasAttunementOverrideChange
-    });
-
-    return hasChanges;
+      return hasContentChanges || hasAttunementOverrideChange;
   }
 );
 
