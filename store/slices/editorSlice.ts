@@ -124,6 +124,9 @@ const editorSlice = createSlice({
           state.editorAttunement = sanitizeAttunement(attunement);
           state.isAttunementOverridden = isAttunementOverridden !== undefined ? isAttunementOverridden : true;
         }
+        if (isAttunementOverridden !== undefined) {
+          state.isAttunementOverridden = isAttunementOverridden;
+        }
         if (mod !== undefined) {
           state.editorMod = sanitizeMod(mod);
           // Update modValues when mod is changed
@@ -151,6 +154,15 @@ const editorSlice = createSlice({
       });
       // Push the reset state to history
       pushToHistory(state);
+    },
+    resetEditorToQueueItem: (state, action: PayloadAction<QueueItem>) => {
+      const item = action.payload;
+      state.editorSeed = item.initialSeed;
+      state.editorMod = item.initialMod || '000000000000';
+      state.editorAttunement = item.initialAttunement?.toString() || calculateMostFrequentNumeral(BigInt(item.initialSeed))?.toString() || "0";
+      state.isAttunementOverridden = item.initialAttunementOverridden;
+      state.bitsArray = seedToBits(BigInt(state.editorSeed));
+      state.modValues = parseMod(state.editorMod);
     },
     toggleBit: (state, action: PayloadAction<number>) => {
       const index = action.payload;
@@ -321,7 +333,7 @@ const editorSlice = createSlice({
 // UTILITY FUNCTIONS -------------------------------
 
 // Push current state to history
-const MAX_HISTORY_LENGTH = 25;
+const MAX_HISTORY_LENGTH = 20;
 const pushToHistory = (state: EditorState) => {
   const lastHistoryState = state.history.past[state.history.past.length - 1];
   const isNewStateDifferent = !lastHistoryState ||
@@ -406,25 +418,33 @@ export const selectModValuesAndDisplaySettings = createSelector(
 );
 
 export const selectHasEditorChanges = createSelector(
-  [selectEditorSeed, selectEditorMod, selectEditorAttunement, selectIsAttunementOverridden, selectSelectedIndex, selectQueueItems],
+  [
+    selectEditorSeed,
+    selectEditorMod,
+    selectEditorAttunement,
+    selectIsAttunementOverridden,
+    selectSelectedIndex,
+    selectQueueItems
+  ],
   (editorSeed, editorMod, editorAttunement, isAttunementOverridden, selectedIndex, queueItems) => {
-      if (selectedIndex === null || !queueItems.length) return false;
-      const selectedItem = queueItems[selectedIndex];
-      if (!selectedItem) return false;
+    if (selectedIndex === null || !queueItems.length) return false;
+    const selectedItem = queueItems[selectedIndex];
+    if (!selectedItem) return false;
 
-      const itemSeed = selectedItem.newValues?.newSeed || selectedItem.initialSeed;
-      const itemMod = selectedItem.newValues?.newMod || selectedItem.initialMod || '000000000000';
-      const itemAttunement = selectedItem.newValues?.newAttunement?.toString() || selectedItem.initialAttunement?.toString() || calculateMostFrequentNumeral(BigInt(selectedItem.initialSeed))?.toString() || "0";
-      const itemIsAttunementOverridden = selectedItem.newValues?.isAttunementOverridden ?? selectedItem.isAttunementOverridden ?? false;
+    const itemSeed = selectedItem.newValues?.newSeed || selectedItem.initialSeed;
+    const itemMod = selectedItem.newValues?.newMod || selectedItem.initialMod || '000000000000';
+    const itemAttunement = selectedItem.newValues?.newAttunement?.toString() || selectedItem.initialAttunement?.toString() || calculateMostFrequentNumeral(BigInt(selectedItem.initialSeed))?.toString() || "0";
+    const itemIsAttunementOverridden = selectedItem.newValues?.isAttunementOverridden ?? selectedItem.isAttunementOverridden ?? false;
 
-      const hasContentChanges = 
-        editorSeed !== itemSeed ||
-        editorMod !== itemMod ||
-        editorAttunement !== itemAttunement;
+    const hasContentChanges = 
+      editorSeed !== itemSeed ||
+      editorMod !== itemMod ||
+      editorAttunement !== itemAttunement;
 
-      const hasAttunementOverrideChange = isAttunementOverridden !== itemIsAttunementOverridden;
+    const hasAttunementOverrideChange = 
+      isAttunementOverridden !== itemIsAttunementOverridden;
 
-      return hasContentChanges || hasAttunementOverrideChange;
+    return hasContentChanges || hasAttunementOverrideChange;
   }
 );
 
@@ -470,6 +490,7 @@ export const selectUIVisibility = (state: RootState) => state.editor.uiVisibilit
 export const {
   updateEditorState,
   resetEditorState,
+  resetEditorToQueueItem,
   setHasEditorChanges,
   toggleBit,
   updateModValue,

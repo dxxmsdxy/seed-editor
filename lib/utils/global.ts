@@ -127,37 +127,17 @@ export function randomizeMod(): string {
   return finalMod;
 }
 
-export const calculateMostFrequentNumeral = memoize((seed) => {
-    var seedStr = seed.toString();
-    // @ts
-    // const numeralFrequencies: Record<string, number> = {};
-    const numeralFrequencies = {};
-  
-    // Iterate through each numeral in the string and count its frequency
-    for (const numeral of seedStr) {
-      if (numeralFrequencies[numeral]) {
-        numeralFrequencies[numeral]++;
-      } else {
-        numeralFrequencies[numeral] = 1;
-      }
-    }
-  
-    // Find the most frequent numeral
-    let mostFrequentNumeral = null;
-    let highestFrequency = 0;
-  
-    for (const numeral in numeralFrequencies) {
-      const frequency = numeralFrequencies[numeral];
-      if (
-        frequency > highestFrequency ||
-        (frequency === highestFrequency && numeral > (mostFrequentNumeral || ""))
-      ) {
-        mostFrequentNumeral = numeral;
-        highestFrequency = frequency;
-      }
-    }
-    return mostFrequentNumeral !== null ? parseInt(mostFrequentNumeral) : null;
-});
+export const calculateMostFrequentNumeral = memoize((seed: bigint) => {
+  const seedStr = seed.toString();
+  const numeralFrequencies: Record<string, number> = {};
+
+  for (let i = 0; i < seedStr.length; i++) {
+    const numeral = seedStr[i];
+    numeralFrequencies[numeral] = (numeralFrequencies[numeral] || 0) + 1;
+  }
+
+  return Object.entries(numeralFrequencies).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+}, (seed: bigint) => seed.toString());
 
 export function updateDataAttunementAttribute(seed, artwork) {
   const mostFrequentNumeral = calculateMostFrequentNumeral(seed);
@@ -242,20 +222,28 @@ export const checkPrime = memoize((seed) => {
       ${millerRabinTest.toString()}
     `;
 
-    const blob = new Blob([workerCode], { type: 'application/javascript' });
-    const worker = new Worker(URL.createObjectURL(blob));
+    const worker = new Worker(URL.createObjectURL(new Blob([workerCode], { type: 'application/javascript' })));
 
     worker.onmessage = function(e) {
-      resolve(e.data);
-      worker.terminate(); // Move termination here
+        resolve(e.data);
+        worker.terminate();
     };
+
     worker.postMessage(seed.toString());
 
-    // Add a timeout to ensure the worker doesn't run indefinitely
-    setTimeout(() => {
-      worker.terminate();
-      resolve(false); // Resolve with false if the computation takes too long
-    }, 3000); // Adjust the timeout as needed
+    // Use AbortController for better timeout handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    controller.signal.addEventListener('abort', () => {
+        worker.terminate();
+        resolve(false);
+    });
+
+    worker.onerror = () => {
+        clearTimeout(timeoutId);
+        controller.abort();
+    };
   });
 });
 

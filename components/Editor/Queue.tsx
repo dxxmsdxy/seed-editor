@@ -11,6 +11,7 @@ import {
   updateQueueItem,
   updateQueueOrder,
   resetQueueItem,
+  resetQueueItemAndUpdateEditor,
   selectQueueItems,
   setSelectedIndex,
   setCurrentPage,
@@ -96,41 +97,28 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
       dispatch(resetEditorState());
     } else {
       dispatch(pushCurrentStateToHistory());
-      dispatch(setSelectedIndex(index));
       const selectedItem = queueItems[index];
       if (selectedItem) {
-        console.log('Updating editor state with:', {
+        const newState = {
           seed: selectedItem.newValues.newSeed || selectedItem.initialSeed,
           mod: selectedItem.newValues.newMod || selectedItem.initialMod || '000000000000',
           attunement: selectedItem.newValues.newAttunement?.toString() ?? selectedItem.initialAttunement?.toString() ?? '0',
           isAttunementOverridden: selectedItem.newValues.isAttunementOverridden ?? selectedItem.isAttunementOverridden
-        });
-        dispatch(updateEditorState({
-          seed: selectedItem.newValues.newSeed || selectedItem.initialSeed,
-          mod: selectedItem.newValues.newMod || selectedItem.initialMod || '000000000000',
-          attunement: selectedItem.newValues.newAttunement?.toString() ?? selectedItem.initialAttunement?.toString() ?? '0',
-          isAttunementOverridden: selectedItem.newValues.isAttunementOverridden ?? selectedItem.isAttunementOverridden
-        }));
+        };
+        console.log('Updating editor state with:', newState);
+        dispatch(updateEditorState(newState));
       }
+      // Move this dispatch after updating the editor state
+      dispatch(setSelectedIndex(index));
     }
-  }, [dispatch, queueItems, selectedQueueIndex]);
+  }, [dispatch, selectedQueueIndex, queueItems]);
 
   // Reset a queue item to its initial state
   const handleQueueItemReset = useCallback((e: React.MouseEvent, index: number) => {
     e.stopPropagation();
-    const item = currentPageItems.find(item => item.index === index);
-    if (item) {
-      dispatch(resetQueueItem(index));
-      if (index === selectedQueueIndex) {
-        dispatch(updateEditorState({
-          seed: item.initialSeed,
-          mod: item.initialMod || '000000000000',
-          attunement: item.initialAttunement?.toString() || '0',
-        }));
-      }
-      dispatch(updateQueueOrder());
-    }
-  }, [dispatch, selectedQueueIndex, currentPageItems]);
+    dispatch(resetQueueItemAndUpdateEditor(index));
+    dispatch(updateQueueOrder());
+  }, [dispatch]);
 
   // Click the inscribe button
   const handleInscribeClick = useCallback(() => {
@@ -150,13 +138,6 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
 
   // Store divider index
   const dividerIndex = useMemo(() => getDividerIndex(currentPageItems), [currentPageItems, getDividerIndex]);
-
-
-  // EFFECTS --------------------------------------
-
-  useEffect(() => {
-    // This effect will run whenever the queue items change
-  }, [queueItems.length]);
 
   
 

@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit';
 import { RootState } from '@/store';
 import { calculateMostFrequentNumeral } from '@/lib/utils/global';
+import { resetEditorToQueueItem } from './editorSlice';
 
 
 
@@ -14,6 +15,7 @@ export interface QueueItem {
   initialSeed: string;
   initialMod: string | null;
   initialAttunement: number | null;
+  initialAttunementOverridden: boolean;
   isAttunementOverridden: boolean;
   isSet: boolean;
   newValues: {
@@ -54,10 +56,13 @@ const queueSlice = createSlice({
       state.items = action.payload.map(item => ({
         ...item,
         initialAttunement: item.initialAttunement ?? calculateMostFrequentNumeral(BigInt(item.initialSeed)) ?? 0,
+        initialAttunementOverridden: item.initialAttunement !== null,
+        isAttunementOverridden: item.initialAttunement !== null,
         newValues: {
           newSeed: null,
           newMod: null,
           newAttunement: null,
+          isAttunementOverridden: null,
         },
       }));
     },
@@ -80,8 +85,10 @@ const queueSlice = createSlice({
           newSeed: null,
           newMod: null,
           newAttunement: null,
+          isAttunementOverridden: null,
         };
         state.items[index].isSet = false;
+        state.items[index].isAttunementOverridden = state.items[index].initialAttunementOverridden;
       }
     },
     setSelectedIndex: (state, action: PayloadAction<number | null>) => {
@@ -195,6 +202,15 @@ export const selectCurrentPageItems = createSelector(
     return items.slice(startIndex, endIndex);
   }
 );
+
+export const resetQueueItemAndUpdateEditor = (index: number) => (dispatch: any, getState: () => RootState) => {
+  dispatch(resetQueueItem(index));
+  const state = getState();
+  const resetItem = state.queue.items[index];
+  if (resetItem) {
+    dispatch(resetEditorToQueueItem(resetItem));
+  }
+};
 
 
 // EXPORTED ACTIONS ---------------------------------

@@ -107,9 +107,11 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
                 const spinElements = svg.querySelectorAll('.lr.on, .sub.on');
                 const depthElements = svg.querySelectorAll('.lr.on .fx, .sub.on .fx');
 
-                memoizedApplyModValueToElements(colorElements, modValues.color, 'color');
-                memoizedApplyModValueToElements(spinElements, modValues.spin, 'spin');
-                memoizedApplyModValueToElements(depthElements, modValues.depth, 'depth');
+                if (editorMod !== '000000000000') {
+                    memoizedApplyModValueToElements(colorElements, modValues.color, 'color');
+                    memoizedApplyModValueToElements(spinElements, modValues.spin, 'spin');
+                    memoizedApplyModValueToElements(depthElements, modValues.depth, 'depth');
+                }
             
                 const rgblens = document.querySelector('.rgblens') as HTMLElement;
                 if (rgblens) {
@@ -148,20 +150,22 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
 
     // EFFECTS ----------------------------------------
 
+    const artworkDependencies = useMemo(() => ({
+        editorSeed,
+        editorAttunement,
+        isAttunementOverridden,
+        isSpinAnimationPaused,
+        modValuesString: JSON.stringify(modValues),
+        displaySettingsString: JSON.stringify(displaySettings),
+    }), [editorSeed, editorAttunement, isAttunementOverridden, isSpinAnimationPaused, modValues, displaySettings]);
 
     useLayoutEffect(() => {
         if (svgRef.current) {
             updateArtwork();
             updateAttunement();
-        }
-    }, [svgRef, editorSeed, editorAttunement, isAttunementOverridden, isSpinAnimationPaused, memoizedApplyModValueToElements]);
-
-    useLayoutEffect(() => {
-        if (svgRef.current) {
             resetLayersCallback();
-            updateArtwork();
         }
-    }, [svgRef, resetLayersCallback, updateArtwork, modValues, editorMod]);
+    }, [svgRef, updateArtwork, updateAttunement, resetLayersCallback, artworkDependencies, modValues, editorMod]);
 
     useEffect(() => {
         updateArtworkRef.current = updateArtwork;

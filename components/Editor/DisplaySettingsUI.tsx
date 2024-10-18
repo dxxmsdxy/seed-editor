@@ -69,15 +69,10 @@ const DisplaySettings: React.FC = () => {
   // Toggle attunement override state
   const handleAttunementToggle = useCallback(() => {
     const defaultAttunement = calculateMostFrequentNumeral(BigInt(editorSeed))?.toString() ?? "0";
-    if (isAttunementOverridden) {
-      // If attunement is overridden, reset it to the default value
-      dispatch(updateEditorState({ attunement: defaultAttunement }));
-      dispatch(resetAttunementOverride());
-    } else {
-      // If attunement is not overridden, set isAttunementOverridden to true
-      dispatch(updateEditorState({ attunement: editorAttunement }));
-      dispatch(setIsAttunementOverridden(true));
-    }
+    dispatch(updateEditorState({
+      attunement: editorAttunement,
+      isAttunementOverridden: !isAttunementOverridden
+    }));
   }, [dispatch, isAttunementOverridden, editorSeed, editorAttunement]);
 
   // Handle increment/decrement of attunement

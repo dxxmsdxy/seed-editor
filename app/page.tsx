@@ -239,34 +239,6 @@ const Home: React.FC = () => {
     }
   }, [walletConnected, dispatch]);
 
-  // Update the editor state when a queue item is selected
-  useEffect(() => {
-    if (selectedQueueIndex !== null && selectedQueueIndex < queueItems.length) {
-      const selectedItem = queueItems[selectedQueueIndex];
-      console.log('Selected queue item:', selectedItem);
-      console.log('Current editor state:', {
-        editorSeed,
-        editorMod,
-        editorAttunement,
-        isAttunementOverridden
-      });
-      if (!hasEditorChanges) {
-        console.log('Updating editor state with:', {
-          seed: selectedItem.newValues.newSeed || selectedItem.initialSeed,
-          mod: selectedItem.newValues.newMod || selectedItem.initialMod || '000000000000',
-          attunement: selectedItem.newValues.newAttunement?.toString() || selectedItem.initialAttunement?.toString(),
-          isAttunementOverridden: selectedItem.isAttunementOverridden
-        });
-        dispatch(updateEditorState({
-          seed: selectedItem.newValues.newSeed || selectedItem.initialSeed,
-          mod: selectedItem.newValues.newMod || selectedItem.initialMod || '000000000000',
-          attunement: selectedItem.newValues.newAttunement?.toString() || selectedItem.initialAttunement?.toString(),
-          isAttunementOverridden: selectedItem.isAttunementOverridden
-        }));
-      }
-    }
-  }, [selectedQueueIndex, queueItems, hasEditorChanges, dispatch, editorSeed, editorMod, editorAttunement, isAttunementOverridden]);
-
   // Toggle changes flags on Editor element
   useEffect(() => {
     const editorElement = document.querySelector('.editor');
@@ -529,13 +501,11 @@ const Home: React.FC = () => {
   // Conditions for when editor seed can be reset
   const enableSeedResetButton = useMemo(() => {
     const isNonZeroSeed = editorSeed !== '0';
-    const isNonDefaultMod = editorMod !== '000000000000';
+    /* const isNonDefaultMod = editorMod !== '000000000000';
     const calculatedNumber = calculateMostFrequentNumeral(BigInt(editorSeed));
-    const isNonDefaultAttunement = calculatedNumber !== null && (editorAttunement ? editorAttunement.toString() : '0') !== calculatedNumber.toString();
+    const isNonDefaultAttunement = calculatedNumber !== null && (editorAttunement ? editorAttunement.toString() : '0') !== calculatedNumber.toString(); */
 
-
-    
-    return isNonZeroSeed && isNonDefaultMod || isNonZeroSeed && isNonDefaultAttunement;
+    return isNonZeroSeed //&& isNonDefaultMod || isNonZeroSeed && isNonDefaultAttunement;
   }, [editorSeed, editorMod, editorAttunement]);
 
   // Memoized artwork component
