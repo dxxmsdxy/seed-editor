@@ -1893,20 +1893,20 @@ body:has(.theme-bkg)
 }
 
 .mod-style-picker {
-  display: flex;
-  font-size:14px;
+	display: flex;
+	font-size:14px;
 	font-weight:700;
 	justify-content:center;
-  align-content: center;
-  justify-items: center;
-  align-items: center;
+	align-content: center;
+	justify-items: center;
+	align-items: center;
 	letter-spacing:1px;
 	line-height:0;
-  border:1px solid var(--ui-color);
+	border:1px solid var(--ui-color);
 	color:var(--ui-color);
-  cursor: pointer;
-  transition:color .2s ease-in-out,background-color .2s ease-in-out;
-  display: none;
+	cursor: pointer;
+	transition:color .2s ease-in-out,background-color .2s ease-in-out;
+	display: none;
 }
 
 .btn-display-setting
@@ -1926,7 +1926,7 @@ body:has(.theme-bkg)
 	position: relative;
 }
 
-btn-display-setting::before {
+.btn-display-setting::before {
 	content: '';
 	position: absolute;
 	top: 0;
