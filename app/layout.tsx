@@ -45,13 +45,13 @@ export default function RootLayout({
     <ViewTransitions>
       <html lang="en">
         <head>
-          <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#f5f5f5"/>
+          <link rel="mask-icon" href="/safari-pinned-tab.svg" color="var(--theme-color)"/>
           <meta name="apple-mobile-web-app-capable" content="yes"/>
           <meta name="mobile-web-app-capable" content="yes"/>
-          <meta name="apple-mobile-web-app-status-bar-style" content="#f5f5f5"/>
+          <meta name="apple-mobile-web-app-status-bar-style" content="var(--theme-color)"/>
           <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-          <meta name="msapplication-TileColor" content="#f5f5f5"/>
-          <meta name="theme-color" content="#f5f5f5"/>
+          <meta name="msapplication-TileColor" content="var(--theme-color)"/>
+          <meta name="theme-color" content="var(--theme-color)"/>
           <link rel="preconnect" href="https://fonts.googleapis.com" />
 
           <Script src="https://seeds.mintapi.bestinslot.xyz/static/combined_dependencies.js"></Script>

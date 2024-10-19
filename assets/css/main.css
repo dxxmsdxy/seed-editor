@@ -21,6 +21,10 @@ body
 	box-sizing:border-box;
 }
 
+*, *:before, *:after {
+	box-sizing: border-box;
+  }
+
 .sleep-mode,.sleep-mode *
 {
 	cursor:none!important
