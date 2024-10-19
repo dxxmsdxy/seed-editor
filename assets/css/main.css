@@ -1919,7 +1919,25 @@ body:has(.theme-bkg)
 	cursor:pointer;
 	display:flex;
 	justify-content:center;
-	transition:color .2s ease-in-out,background-color .2s ease-in-out
+	transition:color .2s ease-in-out,background-color .2s ease-in-out;
+	-webkit-tap-highlight-color: transparent;
+	touch-action: manipulation;
+	user-select: none;
+	height: 0;
+	padding-bottom: 100%;
+	position: relative;
+}
+
+btn-display-setting::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .btn-display-setting:active,.btn-display-setting.selected,.mod-style-picker.selected,.mod-style-picker:active
