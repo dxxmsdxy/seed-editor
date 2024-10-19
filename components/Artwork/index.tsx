@@ -72,7 +72,7 @@ const Artwork = React.memo(forwardRef<{ updateArtwork: () => void }, ArtworkProp
     >
         <desc id="seedsDesc">
           SEEDS. Interpretable artwork. Code &amp; art by dxxmsdxy. Inscribed{" "}
-          {`${currentDate.getMonth() + 1}/${currentDate.getDate()}/${currentDate
+          {`${currentDate.getMonth()}/${currentDate.getDate()}/${currentDate
             .getFullYear()
             .toString()
             .slice(2)}`}
