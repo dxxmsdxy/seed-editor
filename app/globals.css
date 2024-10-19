@@ -393,10 +393,6 @@ body:has(svg.pauseColor) .colorbkg {
     border-bottom: none;
     padding-bottom: none;
   }
-
-  body:has(.advanced.selected) .app-pane {
-    margin-bottom: 12px;
-  }
 }
 
 .set-queue-item-container:has(.select:active) #checkmark path {
