@@ -1,3 +1,10 @@
+:root {
+    --sat: env(safe-area-inset-top);
+    --sar: env(safe-area-inset-right);
+    --sab: env(safe-area-inset-bottom);
+    --sal: env(safe-area-inset-left);
+}
+
 html
 {
 	-ms-text-size-adjust:100%;
@@ -9,6 +16,7 @@ body
 {
 	margin:0;
 	overscroll-behavior-y: none;
+	box-sizing:border-box;
 }
 
 .sleep-mode,.sleep-mode *
@@ -135,6 +143,12 @@ button,input,optgroup,select,textarea
 button
 {
 	overflow:visible
+}
+
+
+button:focus
+{
+	outline:none!important
 }
 
 button,select
@@ -7318,7 +7332,6 @@ body:has(.changed-mod) .mod-sliders
 	}
 }
 
-button:focus
-{
-	outline:none!important
+@media(display-mode: standalone),(display-mode: fullscreen),(display-mode: minimal-ui){
+    
 }
