@@ -104,7 +104,7 @@ export const MenuDesktop = ({ dropdownOpen, setDropdownOpen }) => {
               className="dropdown-link social z-dropdown-link"
               tabIndex={0}
             >
-              Twitter
+              X
             </a>
             <a
               href="https://discord.gg/UMD27gr5WB"
