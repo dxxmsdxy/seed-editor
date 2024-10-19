@@ -75,7 +75,6 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
         editorAttunement,
         isSpinAnimationPaused
     }), [editorSeed, modValues, editorMod, editorAttunement, isSpinAnimationPaused]);
-      
 
     // Update the artwork with editor state
     const updateArtwork = useCallback(() => {
@@ -89,8 +88,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
                 const displayClasses = ['reveal', 'flip', 'invert', 'hyper', 'grayscale', 'cmyk', 'accent-1', 'accent-2', 'accent-3'];
                 const isPalindrome = checkPalindrome(BigInt(editorSeed));
                 const isSingleDigit = editorSeed.length === 1;
-
-                resetLayers(svg);
+                
                 updateSVGWithSeed(BigInt(editorSeed), svg, bitsArray);
                 svg.classList.add(...classesToAdd);
                 svg.setAttribute("width", "100%");
@@ -157,13 +155,13 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
 
     // EFFECTS ----------------------------------------
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (svgRef.current) {
             updateArtwork();
             updateAttunement();
             resetLayersCallback();
         }
-    }, [svgRef, updateArtwork, updateAttunement, resetLayersCallback, artworkDependencies, modValues, editorMod]);
+    }, [svgRef, updateArtwork, updateAttunement, resetLayersCallback, artworkDependencies]);
 
     useEffect(() => {
         updateArtworkRef.current = updateArtwork;

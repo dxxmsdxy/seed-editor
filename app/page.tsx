@@ -327,7 +327,8 @@ const Home: React.FC = () => {
               newValues: {
                 newSeed: editorSeed,
                 newMod: editorMod,
-                newAttunement: parseInt(editorAttunement)
+                newAttunement: parseInt(editorAttunement),
+                isAttunementOverridden: isAttunementOverridden
               }
             }));
             dispatch(setSelectedIndex(index));

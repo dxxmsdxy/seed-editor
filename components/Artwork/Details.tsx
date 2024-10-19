@@ -1,3 +1,5 @@
+import React, { useMemo } from 'react';
+import { createSelector } from '@reduxjs/toolkit';
 import { useAppSelector } from '@/app/hooks';
 import { getMintOrder, calculateRemainder, calculateMostFrequentNumeral } from '@/lib/utils/global';
 import { generateName } from '@/lib/utils/nameGenerator';
@@ -11,6 +13,12 @@ interface DetailsProps {
   bitsArray: boolean[];
   generatedName: string;
 }
+
+const selectSelectedItem = createSelector(
+  (state) => state.queue.selectedIndex,
+  (state) => state.queue.items,
+  (selectedIndex, items) => selectedIndex !== null ? items[selectedIndex] : null
+);
 
 const getAttunementString = (attunement: number): string => {
   const attunements = [
@@ -43,19 +51,17 @@ const Details: React.FC<DetailsProps> = ({
   bitsArray,
   generatedName,
 }) => {
-  const activeBits = bitsArray.filter(bit => bit).length;
-  const cardinalNumber = calculateRemainder(BigInt(editorSeed));
-  const naturalAttunement = calculateMostFrequentNumeral(BigInt(editorSeed));
+  const selectedItem = useAppSelector(selectSelectedItem);
 
-  const seedState = editorMod === "000000000000" && editorAttunement == naturalAttunement ? "Natural" : "Modified";
+  const memoizedValues = useMemo(() => {
+    const activeBits = bitsArray.filter(bit => bit).length;
+    const cardinalNumber = calculateRemainder(BigInt(editorSeed));
+    const naturalAttunement = calculateMostFrequentNumeral(BigInt(editorSeed));
+    return { activeBits, cardinalNumber, naturalAttunement };
+  }, [editorSeed, bitsArray]);
 
-  // Get the selected queue item and its properties
-  const selectedItem = useAppSelector(state => {
-    const selectedIndex = state.queue.selectedIndex;
-    return selectedIndex !== null ? state.queue.items[selectedIndex] : null;
-  });
+  const seedState = editorMod === "000000000000" && editorAttunement == +memoizedValues.naturalAttunement ? "Natural" : "Modified";
 
-  // Handle cases where the item might not have seedList data
   // Determine the kind based on the selected item
   let selectedKind = "--";
   if (selectedItem) {
@@ -114,11 +120,11 @@ const Details: React.FC<DetailsProps> = ({
               </li>
               <li className="metadata-item">
                 <span className="metadata-label">Bits:</span>
-                <span className="metadata-value">{activeBits}</span>
+                <span className="metadata-value">{memoizedValues.activeBits}</span>
               </li>
               <li className="metadata-item">
                 <span className="metadata-label">Cardinal No.:</span>
-                <span className="metadata-value">{cardinalNumber.toString()}</span>
+                <span className="metadata-value">{memoizedValues.cardinalNumber.toString()}</span>
               </li>
             </ul>
           </div>

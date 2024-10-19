@@ -96,7 +96,7 @@ const queueSlice = createSlice({
     },
     updateQueueItemWithDragDrop: (state, action: PayloadAction<{ 
       index: number; 
-      newValues: Partial<QueueItem['newValues']> 
+      newValues: Partial<QueueItem['newValues']> & { isAttunementOverridden?: boolean }
     }>) => {
       const { index, newValues } = action.payload;
       if (index >= 0 && index < state.items.length) {
@@ -104,6 +104,9 @@ const queueSlice = createSlice({
           ...state.items[index].newValues,
           ...newValues,
         };
+        if (newValues.isAttunementOverridden !== undefined) {
+          state.items[index].isAttunementOverridden = newValues.isAttunementOverridden;
+        }
         state.selectedIndex = index;
       }
     },

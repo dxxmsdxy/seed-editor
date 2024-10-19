@@ -1,5 +1,7 @@
-import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import React, { useRef, useEffect, useMemo, forwardRef } from 'react';
+import { useAppSelector } from '@/app/hooks';
 import ArtTransformer from './ArtTransformer';
+import { selectEditorSeed, selectEditorMod, selectEditorAttunement, selectIsAttunementOverridden, selectDisplaySettings } from '@/store/slices/editorSlice';
 
 
 
@@ -19,59 +21,55 @@ interface ArtworkProps {
   onArtworkReady: () => void;
 }
 
-const Artwork = forwardRef<{ updateArtwork: () => void }, ArtworkProps>((props, ref) => {
-  Artwork.displayName = 'Artwork';
+const Artwork = React.memo(forwardRef<{ updateArtwork: () => void }, ArtworkProps>((props, ref) => {
+  const {
+    seed,
+    mod,
+    attunement,
+    isPlaying,
+    onArtworkReady,
+    selectedQueueIndex,
+  } = props;
+
   const svgRef = useRef<SVGSVGElement>(null);
   const updateArtworkRef = useRef<(() => void) | undefined>(undefined);
   const currentDate = new Date();
 
+  const editorSeed = useAppSelector(selectEditorSeed);
+  const editorMod = useAppSelector(selectEditorMod);
+  const editorAttunement = useAppSelector(selectEditorAttunement);
+  const isAttunementOverridden = useAppSelector(selectIsAttunementOverridden);
+  const displaySettings = useAppSelector(selectDisplaySettings);
+
+  const isSpinAnimationPaused = useMemo(() => !isPlaying, [isPlaying]);
+
   useEffect(() => {
-    if (svgRef.current) {
-      props.onArtworkReady();
-      // Trigger an update when the artwork is ready
-      if (updateArtworkRef.current) {
-        updateArtworkRef.current();
-      }
+    if (typeof ref === 'function') {
+      ref({ updateArtwork: () => updateArtworkRef.current?.() });
+    } else if (ref) {
+      ref.current = { updateArtwork: () => updateArtworkRef.current?.() };
     }
-  }, [svgRef.current, props.onArtworkReady]);
+  }, [ref]);
 
-  useImperativeHandle(ref, () => ({
-    updateArtwork: () => {
-      if (updateArtworkRef.current) {
-        updateArtworkRef.current();
-      }
-    }
-  }));
-
-
-
-  // STRUCTURE ------------------------------------
-
-  return (
-    <>
-      <ArtTransformer
-        svgRef={svgRef}
-        updateArtworkRef={updateArtworkRef}
-        isSpinAnimationPaused={!props.isPlaying}
-      />
-      <svg
-        ref={svgRef}
-        xmlns="http://www.w3.org/2000/svg"
-        xmlnsXlink="http://www.w3.org/1999/xlink"
-        version="1.1"
-        id="seedsArtwork"
-        x="0"
-        y="0"
-        width="100%"
-        height="100%"
-        viewBox="0 0 1440 1920"
-        role="img"
-        data-seed={0}
-        tabIndex={0}
-        data-mod={props.editorMod}
-        data-attunement={props.editorAttunement}
-        preserveAspectRatio="true"
-      >
+  const memoizedSVG = useMemo(() => (
+    <svg
+      ref={svgRef}
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 1440 1920"
+      className={`artwork ${isPlaying ? 'playing' : ''}`}
+      version="1.1"
+      id="seedsArtwork"
+      x="0"
+      y="0"
+      width="100%"
+      height="100%"
+      role="img"
+      data-seed={0}
+      tabIndex={0}
+      data-mod={props.editorMod}
+      data-attunement={props.editorAttunement}
+      preserveAspectRatio="true"
+    >
         <desc id="seedsDesc">
           SEEDS. Interpretable artwork. Code &amp; art by dxxmsdxy. Inscribed{" "}
           {`${currentDate.getMonth() + 1}/${currentDate.getDate()}/${currentDate
@@ -905,8 +903,18 @@ const Artwork = forwardRef<{ updateArtwork: () => void }, ArtworkProps>((props, 
           </g>
         </g>
       </svg>
-    </>
-  );
-});
+    ), [isPlaying]);
+
+return (
+  <>
+    {memoizedSVG}
+    <ArtTransformer
+      svgRef={svgRef}
+      updateArtworkRef={updateArtworkRef}
+      isSpinAnimationPaused={isSpinAnimationPaused}
+    />
+  </>
+);
+}));
 
 export default Artwork;
