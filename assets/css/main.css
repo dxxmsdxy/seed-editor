@@ -940,18 +940,6 @@ label
 	width:auto
 }
 
-@media screen and (max-width: 991px) {
-	.z-nav[data-collapse="medium"] .z-nav-menu
-	{
-		display:none
-	}
-
-	.z-nav[data-collapse="medium"] .z-nav-button
-	{
-		display:block!important
-	}
-}
-
 @media screen and (max-width: 767px) {
 	.z-nav[data-collapse="small"] .z-nav-menu
 	{
@@ -5620,8 +5608,8 @@ body:has(.changed-mod) .mod-sliders
 	.seed-input
 	{
 		display: block;
-		padding-left:10px;
-		padding-right:10px;
+		padding-left: 10px;
+		padding-right: 0px;
 	}
 
 	.seed-indicator
@@ -5752,9 +5740,23 @@ body:has(.changed-mod) .mod-sliders
 		min-height:65vh
 	}
 
+	.z-nav[data-collapse="medium"] .z-nav-menu
+	{
+		display:none
+	}
+
+	.z-nav[data-collapse="medium"] .z-nav-button
+	{
+		display:block
+	}
+
 	body:has(.seed-details.focused) .svg-container
 	{
 		transform:scale3d(1.1,1.1,1)translate(0,3vh)
+	}
+
+	body:has(.seed-details.focused) .z-nav-button {
+		display: none;
 	}
 
 	.svg-image-container
