@@ -155,7 +155,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
 
     // EFFECTS ----------------------------------------
 
-    useLayoutEffect(() => {
+    useEffect(() => {
         if (svgRef.current) {
             updateArtwork();
             updateAttunement();

@@ -56,7 +56,7 @@ const Artwork = React.memo(forwardRef<{ updateArtwork: () => void }, ArtworkProp
       ref={svgRef}
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 1440 1920"
-      className={`artwork ${isPlaying ? 'playing' : ''}`}
+      className={`seedartwork ${isPlaying ? 'playing' : ''}`}
       version="1.1"
       id="seedsArtwork"
       x="0"
