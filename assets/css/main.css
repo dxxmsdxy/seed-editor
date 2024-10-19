@@ -1375,6 +1375,17 @@ body:has(.theme-bkg)
 	position:relative
 }
 
+.ui-element
+{
+	transition:opacity 0.5s;
+}
+
+.ui-element.disabled
+{
+	opacity: 0.1;
+	pointer-events: none;
+}
+
 .collection-name
 {
 	color:var(--ui-color);
@@ -1876,6 +1887,11 @@ body:has(.theme-bkg)
 	text-overflow:ellipsis;
 	white-space:nowrap;
   transition: color 0.2s, background-color 0.2s;
+}
+
+.mod-container
+{
+	width: 100%;
 }
 
 .mod-controls
@@ -4489,6 +4505,11 @@ body:has(.seed-details.focused) .app-pane.left {
 	stroke: var(--theme-color);
 }
 
+.seed-details .metadata-icon {
+	width: 13px;
+    height: 13px;
+}
+
 .queue-item .metadata-icon
 {
 	position: absolute;
@@ -5062,7 +5083,7 @@ body:has(.changed-mod) .mod-sliders
 
 .draggable-state
 {
-  display: inline-block;
+  	display: inline-block;
 	background:var(--theme-color);
 	background-color:#000e;
 	border:'1px solid black';
@@ -5074,10 +5095,10 @@ body:has(.changed-mod) .mod-sliders
 	pointer-events:none;
 	transform:translate(-50%,-50%);
 	z-index:9999;
-  font-size: 0.8em;
-  font-weight: 700;
-  opacity: 0;
-  animation: uiLoad 0.3s 0.15s forwards;
+	font-size: 0.8em;
+	font-weight: 700;
+	opacity: 0;
+	animation: uiLoad 0.3s 0.15s forwards;
 }
 
 @keyframes uiLoad {
@@ -5096,11 +5117,13 @@ body:has(.changed-mod) .mod-sliders
 .grabbing .queue-item:hover
 {
 	background-color:#eee1;
+	opacity: 1;
+	color: #000;
   	cursor: grabbing;
 }
 
 .grabbing .svg-container {
-  transform: scale3d(1.01,1.01,1)translate3d(4px,0,0);
+  transform: scale3d(0.98,0.98,1)translate3d(10px,0,0);
   box-shadow: 0 0 1px 6px rgba(0,0,0,0.1);
   transition: transform 0.6s 0.1s, box-shadow 0.6s 0.1s;
 }
@@ -5720,7 +5743,8 @@ body:has(.changed-mod) .mod-sliders
 		flex:0 auto
 	}
 
-	.layer-grid-wrap
+	.layer-grid-wrap,
+	.display-settings-wrap
 	{
 		padding-bottom:30px
 	}
@@ -6218,6 +6242,29 @@ body:has(.changed-mod) .mod-sliders
 	{
 		flex:0 auto;
 		order:1
+	}
+
+	.attunement-selector .reset-attunement
+	{
+		position: static;
+		display: block;
+	}
+
+	.attunement-selector.default .reset-attunement
+	{
+		display: none;
+	}
+
+	body:has(.seed-details.focused) .layer-grid-wrap,
+	body:has(.seed-details.focused) .display-settings-wrap,
+	body:has(.seed-details.focused) .advanced{
+		display:none;
+	}
+
+	body:has(.seed-details.focused) .app-pane.left
+	{
+		transform: none;
+		width: 100%;
 	}
 
 	.layer-grid-wrap

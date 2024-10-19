@@ -71,6 +71,8 @@ const Details: React.FC<DetailsProps> = ({
   const mintOrder = selectedItem?.mintOrder ?? null;
   const mintOrderDisplay = mintOrder !== null ? (mintOrder + 1).toString() : "--";
 
+  const isDisabled = mintOrder === null;
+
   // Determine if the item is from the seedList
   const isFromSeedList = selectedItem?.id !== undefined && selectedItem?.kind !== undefined;
 
@@ -138,8 +140,8 @@ const Details: React.FC<DetailsProps> = ({
               <li className="ui-element">PNG</li>
               <li className="ui-element">SVG</li>
               <span className="split-button">
-                <li className="ui-element">Embed</li>
-                <li className="ui-element">Raw</li>
+                <li className={`ui-element details-embed ${isDisabled ? 'disabled' : ''}`}>Embed</li>
+                <li className={`ui-element details-raw ${isDisabled ? 'disabled' : ''}`}>Raw</li>
               </span>
             </ul>
           </div>

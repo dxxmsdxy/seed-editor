@@ -351,6 +351,7 @@
 .seedartwork.invert .wrap,
 .seedartwork.invert .backdrop {
   filter: hue-rotate(180deg) saturate(1) invert(1);
+  -webkit-filter: hue-rotate(180deg) saturate(1) invert(1);
 }
 .seedartwork.reveal:has(g.on) .art g.on .fx * {
   animation: pulseCycle 6.75s linear 0s infinite forwards;
