@@ -5752,6 +5752,11 @@ body:has(.changed-mod) .mod-sliders
 		min-height:65vh
 	}
 
+	body:has(.seed-details.focused) .svg-container
+	{
+		transform:scale3d(1.1,1.1,1)translate(0,3vh)
+	}
+
 	.svg-image-container
 	{
 		margin-bottom:0
