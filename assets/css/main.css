@@ -1923,8 +1923,6 @@ body:has(.theme-bkg)
 	-webkit-tap-highlight-color: transparent;
 	touch-action: manipulation;
 	user-select: none;
-	height: 0;
-	padding-bottom: 100%;
 	position: relative;
 }
 
