@@ -1935,11 +1935,16 @@ body:has(.theme-bkg)
 	cursor:pointer;
 	display:flex;
 	justify-content:center;
+	align-items: center;
 	transition:color .2s ease-in-out,background-color .2s ease-in-out;
 	-webkit-tap-highlight-color: transparent;
 	touch-action: manipulation;
 	user-select: none;
 	position: relative;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	-webkit-touch-callout: none;
 }
 
 .btn-display-setting::before {
@@ -1952,6 +1957,13 @@ body:has(.theme-bkg)
 	display: flex;
 	align-items: center;
 	justify-content: center;
+}
+
+.display-settings-wrap button svg {
+	max-width: 100%;
+	max-height: 100%;
+	-webkit-transform: translateZ(0);
+	transform: translateZ(0);
 }
 
 .btn-display-setting:active,.btn-display-setting.selected,.mod-style-picker.selected,.mod-style-picker:active
