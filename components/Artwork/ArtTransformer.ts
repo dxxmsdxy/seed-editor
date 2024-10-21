@@ -2,7 +2,7 @@ import React, { useLayoutEffect, useEffect, useMemo, useCallback } from 'react';
 import { useAppSelector } from '@/app/hooks';
 import { updateSVGWithSeed } from "@/lib/utils/artwork/updateSVGWithSeed";
 import { applyModValueToElements, resetLayers, flipLayers } from '@/lib/utils/artwork/updateSVGWithMod';
-import { selectEditorSeed, selectEditorMod, selectEditorAttunement, selectBitsArray, selectIsAttunementOverridden, selectModValues, selectDisplaySettings } from '@/store/slices/editorSlice';
+import { selectBitsArray } from '@/store/slices/editorSlice';
 import { attunementNames, updateThemeColor, checkPalindrome, calculateMostFrequentNumeral } from '@/lib/utils/global';
 
 
@@ -16,7 +16,20 @@ interface ArtTransformerProps {
     svgRef: React.RefObject<SVGSVGElement>;
     updateArtworkRef: React.MutableRefObject<(() => void) | undefined>;
     isSpinAnimationPaused: boolean;
-}
+    editorSeed: string;
+    editorMod: string;
+    editorAttunement: string;
+    isAttunementOverridden: boolean;
+    modValues: {
+        color: number;
+        spin: number;
+        depth: number;
+        tint: number;
+        tintPercent: number;
+    };
+    displaySettings: any;
+  }
+  
 
 // LOGIC -----------------------------------------
 
@@ -24,31 +37,23 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
     svgRef,
     updateArtworkRef,
     isSpinAnimationPaused,
+    editorSeed,
+    editorMod,
+    editorAttunement,
+    isAttunementOverridden,
+    modValues,
+    displaySettings,
 }) => {
+
 
     // REDUX STATE -------------------------------
     
-    const editorSeed = useAppSelector(selectEditorSeed);
     const bitsArray = useAppSelector(selectBitsArray);
-    const editorMod = useAppSelector(selectEditorMod);
-    const editorAttunement = useAppSelector(selectEditorAttunement);
-    const isAttunementOverridden = useAppSelector(selectIsAttunementOverridden);
-    const modValues = useAppSelector(selectModValues);
-    const displaySettings = useAppSelector(selectDisplaySettings);
 
 
     // CALLBACKS ----------------------------------
 
     const memoizedApplyModValueToElements = useMemo(() => applyModValueToElements, []);
-
-    const artworkDependencies = useMemo(() => ({
-        editorSeed,
-        editorAttunement,
-        isAttunementOverridden,
-        isSpinAnimationPaused,
-        modValues,
-        displaySettings,
-    }), [editorSeed, editorAttunement, isAttunementOverridden, isSpinAnimationPaused, modValues, displaySettings]);
 
     // Reset the SVG's layers to initial state
     const resetLayersCallback = useMemo(() => {
@@ -56,14 +61,20 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
             if (svgRef.current) {
                 const svg = svgRef.current;
                 resetLayers(svg);
-
+    
                 const colorElements = document.querySelectorAll('.seedartwork,.lr path,.lr polygon, .lr circle, .lr .ellipse, .lr line, .lr rect, .lr .polyline,.sub path,.sub polygon,.sub circle,.sub ellipse,.sub line,.sub rect,.sub polyline,.sub .fx');
                 const spinElements = svg.querySelectorAll('.lr, .sub');
                 const depthElements = svg.querySelectorAll('.lr .fx, .sub .fx');
-                
-                memoizedApplyModValueToElements(colorElements, modValues.color, 'color');
-                memoizedApplyModValueToElements(spinElements, modValues.spin, 'spin');
-                memoizedApplyModValueToElements(depthElements, modValues.depth, 'depth');
+
+                if (modValues && modValues.color !== undefined) {
+                    memoizedApplyModValueToElements(colorElements, modValues.color, 'color');
+                }
+                if (modValues && modValues.spin !== undefined) {
+                    memoizedApplyModValueToElements(spinElements, modValues.spin, 'spin');
+                }
+                if (modValues && modValues.depth !== undefined) {
+                    memoizedApplyModValueToElements(depthElements, modValues.depth, 'depth');
+                }
             }
         };
     }, [svgRef, modValues]);
@@ -155,13 +166,13 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
 
     // EFFECTS ----------------------------------------
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (svgRef.current) {
             updateArtwork();
             updateAttunement();
             resetLayersCallback();
         }
-    }, [updateArtwork, updateAttunement, resetLayersCallback]);
+    }, [updateArtwork, updateAttunement, resetLayersCallback, isSpinAnimationPaused]);
 
     useEffect(() => {
         updateArtworkRef.current = updateArtwork;

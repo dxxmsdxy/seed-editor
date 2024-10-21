@@ -16,6 +16,9 @@ interface ArtworkProps {
   editorSeed: string;
   editorMod: string;
   editorAttunement: string;
+  isAttunementOverridden: boolean;
+  modValues: any; // Replace 'any' with the correct type
+  displaySettings: any; // Replace 'any' with the correct type
   selectedQueueIndex: number | null;
   isPlaying: boolean;
   onArtworkReady: () => void;
@@ -29,17 +32,18 @@ const Artwork = React.memo(forwardRef<{ updateArtwork: () => void }, ArtworkProp
     isPlaying,
     onArtworkReady,
     selectedQueueIndex,
+    editorSeed,
+    editorMod,
+    editorAttunement,
+    isAttunementOverridden,
+    modValues,
+    displaySettings,
   } = props;
 
   const svgRef = useRef<SVGSVGElement>(null);
   const updateArtworkRef = useRef<(() => void) | undefined>(undefined);
   const currentDate = new Date();
 
-  const editorSeed = useAppSelector(selectEditorSeed);
-  const editorMod = useAppSelector(selectEditorMod);
-  const editorAttunement = useAppSelector(selectEditorAttunement);
-  const isAttunementOverridden = useAppSelector(selectIsAttunementOverridden);
-  const displaySettings = useAppSelector(selectDisplaySettings);
 
   const isSpinAnimationPaused = useMemo(() => !isPlaying, [isPlaying]);
 
@@ -912,6 +916,12 @@ return (
       svgRef={svgRef}
       updateArtworkRef={updateArtworkRef}
       isSpinAnimationPaused={isSpinAnimationPaused}
+      editorSeed={editorSeed}
+      editorMod={editorMod}
+      editorAttunement={editorAttunement}
+      isAttunementOverridden={isAttunementOverridden}
+      modValues={modValues}
+      displaySettings={displaySettings}
     />
   </>
 );

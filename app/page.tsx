@@ -448,10 +448,20 @@ const Home: React.FC = () => {
       editorSeed={editorSeed}
       editorMod={editorMod}
       editorAttunement={editorAttunement}
+      isAttunementOverridden={isAttunementOverridden}
+      modValues={modValues}
+      displaySettings={displaySettings}
       onArtworkReady={handleArtworkReady}
       selectedQueueIndex={selectedQueueIndex}
     />
-  ), [editorSeed, editorMod, editorAttunement, isPlaying, selectedQueueIndex]);
+  ), [editorSeed,
+    editorMod,
+    editorAttunement,
+    isPlaying,
+    selectedQueueIndex,
+    isAttunementOverridden,
+    modValues,
+    displaySettings]);
 
 
   
