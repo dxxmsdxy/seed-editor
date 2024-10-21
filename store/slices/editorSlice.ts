@@ -237,9 +237,9 @@ const editorSlice = createSlice({
     
           // If the previous state is identical to the current state, find the next different state
           while (state.history.past.length > 0 && 
-                 previous.seed === state.editorSeed && 
-                 previous.mod === state.editorMod && 
-                 previous.attunement === state.editorAttunement) {
+                previous.seed === state.editorSeed && 
+                previous.mod === state.editorMod && 
+                previous.attunement === state.editorAttunement) {
             const nextPrevious = state.history.past.pop();
             if (nextPrevious) {
               state.history.future.push(previous);
@@ -263,9 +263,9 @@ const editorSlice = createSlice({
         do {
           next = state.history.future.pop();
         } while (state.history.future.length > 0 && 
-                 next?.seed === state.editorSeed && 
-                 next?.mod === state.editorMod && 
-                 next?.attunement === state.editorAttunement);
+                next?.seed === state.editorSeed && 
+                next?.mod === state.editorMod && 
+                next?.attunement === state.editorAttunement);
     
         if (next) {
           const currentState: EditorHistoryState = {

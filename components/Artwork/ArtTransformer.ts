@@ -95,16 +95,12 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
         requestAnimationFrame(() => {
             const updates = () => {
                 
-                const classesToAdd = ['seedartwork', 'js', 'reveal', 'pauseColor', 'pauseDepth', 'spin'];
                 const displayClasses = ['reveal', 'flip', 'invert', 'hyper', 'grayscale', 'cmyk', 'accent-1', 'accent-2', 'accent-3'];
                 const isPalindrome = checkPalindrome(BigInt(editorSeed));
                 const isSingleDigit = editorSeed.length === 1;
                 
                 updateSVGWithSeed(BigInt(editorSeed), svg, bitsArray);
-                svg.classList.add(...classesToAdd);
-                svg.setAttribute("width", "100%");
-                svg.setAttribute("height", "100%");
-                svg.setAttribute("tabIndex", "0");
+                svg.classList.add('spin');
 
                 displayClasses.forEach((className, index) => {
                     const isActive = index === 0 ? (displaySettings.value & (1 << 0)) === 0 : (displaySettings.value & (1 << index)) !== 0;
@@ -126,9 +122,15 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
                 const depthElements = Array.from(svg.querySelectorAll('.lr.on .fx, .sub.on .fx'));
 
                 if (editorMod !== '000000000000' || editorMod !== null) {
-                    memoizedApplyModValueToElements(colorElements, modValues.color, 'color');
-                    memoizedApplyModValueToElements(spinElements, modValues.spin, 'spin');
-                    memoizedApplyModValueToElements(depthElements, modValues.depth, 'depth');
+                    if (modValues && modValues.color !== undefined) {
+                        memoizedApplyModValueToElements(colorElements, modValues.color, 'color');
+                    }
+                    if (modValues && modValues.spin !== undefined) {
+                        memoizedApplyModValueToElements(spinElements, modValues.spin, 'spin');
+                    }
+                    if (modValues && modValues.depth !== undefined) {
+                        memoizedApplyModValueToElements(depthElements, modValues.depth, 'depth');
+                    }
                 }
             
                 const rgblens = document.querySelector('.rgblens') as HTMLElement;
@@ -166,7 +168,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
 
     // EFFECTS ----------------------------------------
 
-    useLayoutEffect(() => {
+    useEffect(() => {
         if (svgRef.current) {
             updateArtwork();
             updateAttunement();

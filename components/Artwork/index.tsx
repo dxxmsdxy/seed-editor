@@ -60,7 +60,7 @@ const Artwork = React.memo(forwardRef<{ updateArtwork: () => void }, ArtworkProp
       ref={svgRef}
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 1440 1920"
-      className={`seedartwork ${isPlaying ? 'playing' : ''}`}
+      className={`seedartwork js reveal pauseColor pauseDepth spin ${isPlaying ? 'playing' : ''}`}
       version="1.1"
       id="seedsArtwork"
       x="0"
@@ -928,8 +928,30 @@ return (
 }));
 
 export default React.memo(Artwork, (prevProps, nextProps) => {
-  // Custom comparison to prevent re-renders
-  return prevProps.seed === nextProps.seed &&
-         prevProps.mod === nextProps.mod &&
-         prevProps.attunement === nextProps.attunement;
+  return (
+    prevProps.seed === nextProps.seed &&
+    prevProps.mod === nextProps.mod &&
+    prevProps.attunement === nextProps.attunement &&
+    prevProps.editorSeed === nextProps.editorSeed &&
+    prevProps.editorMod === nextProps.editorMod &&
+    prevProps.editorAttunement === nextProps.editorAttunement &&
+    prevProps.isAttunementOverridden === nextProps.isAttunementOverridden &&
+    prevProps.isPlaying === nextProps.isPlaying &&
+    prevProps.selectedQueueIndex === nextProps.selectedQueueIndex &&
+    shallowEqual(prevProps.modValues, nextProps.modValues) &&
+    shallowEqual(prevProps.displaySettings, nextProps.displaySettings)
+  );
 });
+
+// Helper function for shallow equality of objects
+function shallowEqual(obj1, obj2) {
+  if (obj1 === obj2) return true;
+  if (typeof obj1 !== 'object' || typeof obj2 !== 'object') return false;
+  const keys1 = Object.keys(obj1);
+  const keys2 = Object.keys(obj2);
+  if (keys1.length !== keys2.length) return false;
+  for (let key of keys1) {
+    if (obj1[key] !== obj2[key]) return false;
+  }
+  return true;
+}
