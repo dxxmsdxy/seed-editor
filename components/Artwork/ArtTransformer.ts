@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useEffect, useMemo, useCallback } from 'react';
+import React, { useLayoutEffect, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAppSelector } from '@/app/hooks';
 import { updateSVGWithSeed } from "@/lib/utils/artwork/updateSVGWithSeed";
 import { applyModValueToElements, resetLayers, flipLayers } from '@/lib/utils/artwork/updateSVGWithMod';
@@ -47,7 +47,15 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
     modValues,
     displaySettings,
 }) => {
-
+    const previousValuesRef = useRef({
+        editorSeed: '',
+        editorMod: '',
+        editorAttunement: '',
+        isSpinAnimationPaused: false,
+        modValues: { ...modValues },
+        displaySettings: { ...displaySettings },
+        isAttunementOverridden: isAttunementOverridden,
+    });
 
     // REDUX STATE -------------------------------
     
@@ -127,6 +135,30 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
         const svg = svgRef.current;
 
         requestAnimationFrame(() => {
+
+            const previousValues = previousValuesRef.current;
+            if (
+                previousValues.editorSeed === editorSeed &&
+                previousValues.editorMod === editorMod &&
+                previousValues.editorAttunement === editorAttunement &&
+                previousValues.isSpinAnimationPaused === isSpinAnimationPaused &&
+                JSON.stringify(previousValues.modValues) === JSON.stringify(modValues) &&
+                JSON.stringify(previousValues.displaySettings) === JSON.stringify(displaySettings) &&
+                previousValues.isAttunementOverridden === isAttunementOverridden
+            ) {
+                return; // No changes, skip update
+            }
+
+            previousValuesRef.current = {
+                editorSeed,
+                editorMod,
+                editorAttunement,
+                isSpinAnimationPaused,
+                modValues: { ...modValues },
+                displaySettings: { ...displaySettings },
+                isAttunementOverridden,
+            };
+
             const updates = () => {
                 
                 const displayClasses = ['reveal', 'flip', 'invert', 'hyper', 'grayscale', 'cmyk', 'accent-1', 'accent-2', 'accent-3'];
@@ -169,7 +201,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
             updateThemeColor(attunementNames[Number(memoizedCalculatedAttunement)]);
           }
         }
-    }, [svgRef, editorAttunement, memoizedCalculatedAttunement, isAttunementOverridden]);
+    }, [editorAttunement, editorSeed, isAttunementOverridden]);
 
 
     // EFFECTS ----------------------------------------

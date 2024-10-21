@@ -1,7 +1,5 @@
 import React, { useRef, useEffect, useMemo, forwardRef } from 'react';
-import { useAppSelector } from '@/app/hooks';
 import ArtTransformer from './ArtTransformer';
-import { selectEditorSeed, selectEditorMod, selectEditorAttunement, selectIsAttunementOverridden, selectDisplaySettings } from '@/store/slices/editorSlice';
 
 
 
@@ -35,18 +33,15 @@ interface ArtworkProps {
 
 const Artwork = React.memo(forwardRef<{ updateArtwork: () => void }, ArtworkProps>((props, ref) => {
   const {
-    seed,
-    mod,
-    attunement,
-    isPlaying,
-    onArtworkReady,
-    selectedQueueIndex,
     editorSeed,
     editorMod,
     editorAttunement,
+    isPlaying,
     isAttunementOverridden,
     modValues,
     displaySettings,
+    selectedQueueIndex,
+    onArtworkReady,
   } = props;
 
   const svgRef = useRef<SVGSVGElement>(null);
@@ -54,9 +49,6 @@ const Artwork = React.memo(forwardRef<{ updateArtwork: () => void }, ArtworkProp
   const currentDate = new Date();
   const memoizedModValues = useMemo(() => modValues, [modValues.color, modValues.spin, modValues.depth, modValues.tint, modValues.tintPercent]);
   const memoizedDisplaySettings = useMemo(() => displaySettings, [displaySettings.value, displaySettings.array]);
-
-
-  const isSpinAnimationPaused = useMemo(() => !isPlaying, [isPlaying]);
 
   useEffect(() => {
     if (typeof ref === 'function') {
@@ -71,7 +63,8 @@ const Artwork = React.memo(forwardRef<{ updateArtwork: () => void }, ArtworkProp
       ref={svgRef}
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 1440 1920"
-      className={`seedartwork js reveal pauseColor pauseDepth spin ${isPlaying ? 'playing' : ''}`}
+      className="seedartwork js reveal pauseColor pauseDepth spin"
+          
       version="1.1"
       id="seedsArtwork"
       x="0"
@@ -918,7 +911,7 @@ const Artwork = React.memo(forwardRef<{ updateArtwork: () => void }, ArtworkProp
         </g>
       </g>
     </svg>
-  ), [isPlaying, props.editorMod, props.editorAttunement]);
+  ), []);
 
 return (
   <>
@@ -926,7 +919,7 @@ return (
     <ArtTransformer
       svgRef={svgRef}
       updateArtworkRef={updateArtworkRef}
-      isSpinAnimationPaused={isSpinAnimationPaused}
+      isSpinAnimationPaused={!isPlaying}
       editorSeed={editorSeed}
       editorMod={editorMod}
       editorAttunement={editorAttunement}
