@@ -429,84 +429,12 @@ const Home: React.FC = () => {
   }, [editorSeed, editorMod, editorAttunement, isAttunementOverridden, modValues.tintPercent]);
 
 
-
-  // SOUND GEN ------------------------------
-
-  /* const [effectsSettings, setEffectsSettings] = useState({
-    reverbWetLevel: 0.7,
-    delayTime: 0.3,
-    delayFeedback: 0.4,
-    delayWetLevel: 0.5,
-    chorusWetLevel: 0.6,
-    distortionAmount: 50,
-    compressionThreshold: -30,
-    compressionKnee: 25,
-    compressionRatio: 10,
-    compressionAttack: 0.005,
-    compressionRelease: 0.3,
-  });
-  const [soundDesignSettings, setSoundDesignSettings] = useState({
-    spatialSpread: 1.0, // Default spatial spread
-    frequencyGainScale: -0.05, // Default frequency gain scaling
-  });
-
-  // Initialize audio when the component mounts or when the seed changes
-  useEffect(() => {
-    if (editorSeed && !isNaN(parseInt(String(editorSeed), 10))) {
-      startAudio(String(editorSeed));
-      setIsAudioInitialized(true);
-      // Do not call playAudio here; playback is controlled by isSpinAnimationPaused state
-    } else {
-      stopAudio();
-      setIsAudioInitialized(false);
-    }
-  }, [editorSeed]);
-
-  // Handle play/pause state changes
-  useEffect(() => {
-    if (isAudioInitialized) {
-      if (!isSpinAnimationPaused) {
-        playAudio();
-        setIsPlaying(true);
-      } else {
-        pauseAudio();
-        setIsPlaying(false);
-      }
-    }
-  }, [isAudioInitialized, isSpinAnimationPaused]);
-
-  // Handle tempo changes
-  const handleTempoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTempo = parseInt(e.target.value, 10);
-    setTempoValue(newTempo);
-    setTempo(newTempo);
-  };
-
-  // Modulate sound with Editor mod values
-  useEffect(() => {
-
-    // Example parsing (you may need to adjust based on actual structure)
-    const newModValues = {
-      color: editorMod.slice(0, 2),       // AA
-      spin: editorMod.slice(2, 4),        // BB
-      depth: editorMod.slice(4, 6),       // CC
-      tint: editorMod.slice(6, 8),        // DD
-      tintPercent: editorMod.slice(8, 9), // E
-    };
-
-    modulateSound(newModValues); // Update modValues in soundGenerator
-  }, [editorMod]); */
-
   // MEMOIZED VALUES --------------------------------
 
   // Conditions for when editor seed can be reset
   const enableSeedResetButton = useMemo(() => {
     const isNonZeroSeed = editorSeed !== '0';
-    /* const isNonDefaultMod = editorMod !== '000000000000';
-    const calculatedNumber = calculateMostFrequentNumeral(BigInt(editorSeed));
-    const isNonDefaultAttunement = calculatedNumber !== null && (editorAttunement ? editorAttunement.toString() : '0') !== calculatedNumber.toString(); */
-
-    return isNonZeroSeed //&& isNonDefaultMod || isNonZeroSeed && isNonDefaultAttunement;
+    return isNonZeroSeed
   }, [editorSeed, editorMod, editorAttunement]);
 
   // Memoized artwork component

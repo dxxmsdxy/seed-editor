@@ -46,8 +46,8 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
         editorAttunement,
         isAttunementOverridden,
         isSpinAnimationPaused,
-        modValuesString: JSON.stringify(modValues),
-        displaySettingsString: JSON.stringify(displaySettings),
+        modValues,
+        displaySettings,
     }), [editorSeed, editorAttunement, isAttunementOverridden, isSpinAnimationPaused, modValues, displaySettings]);
 
     // Reset the SVG's layers to initial state
@@ -66,7 +66,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
                 memoizedApplyModValueToElements(depthElements, modValues.depth, 'depth');
             }
         };
-    }, [svgRef, memoizedApplyModValueToElements, modValues]);
+    }, [svgRef, modValues]);
 
     const artworkState = useMemo(() => ({
         editorSeed,
@@ -114,7 +114,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
                 const spinElements = Array.from(svg.querySelectorAll('.lr.on, .sub.on'));
                 const depthElements = Array.from(svg.querySelectorAll('.lr.on .fx, .sub.on .fx'));
 
-                if (editorMod !== '000000000000') {
+                if (editorMod !== '000000000000' || editorMod !== null) {
                     memoizedApplyModValueToElements(colorElements, modValues.color, 'color');
                     memoizedApplyModValueToElements(spinElements, modValues.spin, 'spin');
                     memoizedApplyModValueToElements(depthElements, modValues.depth, 'depth');
@@ -161,7 +161,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
             updateAttunement();
             resetLayersCallback();
         }
-    }, [svgRef, updateArtwork, updateAttunement, resetLayersCallback, artworkDependencies]);
+    }, [updateArtwork, updateAttunement, resetLayersCallback]);
 
     useEffect(() => {
         updateArtworkRef.current = updateArtwork;

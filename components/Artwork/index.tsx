@@ -903,7 +903,7 @@ const Artwork = React.memo(forwardRef<{ updateArtwork: () => void }, ArtworkProp
           </g>
         </g>
       </svg>
-    ), [isPlaying]);
+    ), []);
 
 return (
   <>
@@ -917,4 +917,9 @@ return (
 );
 }));
 
-export default Artwork;
+export default React.memo(Artwork, (prevProps, nextProps) => {
+  // Custom comparison to prevent re-renders
+  return prevProps.seed === nextProps.seed &&
+         prevProps.mod === nextProps.mod &&
+         prevProps.attunement === nextProps.attunement;
+});
