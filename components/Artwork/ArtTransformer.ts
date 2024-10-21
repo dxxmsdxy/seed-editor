@@ -4,6 +4,7 @@ import { updateSVGWithSeed } from "@/lib/utils/artwork/updateSVGWithSeed";
 import { applyModValueToElements, resetLayers, flipLayers } from '@/lib/utils/artwork/updateSVGWithMod';
 import { selectBitsArray } from '@/store/slices/editorSlice';
 import { attunementNames, updateThemeColor, checkPalindrome, calculateMostFrequentNumeral } from '@/lib/utils/global';
+import { isEqual } from 'lodash';
 
 
 
@@ -131,59 +132,61 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
 
     // Update the artwork with editor state
     const updateArtwork = useCallback(() => {
-        if (!svgRef.current) return;
-        const svg = svgRef.current;
+        
+            if (!svgRef.current) return;
+            const svg = svgRef.current;
 
-        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
 
-            const previousValues = previousValuesRef.current;
-            if (
-                previousValues.editorSeed === editorSeed &&
-                previousValues.editorMod === editorMod &&
-                previousValues.editorAttunement === editorAttunement &&
-                previousValues.isSpinAnimationPaused === isSpinAnimationPaused &&
-                JSON.stringify(previousValues.modValues) === JSON.stringify(modValues) &&
-                JSON.stringify(previousValues.displaySettings) === JSON.stringify(displaySettings) &&
-                previousValues.isAttunementOverridden === isAttunementOverridden
-            ) {
-                return; // No changes, skip update
-            }
+                const previousValues = previousValuesRef.current;
+                if (
+                    previousValuesRef.current.editorSeed === editorSeed &&
+                    previousValuesRef.current.editorMod === editorMod &&
+                    previousValuesRef.current.editorAttunement === editorAttunement &&
+                    previousValuesRef.current.isSpinAnimationPaused === isSpinAnimationPaused &&
+                    previousValuesRef.current.isAttunementOverridden === isAttunementOverridden &&
+                    isEqual(previousValuesRef.current.modValues, modValues) &&
+                    isEqual(previousValuesRef.current.displaySettings, displaySettings)
+                ) {
+                    return; // No changes, skip update
+                }
 
-            previousValuesRef.current = {
-                editorSeed,
-                editorMod,
-                editorAttunement,
-                isSpinAnimationPaused,
-                modValues: { ...modValues },
-                displaySettings: { ...displaySettings },
-                isAttunementOverridden,
-            };
+                previousValuesRef.current = {
+                    editorSeed,
+                    editorMod,
+                    editorAttunement,
+                    isSpinAnimationPaused,
+                    modValues: { ...modValues },
+                    displaySettings: { ...displaySettings },
+                    isAttunementOverridden,
+                };
 
-            const updates = () => {
-                
-                const displayClasses = ['reveal', 'flip', 'invert', 'hyper', 'grayscale', 'cmyk', 'accent-1', 'accent-2', 'accent-3'];
-                const isPalindrome = checkPalindrome(BigInt(editorSeed));
-                const isSingleDigit = editorSeed.length === 1;
-                
-                updateSVGWithSeed(BigInt(editorSeed), svg, bitsArray);
-                svg.classList.add('spin');
+                const updates = () => {
+                    
+                    const displayClasses = ['reveal', 'flip', 'invert', 'hyper', 'grayscale', 'cmyk', 'accent-1', 'accent-2', 'accent-3'];
+                    const isPalindrome = checkPalindrome(BigInt(editorSeed));
+                    const isSingleDigit = editorSeed.length === 1;
+                    
+                    updateSVGWithSeed(BigInt(editorSeed), svg, bitsArray);
+                    svg.classList.add('spin');
 
-                displayClasses.forEach((className, index) => {
-                    const isActive = index === 0 ? (displaySettings.value & (1 << 0)) === 0 : (displaySettings.value & (1 << index)) !== 0;
-                    svg.classList.toggle(className, isActive);
-                    if (className === 'flip') {
-                        flipLayers(svg, isActive);
-                    }
-                });
+                    displayClasses.forEach((className, index) => {
+                        const isActive = index === 0 ? (displaySettings.value & (1 << 0)) === 0 : (displaySettings.value & (1 << index)) !== 0;
+                        svg.classList.toggle(className, isActive);
+                        if (className === 'flip') {
+                            flipLayers(svg, isActive);
+                        }
+                    });
 
-                svg.classList.toggle('palindrome', isPalindrome && !isSingleDigit);
-                svg.classList.toggle('depth', modValues.depth > 0);
-                svg.classList.toggle('pauseSpin', isSpinAnimationPaused);
-                
-                applyModValues();
-            };
-            updates();
-        });
+                    svg.classList.toggle('palindrome', isPalindrome && !isSingleDigit);
+                    svg.classList.toggle('depth', modValues.depth > 0);
+                    svg.classList.toggle('pauseSpin', isSpinAnimationPaused);
+                    
+                    applyModValues();
+                };
+                updates();
+            });
+            
     }, [artworkState]);
 
     // Update the artwork attunement with editor state
@@ -206,7 +209,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
 
     // EFFECTS ----------------------------------------
 
-    useLayoutEffect(() => {
+    useEffect(() => {
         if (svgRef.current) {
             updateArtwork();
             updateAttunement();
@@ -214,9 +217,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
         }
     }, [updateArtwork, updateAttunement, resetLayersCallback]);
 
-    useEffect(() => {
-        updateArtworkRef.current = updateArtwork;
-    }, [updateArtwork]);
+    
 
     useEffect(() => {
         if (svgRef.current) {

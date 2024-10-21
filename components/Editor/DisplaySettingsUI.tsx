@@ -51,38 +51,51 @@ const DisplaySettings: React.FC = () => {
   const startSelection = useCallback(() => setActiveSelection(true), []);
   const endSelection = useCallback(() => setActiveSelection(false), []);
 
-  const isDefault = useMemo(() => {
-    const defaultAttunement = calculateMostFrequentNumeral(BigInt(editorSeed))?.toString() ?? "0";
-    if (isAttunementOverridden) { return } else {
-      return !isAttunementOverridden && editorAttunement === defaultAttunement;
-    }
-  }, [editorSeed, editorAttunement, isAttunementOverridden]);
+  const calculatedAttunement = useMemo(() => 
+    calculateMostFrequentNumeral(editorSeed) ?? "0"
+  ,[editorSeed]);
 
+  const currentAttunement = isAttunementOverridden ? editorAttunement : calculatedAttunement;
+
+  const isDefault = useMemo(() => {
+    return !isAttunementOverridden;
+  }, [isAttunementOverridden]);
 
   // Handle attunement changes
-  const handleAttunementChange = React.useCallback((changingAttunement: number) => {
+  const handleAttunementChange = useCallback((changingAttunement: number) => {
     if (!isNaN(changingAttunement)) {
-      dispatch(updateEditorState({ attunement: changingAttunement.toString() }));
+      dispatch(updateEditorState({ 
+        attunement: changingAttunement.toString(),
+        isAttunementOverridden: true
+      }));
     }
   }, [dispatch]);
 
   // Toggle attunement override state
   const handleAttunementToggle = useCallback(() => {
-    const defaultAttunement = calculateMostFrequentNumeral(BigInt(editorSeed))?.toString() ?? "0";
-    dispatch(updateEditorState({
-      attunement: editorAttunement,
-      isAttunementOverridden: !isAttunementOverridden
-    }));
-  }, [dispatch, isAttunementOverridden, editorSeed, editorAttunement]);
+    if (isAttunementOverridden) {
+      dispatch(updateEditorState({
+        attunement: calculatedAttunement,
+        isAttunementOverridden: false
+      }));
+    } else {
+      dispatch(updateEditorState({
+        attunement: currentAttunement,
+        isAttunementOverridden: true
+      }));
+    }
+  }, [dispatch, isAttunementOverridden, calculatedAttunement, currentAttunement]);
 
   // Handle increment/decrement of attunement
-  const handleAttunementIncrement = React.useCallback(() => {
-    handleAttunementChange((Number(editorAttunement) + 1) % 10);
-  }, [editorAttunement, handleAttunementChange]);
+  const handleAttunementIncrement = useCallback(() => {
+    const nextAttunement = (Number(currentAttunement) + 1) % 10;
+    handleAttunementChange(nextAttunement);
+  }, [currentAttunement, handleAttunementChange]);
 
   const handleAttunementDecrement = React.useCallback(() => {
-    handleAttunementChange((Number(editorAttunement) - 1 + 10) % 10);
-  }, [editorAttunement, handleAttunementChange]);
+    const prevAttunement = (Number(currentAttunement) - 1 + 10) % 10;
+    handleAttunementChange(prevAttunement);
+  }, [currentAttunement, handleAttunementChange]);
 
   // Handle manual input of attunement
   const handleAttunementInput = React.useCallback((e: React.FormEvent<HTMLSpanElement>) => {
@@ -187,7 +200,7 @@ const DisplaySettings: React.FC = () => {
         <div className="attunement-label-container ui-element" onClick={handleAttunementToggle}>
           <div className="attunement-label ui-element">
             <span className="attunement-name">
-              {attunementNames[Number(editorAttunement)] + ":"}
+              {attunementNames[Number(currentAttunement)] + ":"}
             </span>
             <span
               className="attunement-input ui-element"
@@ -202,7 +215,7 @@ const DisplaySettings: React.FC = () => {
               onBlur={(e) => {
                 e.preventDefault();
                 handleAttunementInput(e);
-                e.currentTarget.textContent = editorAttunement;
+                e.currentTarget.textContent = currentAttunement;
                 clearSelection();
               }}
               onKeyDown={(e) => {
@@ -213,10 +226,14 @@ const DisplaySettings: React.FC = () => {
                 }
               }}
             >
-              {editorAttunement}
+              {currentAttunement}
             </span>
             <span 
-              className={`reset-attunement`}
+              className={`reset-attunement ${isAttunementOverridden ? 'show' : ''}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                dispatch(resetAttunementOverride());
+              }}
             >
               Reset
             </span>

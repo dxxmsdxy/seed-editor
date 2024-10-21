@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useCallback, useEffect, useState, useMemo } from "react";
+import React, { useRef, useCallback, useEffect, useState, useMemo, Profiler } from "react";
 import TransitionLink from '@/components/TransitionLink';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch } from '@/app/hooks';
@@ -22,7 +22,24 @@ import { generateName } from '@/lib/utils/nameGenerator';
 
 
 
-
+const onRenderCallback = (
+  id: string,
+  phase: "mount" | "update",
+  actualDuration: number,
+  baseDuration: number,
+  startTime: number,
+  commitTime: number,
+  interactions: Set<any>
+) => {
+  // Log or store the profiling data
+  console.log(`Profiler: ${id}`);
+  console.log(`Phase: ${phase}`);
+  console.log(`Actual duration: ${actualDuration}`);
+  console.log(`Base duration: ${baseDuration}`);
+  console.log(`Start time: ${startTime}`);
+  console.log(`Commit time: ${commitTime}`);
+  console.log('---');
+};
 
 //============================================//
 
@@ -147,9 +164,6 @@ const Home: React.FC = () => {
       if (!isSpinAnimationPaused) {
         dispatch(setSpinAnimationPaused(true));
         artwork.classList.remove('spin', 'depth')
-        if (artRef.current && artRef.current.resetLayersCallback) {
-          artRef.current.resetLayersCallback()
-        }
       } else {
         dispatch(setSpinAnimationPaused(false));
         artwork.classList.add('spin', 'depth');
@@ -170,8 +184,10 @@ const Home: React.FC = () => {
           isAttunementOverridden: isAttunementOverridden
         }
       }));
-      dispatch(updateQueueOrder());
-      dispatch(setUIVisibility('none'));
+      dispatch((dispatch) => {
+        dispatch(updateQueueOrder());
+        dispatch(setUIVisibility('none'));
+      });
     }
   }, [dispatch, selectedQueueIndex, editorSeed, editorMod, editorAttunement, isAttunementOverridden]);
 
@@ -472,6 +488,7 @@ const Home: React.FC = () => {
   
   return (
     <>
+    <Profiler id="ArtworkSection" onRender={onRenderCallback}>
       <div className="editor">
         <div className="editor-inner" ref={editorRef}>
           <div className="seed-indicator">
@@ -561,7 +578,7 @@ const Home: React.FC = () => {
                   className={`svg-container ${isSpinAnimationPaused ? 'paused' : 'playing'}`}
                 >
                   <div className="svg-outer" {...handleArtworkInteraction()}>
-                    {editorSeed && memoizedArtwork}
+                    {memoizedArtwork}
                     <div className="rgblens"></div>
                   </div>
                   <div className="seed-overlay-container">
@@ -673,6 +690,7 @@ const Home: React.FC = () => {
         </div>
       </TransitionLink>
       <InscribeModal show={showInscribeModal} queueItems={queueItems} />
+      </Profiler>
     </>
   );
 }

@@ -25,8 +25,8 @@ const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems }) => {
     const generateLocalUrls = async () => {
       const updatedItems = await Promise.all(
         queueItems.map(async (item) => {
-          if (item.newSeed !== '0') {
-            const url = await getArtworkUrls(item.newSeed);
+          if (item.newValues.newSeed !== null && item.newValues.newSeed !== '0') {
+            const url = await getArtworkUrls(item.newValues.newSeed);
             return { ...item, url };
           }
           return item;

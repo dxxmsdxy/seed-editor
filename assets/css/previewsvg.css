@@ -1743,6 +1743,9 @@
   animation-duration: 60s;
 }
 
+.seedartwork.depth.hyper:not(.reveal) g.on .fx {
+  filter: none !important;
+}
 .seedartwork.depth:not(.reveal) .bkg {
   filter: drop-shadow(3px 5px 10px rgb(0 0 0/0.1)) brightness(0.85);
 }

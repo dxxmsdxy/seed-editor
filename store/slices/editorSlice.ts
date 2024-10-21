@@ -2,7 +2,7 @@ import { createSlice, createSelector, PayloadAction } from '@reduxjs/toolkit';
 import { produce } from 'immer';
 import { RootState } from '@/store';
 import { selectSelectedIndex, selectQueueItems } from './queueSlice';
-import { memoize } from 'lodash';
+import { memoize, isEqual } from 'lodash';
 import { seedToBits, sanitizeSeed, sanitizeMod, sanitizeAttunement, calculateMostFrequentNumeral, randomizeBits, randomizeMod, getRandomNumber } from "@/lib/utils/global";
 
 
@@ -130,7 +130,10 @@ const editorSlice = createSlice({
         if (mod !== undefined) {
           state.editorMod = sanitizeMod(mod);
           // Update modValues when mod is changed
-          state.modValues = parseMod(mod);
+          const newModValues = parseMod(mod);
+          if (!isEqual(newModValues, state.modValues)) {
+            state.modValues = newModValues;
+          }
         }
         pushToHistory(state);
       });
@@ -204,10 +207,7 @@ const editorSlice = createSlice({
             newMod = newMod.slice(0, 8) + Math.floor(value / 10).toString().slice(-1) + newMod.slice(9);
             break;
         }
-        const parsedModValues = parseMod(state.editorMod);
-        if (JSON.stringify(state.modValues) !== JSON.stringify(parsedModValues)) {
-          state.modValues = parsedModValues;
-        }
+        state.editorMod = newMod;
         pushToHistory(state);
       }
     },
@@ -217,7 +217,7 @@ const editorSlice = createSlice({
     },
     resetAttunementOverride: (state) => {
       state.isAttunementOverridden = false;
-      state.editorAttunement = calculateMostFrequentNumeral(BigInt(state.editorSeed))?.toString() ?? "0";
+      state.editorAttunement = calculateMostFrequentNumeral(state.editorSeed) ?? "0";
       pushToHistory(state);
     },
     pushCurrentStateToHistory: (state) => {

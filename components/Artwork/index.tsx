@@ -64,7 +64,6 @@ const Artwork = React.memo(forwardRef<{ updateArtwork: () => void }, ArtworkProp
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 1440 1920"
       className="seedartwork js reveal pauseColor pauseDepth spin"
-          
       version="1.1"
       id="seedsArtwork"
       x="0"
@@ -72,7 +71,7 @@ const Artwork = React.memo(forwardRef<{ updateArtwork: () => void }, ArtworkProp
       width="100%"
       height="100%"
       role="img"
-      data-seed={0}
+      data-seed={editorSeed}
       tabIndex={0}
       data-mod={props.editorMod}
       data-attunement={props.editorAttunement}
