@@ -398,7 +398,9 @@ export const selectReversedBitsArray = createSelector(
 
 export const selectModValues = createSelector(
   [(state: RootState) => state.editor.modValues],
-  (modValues) => modValues
+  (modValues) => ({
+    ...modValues,
+  })
 );
 
 export const selectDisplaySettings = createSelector(

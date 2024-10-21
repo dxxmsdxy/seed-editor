@@ -17,8 +17,17 @@ interface ArtworkProps {
   editorMod: string;
   editorAttunement: string;
   isAttunementOverridden: boolean;
-  modValues: any; // Replace 'any' with the correct type
-  displaySettings: any; // Replace 'any' with the correct type
+  modValues: {
+    color: number;
+    spin: number;
+    depth: number;
+    tint: number;
+    tintPercent: number;
+  };
+  displaySettings: {
+    value: number;
+    array: boolean[];
+  };
   selectedQueueIndex: number | null;
   isPlaying: boolean;
   onArtworkReady: () => void;
@@ -43,7 +52,6 @@ const Artwork = React.memo(forwardRef<{ updateArtwork: () => void }, ArtworkProp
   const svgRef = useRef<SVGSVGElement>(null);
   const updateArtworkRef = useRef<(() => void) | undefined>(undefined);
   const currentDate = new Date();
-
 
   const isSpinAnimationPaused = useMemo(() => !isPlaying, [isPlaying]);
 
@@ -907,7 +915,7 @@ const Artwork = React.memo(forwardRef<{ updateArtwork: () => void }, ArtworkProp
           </g>
         </g>
       </svg>
-    ), []);
+    ), [isPlaying, props.editorMod, props.editorAttunement]);
 
 return (
   <>
@@ -944,14 +952,18 @@ export default React.memo(Artwork, (prevProps, nextProps) => {
 });
 
 // Helper function for shallow equality of objects
-function shallowEqual(obj1, obj2) {
+function shallowEqual(obj1: any, obj2: any): boolean {
   if (obj1 === obj2) return true;
-  if (typeof obj1 !== 'object' || typeof obj2 !== 'object') return false;
+  if (typeof obj1 !== 'object' || typeof obj2 !== 'object' || obj1 === null || obj2 === null) return false;
+  
   const keys1 = Object.keys(obj1);
   const keys2 = Object.keys(obj2);
+  
   if (keys1.length !== keys2.length) return false;
+  
   for (let key of keys1) {
     if (obj1[key] !== obj2[key]) return false;
   }
+  
   return true;
 }

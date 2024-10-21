@@ -58,7 +58,7 @@ const Home: React.FC = () => {
 
   // REFS -------------------------------------------
 
-  const artRef = useRef<{ resetLayersCallback: () => void } | null>(null);
+  const artRef = useRef<{ updateArtwork: () => void } | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const seedInputRef = useRef<HTMLDivElement>(null);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -440,7 +440,7 @@ const Home: React.FC = () => {
   // Memoized artwork component
   const memoizedArtwork = useMemo(() => (
     <Artwork 
-      ref={artRef as React.Ref<{ updateArtwork: () => void }> | undefined}
+      ref={artRef}
       seed={editorSeed}
       mod={editorMod}
       attunement={editorAttunement.toString()}
@@ -454,14 +454,16 @@ const Home: React.FC = () => {
       onArtworkReady={handleArtworkReady}
       selectedQueueIndex={selectedQueueIndex}
     />
-  ), [editorSeed,
+  ), [
+    editorSeed,
     editorMod,
     editorAttunement,
     isPlaying,
     selectedQueueIndex,
     isAttunementOverridden,
     modValues,
-    displaySettings]);
+    displaySettings,
+  ]);
 
 
   
@@ -559,14 +561,8 @@ const Home: React.FC = () => {
                 <div 
                   className={`svg-container ${isSpinAnimationPaused ? 'paused' : 'playing'}`}
                 >
-                  <div 
-                    className="svg-outer"
-                    {...handleArtworkInteraction()}
-                  >
-                    {editorSeed && React.cloneElement(memoizedArtwork, {
-                      ref: artRef,
-                      ...handleArtworkInteraction()
-                    })}
+                  <div className="svg-outer" {...handleArtworkInteraction()}>
+                    {editorSeed && memoizedArtwork}
                     <div className="rgblens"></div>
                   </div>
                   <div className="seed-overlay-container">
