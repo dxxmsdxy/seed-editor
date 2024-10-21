@@ -333,7 +333,7 @@ const editorSlice = createSlice({
 // UTILITY FUNCTIONS -------------------------------
 
 // Push current state to history
-const MAX_HISTORY_LENGTH = 20;
+const MAX_HISTORY_LENGTH = 15;
 const pushToHistory = (state: EditorState) => {
   const lastHistoryState = state.history.past[state.history.past.length - 1];
   const isNewStateDifferent = !lastHistoryState ||
@@ -398,9 +398,7 @@ export const selectReversedBitsArray = createSelector(
 
 export const selectModValues = createSelector(
   [(state: RootState) => state.editor.modValues],
-  (modValues) => ({
-    ...modValues,
-  })
+  (modValues) => modValues
 );
 
 export const selectDisplaySettings = createSelector(

@@ -2,7 +2,7 @@
 import React, { useRef, useCallback, useEffect, useState, useMemo } from "react";
 import TransitionLink from '@/components/TransitionLink';
 import { useRouter } from 'next/navigation';
-import { useAppSelector, useAppDispatch } from '@/app/hooks';
+import { useAppDispatch } from '@/app/hooks';
 import { createPortal } from 'react-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
@@ -13,10 +13,9 @@ import Queue from '@/components/Editor/Queue';
 import { BitsArray } from "@/components/Editor/LayersUI";
 import DisplaySettings from '@/components/Editor/DisplaySettingsUI';
 import InscribeModal from "@/components/Editor/InscribeModal";
-import DiagnosticsPanel from "@/components/Editor/DiagnosticsPanel";
 
-import { updateEditorState, resetEditorState, undo, redo, selectEditorSeed, selectEditorMod, updateModValue, selectEditorAttunement, selectIsAttunementOverridden, setIsAttunementOverridden, selectBitsArray, selectModValues, selectDisplaySettings, selectHasEditorChanges, setUIVisibility, selectUIVisibility, setSpinAnimationPaused, parseMod } from '@/store/slices/editorSlice';
 import { setSelectedIndex, updateQueueItem, updateQueueOrder, selectSetQueueItems, updateQueueItemWithDragDrop } from '@/store/slices/queueSlice';
+import { updateEditorState, resetEditorState, undo, redo, selectEditorSeed, selectEditorMod, updateModValue, selectEditorAttunement, selectIsAttunementOverridden, setIsAttunementOverridden, selectBitsArray, selectModValues, selectDisplaySettings, selectHasEditorChanges, setUIVisibility, selectUIVisibility, setSpinAnimationPaused, parseMod } from '@/store/slices/editorSlice';
 import { connectWalletAndLoadData } from '@/store/slices/walletSlice';
 import { selectElementContents, clearSelection, randomizeBits, hideMouseCursor, calculateMostFrequentNumeral, sanitizeSeed, sanitizeMod, sanitizeAttunement } from '@/lib/utils/global';
 import { generateName } from '@/lib/utils/nameGenerator';
@@ -42,12 +41,12 @@ const Home: React.FC = () => {
   const displaySettings = useSelector(selectDisplaySettings);
   const hasEditorChanges = useSelector(selectHasEditorChanges);
   const uiVisibility = useSelector(selectUIVisibility);
-  const isSpinAnimationPaused = useSelector((state: RootState) => state.editor.isSpinAnimationPaused)
-  const isDepthAnimationPaused = useSelector((state: RootState) => state.editor.isDepthAnimationPaused)
+  const isSpinAnimationPaused = useSelector((state: RootState) => state.editor.isSpinAnimationPaused);
+  const isDepthAnimationPaused = useSelector((state: RootState) => state.editor.isDepthAnimationPaused);
   const walletConnected = useSelector((state: RootState) => state.wallet.connected);
-  const { items: queueItems, selectedIndex: selectedQueueIndex} = useAppSelector((state: RootState) => state.queue);
-  const getSetQueueItems = useAppSelector(selectSetQueueItems);
-  const showInscribeModal = useAppSelector((state) => state.modal.showInscribeModal);
+  const queueItems = useSelector((state: RootState) => state.queue.items);
+  const selectedQueueIndex = useSelector((state: RootState) => state.queue.selectedIndex);
+  const showInscribeModal = useSelector((state: RootState) => state.modal.showInscribeModal);
 
   const handleArtworkReady = useCallback(() => {
     setIsArtworkReady(true);
@@ -472,7 +471,6 @@ const Home: React.FC = () => {
   
   return (
     <>
-      <DiagnosticsPanel/>
       <div className="editor">
         <div className="editor-inner" ref={editorRef}>
           <div className="seed-indicator">
@@ -673,7 +671,7 @@ const Home: React.FC = () => {
           </svg>
         </div>
       </TransitionLink>
-      <InscribeModal show={showInscribeModal} queueItems={getSetQueueItems} />
+      <InscribeModal show={showInscribeModal} queueItems={queueItems} />
     </>
   );
 }

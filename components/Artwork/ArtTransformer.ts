@@ -27,7 +27,10 @@ interface ArtTransformerProps {
         tint: number;
         tintPercent: number;
     };
-    displaySettings: any;
+    displaySettings: {
+        value: number;
+        array: boolean[];
+    };
 }
   
 
@@ -54,6 +57,39 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
     // CALLBACKS ----------------------------------
 
     const memoizedApplyModValueToElements = useMemo(() => applyModValueToElements, []);
+
+    const applyModValues = useCallback(() => {
+        const svg = svgRef.current;
+        if (!svg) return;
+
+        const colorElements = [
+            svg, // Include the SVG element itself
+            ...Array.from(svg.querySelectorAll('.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline,.sub.on path,.sub.on polygon,.sub.on circle,.sub.on ellipse,.sub.on line,.sub.on rect,.sub.on polyline,.sub.on .fx'))
+        ];
+        const spinElements = Array.from(svg.querySelectorAll('.lr.on, .sub.on'));
+        const depthElements = Array.from(svg.querySelectorAll('.lr.on .fx, .sub.on .fx'));
+
+        if (modValues.color !== undefined) {
+            memoizedApplyModValueToElements(colorElements, modValues.color, 'color');
+        }
+        if (modValues.spin !== undefined) {
+            memoizedApplyModValueToElements(spinElements, modValues.spin, 'spin');
+        }
+        if (modValues.depth !== undefined) {
+            memoizedApplyModValueToElements(depthElements, modValues.depth, 'depth');
+        }
+
+        const rgblens = document.querySelector('.rgblens') as HTMLElement;
+        if (rgblens) {
+            if (modValues.tint === 0) {
+                rgblens.style.cssText = 'background-color: transparent; opacity: 0;';
+            } else {
+                const hue = (modValues.tint - 1) * (360 / 98);
+                rgblens.style.cssText = `background-color: hsl(${hue}, 100%, 50%); opacity: ${modValues.tintPercent === 100 ? '1' : (modValues.tintPercent / 100).toString()};`;
+            }
+        }
+    }, [modValues.color, modValues.spin, modValues.depth, modValues.tint, modValues.tintPercent, svgRef]);
+
 
     // Reset the SVG's layers to initial state
     const resetLayersCallback = useMemo(() => {
@@ -114,34 +150,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
                 svg.classList.toggle('depth', modValues.depth > 0);
                 svg.classList.toggle('pauseSpin', isSpinAnimationPaused);
                 
-                const colorElements = [
-                    svg, // Include the SVG element itself
-                    ...Array.from(svg.querySelectorAll('.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline,.sub.on path,.sub.on polygon,.sub.on circle,.sub.on ellipse,.sub.on line,.sub.on rect,.sub.on polyline,.sub.on .fx'))
-                ];
-                const spinElements = Array.from(svg.querySelectorAll('.lr.on, .sub.on'));
-                const depthElements = Array.from(svg.querySelectorAll('.lr.on .fx, .sub.on .fx'));
-
-                if (editorMod !== '000000000000' || editorMod !== null) {
-                    if (modValues && modValues.color !== undefined) {
-                        memoizedApplyModValueToElements(colorElements, modValues.color, 'color');
-                    }
-                    if (modValues && modValues.spin !== undefined) {
-                        memoizedApplyModValueToElements(spinElements, modValues.spin, 'spin');
-                    }
-                    if (modValues && modValues.depth !== undefined) {
-                        memoizedApplyModValueToElements(depthElements, modValues.depth, 'depth');
-                    }
-                }
-            
-                const rgblens = document.querySelector('.rgblens') as HTMLElement;
-                if (rgblens) {
-                    if (modValues.tint === 0) {
-                        rgblens.style.cssText = 'background-color: transparent; opacity: 0;';
-                    } else {
-                        const hue = (modValues.tint - 1) * (360 / 98);
-                        rgblens.style.cssText = `background-color: hsl(${hue}, 100%, 50%); opacity: ${modValues.tintPercent === 100 ? '1' : (modValues.tintPercent / 100).toString()};`;
-                    }
-                }
+                applyModValues();
             };
             updates();
         });

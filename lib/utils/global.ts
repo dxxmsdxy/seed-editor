@@ -294,48 +294,53 @@ export function clearSelection() {
 // Hide mouse cursor after 5 seconds of inactivity and disable interactions
 export function hideMouseCursor() {
   let isHidden = false;
-  
+  let timeoutId: NodeJS.Timeout | null = null;
+
   const hideCursor = () => {
-    document.body.classList.add('sleep-mode');
-    isHidden = true;
+    if (!isHidden) {
+      document.body.classList.add('sleep-mode');
+      isHidden = true;
+    }
   };
 
-  const showCursor = debounce(() => {
+  const showCursor = () => {
     if (isHidden) {
       document.body.classList.remove('sleep-mode');
       isHidden = false;
     }
+  };
+
+  const resetTimeout = debounce(() => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(hideCursor, 6000);
   }, 100);
 
   const handleInteraction = (event: Event) => {
-    showCursor();
+    showCursor(); // Immediately show cursor
+    resetTimeout(); // Debounced reset of the timeout
     if (isHidden) {
       event.preventDefault();
       event.stopPropagation();
     }
   };
 
-  const attachListeners = () => {
-    ['mousemove', 'mousedown', 'mouseup', 'keydown', 'touchstart'].forEach(eventType => {
-      document.addEventListener(eventType, handleInteraction, { passive: true, capture: true });
-    });
-  };
+  const events = ['mousemove', 'mousedown', 'mouseup', 'keydown', 'touchstart'];
+  events.forEach(eventType => {
+    document.addEventListener(eventType, handleInteraction, { passive: true, capture: true });
+  });
 
-  const removeListeners = () => {
-    ['mousemove', 'mousedown', 'mouseup', 'keydown', 'touchstart'].forEach(eventType => {
-      document.removeEventListener(eventType, handleInteraction, { capture: true });
-    });
-  };
-
-  attachListeners();
-  const timeoutId = setTimeout(hideCursor, 6000);
+  // Initial timeout
+  timeoutId = setTimeout(hideCursor, 6000);
 
   return () => {
-    removeListeners();
-    clearTimeout(timeoutId);
+    events.forEach(eventType => {
+      document.removeEventListener(eventType, handleInteraction, { capture: true });
+    });
+    if (timeoutId) clearTimeout(timeoutId);
     document.body.classList.remove('sleep-mode');
   };
 }
+
 
 // ============  THEME  ============== //
  
