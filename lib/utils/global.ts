@@ -127,17 +127,22 @@ export function randomizeMod(): string {
   return finalMod;
 }
 
-export const calculateMostFrequentNumeral = memoize((seed: bigint) => {
-  const seedStr = seed.toString();
+export const calculateMostFrequentNumeral = memoize((seedStr: string) => {
   const numeralFrequencies: Record<string, number> = {};
 
   for (let i = 0; i < seedStr.length; i++) {
     const numeral = seedStr[i];
-    numeralFrequencies[numeral] = (numeralFrequencies[numeral] || 0) + 1;
+    if (/\d/.test(numeral)) {
+      numeralFrequencies[numeral] = (numeralFrequencies[numeral] || 0) + 1;
+    }
   }
 
-  return Object.entries(numeralFrequencies).reduce((a, b) => a[1] > b[1] ? a : b)[0];
-}, (seed: bigint) => seed.toString());
+  const entries = Object.entries(numeralFrequencies);
+  if (entries.length === 0) {
+    return '0';
+  }
+  return entries.reduce((a, b) => (a[1] > b[1] ? a : b))[0];
+});
 
 export function updateDataAttunementAttribute(seed, artwork) {
   const mostFrequentNumeral = calculateMostFrequentNumeral(seed);

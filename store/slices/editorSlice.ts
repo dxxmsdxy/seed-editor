@@ -181,31 +181,35 @@ const editorSlice = createSlice({
       state.editorMod = state.editorMod.slice(0, -3) + newDisplaySettingsString; // Update editorMod
       pushToHistory(state);
     },
-    updateModValue: (state, action: PayloadAction<{ name: string; value: number }>) => {
+    updateModValue: (state, action: PayloadAction<{ name: keyof typeof state.modValues; value: number }>) => {
       const { name, value } = action.payload;
-      let newMod = state.editorMod;
-    
-      switch (name) {
-        case 'color':
-          newMod = value.toString().padStart(2, '0') + newMod.slice(2);
-          break;
-        case 'spin':
-          newMod = newMod.slice(0, 2) + value.toString().padStart(2, '0') + newMod.slice(4);
-          break;
-        case 'depth':
-          newMod = newMod.slice(0, 4) + value.toString().padStart(2, '0') + newMod.slice(6);
-          break;
-        case 'tint':
-          newMod = newMod.slice(0, 6) + value.toString().padStart(2, '0') + newMod.slice(8);
-          break;
-        case 'tintPercent':
-          newMod = newMod.slice(0, 8) + Math.floor(value / 10).toString().slice(-1) + newMod.slice(9);
-          break;
+      if (state.modValues[name] !== value) {
+        state.modValues[name] = value;
+        let newMod = state.editorMod;
+      
+        switch (name) {
+          case 'color':
+            newMod = value.toString().padStart(2, '0') + newMod.slice(2);
+            break;
+          case 'spin':
+            newMod = newMod.slice(0, 2) + value.toString().padStart(2, '0') + newMod.slice(4);
+            break;
+          case 'depth':
+            newMod = newMod.slice(0, 4) + value.toString().padStart(2, '0') + newMod.slice(6);
+            break;
+          case 'tint':
+            newMod = newMod.slice(0, 6) + value.toString().padStart(2, '0') + newMod.slice(8);
+            break;
+          case 'tintPercent':
+            newMod = newMod.slice(0, 8) + Math.floor(value / 10).toString().slice(-1) + newMod.slice(9);
+            break;
+        }
+        const parsedModValues = parseMod(state.editorMod);
+        if (JSON.stringify(state.modValues) !== JSON.stringify(parsedModValues)) {
+          state.modValues = parsedModValues;
+        }
+        pushToHistory(state);
       }
-    
-      state.editorMod = newMod;
-      state.modValues[name] = value;
-      pushToHistory(state);
     },
     setIsAttunementOverridden: (state, action: PayloadAction<boolean>) => {
       state.isAttunementOverridden = action.payload;
@@ -357,7 +361,7 @@ const pushToHistory = (state: EditorState) => {
   }
 };
 
-export const parseMod = (mod: string) => {
+export const parseMod = memoize((mod: string) => {
   return {
     color: parseInt(mod.slice(0, 2), 10) || 0,
     spin: parseInt(mod.slice(2, 4), 10) || 0,
@@ -365,7 +369,7 @@ export const parseMod = (mod: string) => {
     tint: parseInt(mod.slice(6, 8), 10) || 0,
     tintPercent: (parseInt(mod.slice(8, 9), 10) * 10) || 100,
   };
-};
+});
 
 
 // SELECTORS -----------------------------------------

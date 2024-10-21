@@ -437,6 +437,7 @@ const Home: React.FC = () => {
   }, [editorSeed, editorMod, editorAttunement]);
 
   // Memoized artwork component
+  const { color, spin, depth, tint, tintPercent } = modValues;
   const memoizedArtwork = useMemo(() => (
     <Artwork 
       ref={artRef}

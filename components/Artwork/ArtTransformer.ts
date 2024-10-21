@@ -56,27 +56,29 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
 
     // CALLBACKS ----------------------------------
 
-    const memoizedApplyModValueToElements = useMemo(() => applyModValueToElements, []);
+    const memoizedCalculatedAttunement = useMemo(() => {
+        return calculateMostFrequentNumeral(editorSeed) ?? "0";
+      }, [editorSeed]);
 
     const applyModValues = useCallback(() => {
         const svg = svgRef.current;
         if (!svg) return;
 
         const colorElements = [
-            svg, // Include the SVG element itself
+            svg,
             ...Array.from(svg.querySelectorAll('.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline,.sub.on path,.sub.on polygon,.sub.on circle,.sub.on ellipse,.sub.on line,.sub.on rect,.sub.on polyline,.sub.on .fx'))
         ];
         const spinElements = Array.from(svg.querySelectorAll('.lr.on, .sub.on'));
         const depthElements = Array.from(svg.querySelectorAll('.lr.on .fx, .sub.on .fx'));
 
         if (modValues.color !== undefined) {
-            memoizedApplyModValueToElements(colorElements, modValues.color, 'color');
+            applyModValueToElements(colorElements, modValues.color, 'color');
         }
         if (modValues.spin !== undefined) {
-            memoizedApplyModValueToElements(spinElements, modValues.spin, 'spin');
+            applyModValueToElements(spinElements, modValues.spin, 'spin');
         }
         if (modValues.depth !== undefined) {
-            memoizedApplyModValueToElements(depthElements, modValues.depth, 'depth');
+            applyModValueToElements(depthElements, modValues.depth, 'depth');
         }
 
         const rgblens = document.querySelector('.rgblens') as HTMLElement;
@@ -88,40 +90,36 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
                 rgblens.style.cssText = `background-color: hsl(${hue}, 100%, 50%); opacity: ${modValues.tintPercent === 100 ? '1' : (modValues.tintPercent / 100).toString()};`;
             }
         }
-    }, [modValues.color, modValues.spin, modValues.depth, modValues.tint, modValues.tintPercent, svgRef]);
-
+    }, [modValues]);
 
     // Reset the SVG's layers to initial state
-    const resetLayersCallback = useMemo(() => {
-        return () => {
-            if (svgRef.current) {
-                const svg = svgRef.current;
-                resetLayers(svg);
-    
-                const colorElements = document.querySelectorAll('.seedartwork,.lr path,.lr polygon, .lr circle, .lr .ellipse, .lr line, .lr rect, .lr .polyline,.sub path,.sub polygon,.sub circle,.sub ellipse,.sub line,.sub rect,.sub polyline,.sub .fx');
-                const spinElements = svg.querySelectorAll('.lr, .sub');
-                const depthElements = svg.querySelectorAll('.lr .fx, .sub .fx');
+    const resetLayersCallback = useCallback(() => {
+        if (svgRef.current) {
+            const svg = svgRef.current;
+            resetLayers(svg);
 
-                if (modValues && modValues.color !== undefined) {
-                    memoizedApplyModValueToElements(colorElements, modValues.color, 'color');
-                }
-                if (modValues && modValues.spin !== undefined) {
-                    memoizedApplyModValueToElements(spinElements, modValues.spin, 'spin');
-                }
-                if (modValues && modValues.depth !== undefined) {
-                    memoizedApplyModValueToElements(depthElements, modValues.depth, 'depth');
-                }
+            const colorElements = svg.querySelectorAll('.seedartwork,.lr path,.lr polygon, .lr circle, .lr .ellipse, .lr line, .lr rect, .lr .polyline,.sub path,.sub polygon,.sub circle,.sub ellipse,.sub line,.sub rect,.sub polyline,.sub .fx');
+            const spinElements = svg.querySelectorAll('.lr, .sub');
+            const depthElements = svg.querySelectorAll('.lr .fx, .sub .fx');
+
+            if (modValues.color !== undefined) {
+                applyModValueToElements(colorElements, modValues.color, 'color');
             }
-        };
-    }, [svgRef, modValues]);
+            if (modValues.spin !== undefined) {
+                applyModValueToElements(spinElements, modValues.spin, 'spin');
+            }
+            if (modValues.depth !== undefined) {
+                applyModValueToElements(depthElements, modValues.depth, 'depth');
+            }
+        }
+    }, [modValues]);
 
     const artworkState = useMemo(() => ({
         editorSeed,
-        modValues,
         editorMod,
         editorAttunement,
         isSpinAnimationPaused
-    }), [editorSeed, modValues, editorMod, editorAttunement, isSpinAnimationPaused]);
+    }), [editorSeed, editorMod, editorAttunement, isSpinAnimationPaused]);
 
     // Update the artwork with editor state
     const updateArtwork = useCallback(() => {
@@ -156,10 +154,6 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
         });
     }, [artworkState]);
 
-    const memoizedCalculatedAttunement = useMemo(() => {
-        return calculateMostFrequentNumeral(BigInt(editorSeed))?.toString() ?? "0";
-    }, [editorSeed]);
-
     // Update the artwork attunement with editor state
     const updateAttunement = useCallback(() => {
         if (svgRef.current) {
@@ -180,13 +174,13 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
 
     // EFFECTS ----------------------------------------
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (svgRef.current) {
             updateArtwork();
             updateAttunement();
             resetLayersCallback();
         }
-    }, [updateArtwork, updateAttunement, resetLayersCallback, isSpinAnimationPaused]);
+    }, [updateArtwork, updateAttunement, resetLayersCallback]);
 
     useEffect(() => {
         updateArtworkRef.current = updateArtwork;
@@ -202,7 +196,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
                 });
             }
         }
-    }, [svgRef]);
+    }, []);
 
     return null
 });
