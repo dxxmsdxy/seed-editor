@@ -28,7 +28,7 @@ interface ArtTransformerProps {
         tintPercent: number;
     };
     displaySettings: any;
-  }
+}
   
 
 // LOGIC -----------------------------------------
@@ -147,6 +147,10 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
         });
     }, [artworkState]);
 
+    const memoizedCalculatedAttunement = useMemo(() => {
+        return calculateMostFrequentNumeral(BigInt(editorSeed))?.toString() ?? "0";
+    }, [editorSeed]);
+
     // Update the artwork attunement with editor state
     const updateAttunement = useCallback(() => {
         if (svgRef.current) {
@@ -158,12 +162,11 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
             svg.classList.add(attunementNames[Number(editorAttunement)]);
             updateThemeColor(attunementNames[Number(editorAttunement)]);
           } else {
-            const calculatedAttunement = calculateMostFrequentNumeral(BigInt(editorSeed))?.toString() ?? "0";
-            svg.classList.add(attunementNames[Number(calculatedAttunement)]);
-            updateThemeColor(attunementNames[Number(calculatedAttunement)]);
+            svg.classList.add(attunementNames[Number(memoizedCalculatedAttunement)]);
+            updateThemeColor(attunementNames[Number(memoizedCalculatedAttunement)]);
           }
         }
-    }, [svgRef, editorAttunement, editorSeed, isAttunementOverridden]);
+    }, [svgRef, editorAttunement, memoizedCalculatedAttunement, isAttunementOverridden]);
 
 
     // EFFECTS ----------------------------------------
