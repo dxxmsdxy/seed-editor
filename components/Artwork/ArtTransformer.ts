@@ -1,10 +1,9 @@
-import React, { useLayoutEffect, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAppSelector } from '@/app/hooks';
 import { updateSVGWithSeed } from "@/lib/utils/artwork/updateSVGWithSeed";
 import { applyModValueToElements, resetLayers, flipLayers } from '@/lib/utils/artwork/updateSVGWithMod';
 import { selectBitsArray } from '@/store/slices/editorSlice';
 import { attunementNames, updateThemeColor, checkPalindrome, calculateMostFrequentNumeral } from '@/lib/utils/global';
-import { isEqual } from 'lodash';
 
 
 
@@ -33,9 +32,9 @@ interface ArtTransformerProps {
         array: boolean[];
     };
 }
-  
 
-// LOGIC -----------------------------------------
+
+// COMPONENT --------------------------------------
 
 const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
     svgRef,
@@ -48,11 +47,9 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
     modValues,
     displaySettings,
 }) => {
-    
-    // REDUX STATE -------------------------------
-    const bitsArray = useAppSelector(selectBitsArray);
 
-    // CALLBACKS ----------------------------------
+    // LOGIC --------------------------------------
+    const bitsArray = useAppSelector(selectBitsArray);
 
     const memoizedCalculatedAttunement = useMemo(() => {
         return calculateMostFrequentNumeral(editorSeed) ?? "0";
@@ -61,12 +58,9 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
     const resetMod = useCallback(() => {
         if (svgRef.current) {
             const svg = svgRef.current;
-            // Only reset layers if flip class is not present
-            if (!svg.classList.contains('flip')) {
-                resetLayers(svg);
-            }
+            resetLayers(svg);
         }
-    }, [svgRef]);
+    }, []);
 
     const applyModValues = useCallback(() => {
         const svg = svgRef.current;
@@ -84,7 +78,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
 
         const colorElements = [
             svg,
-            ...Array.from(svg.querySelectorAll('.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline,.sub.on path,.sub.on polygon,.sub.on circle,.sub.on ellipse,.sub.on line,.sub.on rect,.sub.on polyline,.sub.on .fx'))
+            ...Array.from(svg.querySelectorAll('.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline,.sub.on path,.sub.on polygon,.sub.on circle,.sub.on ellipse,.sub.on line,.sub.on rect,.sub.on polyline'))
         ];
         const spinElements = Array.from(svg.querySelectorAll('.lr.on, .sub.on'));
         const depthElements = Array.from(svg.querySelectorAll('.lr.on .fx, .sub.on .fx'));
@@ -108,7 +102,10 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
                 rgblens.style.cssText = `background-color: hsl(${hue}, 100%, 50%); opacity: ${modValues.tintPercent === 100 ? '1' : (modValues.tintPercent / 100).toString()};`;
             }
         }
-    }, [modValues, displaySettings, svgRef]);
+    }, [editorMod]);
+
+    
+    // EFFECTS ----------------------------------------
 
     // Track the previous flip state
     const previousFlipActiveRef = useRef<boolean>((displaySettings.value & (1 << 1)) !== 0);
@@ -126,37 +123,40 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
                 flipLayers(svg, currentFlipActive);
             }
         }
-
         previousFlipActiveRef.current = currentFlipActive;
-    }, [displaySettings.value, svgRef]);
+    }, [editorMod]);
 
-    // EFFECTS ----------------------------------------
-
-    // Update the artwork seed
+    // Update the artwork seed and apply mod values
     useEffect(() => {
         if (svgRef.current) {
             const svg = svgRef.current;
             const isPalindrome = checkPalindrome(BigInt(editorSeed));
             const isSingleDigit = editorSeed.length === 1;
 
+            const isFlipActive = (displaySettings.value & (1 << 1)) !== 0;
+            if (isFlipActive) {
+                flipLayers(svg, false); // Restore original layer order
+            }
+
             updateSVGWithSeed(BigInt(editorSeed), svg, bitsArray);
+
+            if (isFlipActive) {
+                flipLayers(svg, true); // Reapply flip
+            }
 
             svg.classList.add('spin');
             svg.classList.toggle('pauseSpin', isSpinAnimationPaused);
             svg.classList.toggle('palindrome', isPalindrome && !isSingleDigit);
+
+            applyModValues();
         }
     }, [editorSeed, isSpinAnimationPaused]);
 
-    // Reset mod when editorMod or isAttunementOverridden changes
+    // Reset mod when modValues or displaySettings change
     useEffect(() => {
         resetMod();
         applyModValues();
-    }, [editorMod, isAttunementOverridden, resetMod, applyModValues]);
-
-    // Apply mod values when they change
-    useEffect(() => {
-        applyModValues();
-    }, [applyModValues]);
+    }, [editorMod]);
 
     // Update the artwork attunement
     useEffect(() => {
@@ -169,7 +169,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
             svg.classList.add(attunementNames[Number(attunementValue)]);
             updateThemeColor(attunementNames[Number(attunementValue)]);
         }
-    }, [editorAttunement, isAttunementOverridden, memoizedCalculatedAttunement, svgRef]);
+    }, [editorSeed, editorAttunement, isAttunementOverridden]);
 
     // Set original layer indices on mount
     useEffect(() => {
@@ -182,7 +182,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
                 });
             }
         }
-    }, [svgRef]);
+    }, []);
 
     return null;
 });
