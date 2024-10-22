@@ -22,14 +22,14 @@ import { generateName } from '@/lib/utils/nameGenerator';
 
 
 
-const onRenderCallback = (
-  id: string,
-  phase: "mount" | "update",
-  actualDuration: number,
-  baseDuration: number,
-  startTime: number,
-  commitTime: number,
-  interactions: Set<any>
+const onRenderCallback: React.ProfilerOnRenderCallback = (
+  id,
+  phase,
+  actualDuration,
+  baseDuration,
+  startTime,
+  commitTime,
+  interactions
 ) => {
   // Log or store the profiling data
   console.log(`Profiler: ${id}`);
