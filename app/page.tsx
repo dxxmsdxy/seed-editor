@@ -313,16 +313,20 @@ const Home: React.FC = () => {
   // Keyboard event listeners
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.key === 'z' && !event.shiftKey) {
+      const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.userAgent);
+      const modifierKey = isMac ? event.metaKey : event.ctrlKey;
+
+      if (modifierKey && event.key.toLowerCase() === 'z' && !event.shiftKey) {
         event.preventDefault();
         dispatch(undo());
-      } else if (event.ctrlKey && event.key === 'Z' && event.shiftKey) {
+      } else if (modifierKey && event.key.toLowerCase() === 'z' && event.shiftKey) {
         event.preventDefault();
         dispatch(redo());
-      } else if ((event.key === 'r' || event.key === 'r') && (!event.ctrlKey || !event.metaKey )) {
+      } else if ((event.key === 'r' || event.key === 'R') && !modifierKey) {
         event.preventDefault();
         handleRandomizeBits();
       } else if (event.code === 'Space' && event.target === document.body) {
+        event.preventDefault();
         togglePlay();
       }
     };
