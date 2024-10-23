@@ -1,5 +1,6 @@
 "use client";
 import React, { useRef, useCallback, useEffect, useState, useMemo, Profiler } from "react";
+import { useSwipeable, SwipeEventData } from 'react-swipeable';
 import TransitionLink from '@/components/TransitionLink';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch } from '@/app/hooks';
@@ -202,7 +203,7 @@ const Home: React.FC = () => {
         document.body.classList.add('grabbing');
       }, 100);
     };
-
+  
     const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
       if (dragStartPositionRef.current) {
         const dx = event.clientX - dragStartPositionRef.current.x;
@@ -218,7 +219,7 @@ const Home: React.FC = () => {
         }
       }
     };
-
+  
     const handleMouseUp = (event: React.MouseEvent<HTMLDivElement>) => {
       if (dragTimeoutRef.current) {
         clearTimeout(dragTimeoutRef.current);
@@ -231,7 +232,7 @@ const Home: React.FC = () => {
       dragStartPositionRef.current = null;
       document.body.classList.remove('grabbing');
     };
-
+  
     return {
       onMouseDown: handleMouseDown,
       onMouseMove: handleMouseMove,
@@ -333,6 +334,23 @@ const Home: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [dispatch, handleRandomizeBits, togglePlay]);
+
+  const handleSwipe = useCallback((eventData: SwipeEventData) => {
+    if (eventData.event.type.startsWith('touch')) {
+      if (eventData.dir === 'Left') {
+        dispatch(redo());
+      } else if (eventData.dir === 'Right') {
+        dispatch(undo());
+      }
+    }
+  }, [dispatch]);
+
+  const swipeHandlers = useSwipeable({
+    onSwiped: handleSwipe,
+    preventScrollOnSwipe: true,
+    trackMouse: false,
+    trackTouch: true
+  });
 
   useEffect(() => {
     const handleGlobalMouseUp = (e: MouseEvent) => {
@@ -580,6 +598,7 @@ const Home: React.FC = () => {
               >
                 <div 
                   className={`svg-container ${isSpinAnimationPaused ? 'paused' : 'playing'}`}
+                  {...swipeHandlers}
                 >
                   <div className="svg-outer" {...handleArtworkInteraction()}>
                     {memoizedArtwork}

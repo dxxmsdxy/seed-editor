@@ -120,56 +120,56 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
     const updateArtwork = useCallback(() => {
         if (!svgRef.current) return;
         const svg = svgRef.current;
-      
+    
+        if (
+            previousValuesRef.current.editorSeed === editorSeed &&
+            previousValuesRef.current.editorMod === editorMod &&
+            previousValuesRef.current.editorAttunement === editorAttunement &&
+            previousValuesRef.current.isSpinAnimationPaused === isSpinAnimationPaused &&
+            previousValuesRef.current.isAttunementOverridden === isAttunementOverridden
+        ) {
+            return;
+        }
+    
+        // Determine current flip state
+        const flipBit = 1; // flip is at index 1
+        const isFlipActive = (displaySettings.value & (1 << flipBit)) !== 0;
+    
+        // If flip state has changed, rearrange layers
+        if (previousValuesRef.current.flipState !== isFlipActive) {
+            flipLayers(svg, isFlipActive);
+        }
+    
+        // Update previous values
+        previousValuesRef.current = {
+            editorSeed,
+            editorMod,
+            editorAttunement,
+            isSpinAnimationPaused,
+            modValues: { ...modValues },
+            displaySettings: { ...displaySettings },
+            isAttunementOverridden,
+            flipState: isFlipActive,
+        };
+    
+        const applySeed = () => {
+            updateSVGWithSeed(BigInt(editorSeed), svg, bitsArray);
+            const isPalindrome = checkPalindrome(BigInt(editorSeed));
+            const isSingleDigit = editorSeed.length === 1;
+    
+            const displayClasses = ['reveal', 'flip', 'invert', 'hyper', 'grayscale', 'cmyk', 'accent-1', 'accent-2', 'accent-3'];
+            displayClasses.forEach((className, index) => {
+                const isActive = index === 0 ? (displaySettings.value & (1 << 0)) === 0 : (displaySettings.value & (1 << index)) !== 0;
+                svg.classList.toggle(className, isActive);
+            });
+    
+            svg.classList.add('spin');
+            svg.classList.toggle('pauseSpin', isSpinAnimationPaused);
+            svg.classList.toggle('depth', modValues.depth > 0);
+            svg.classList.toggle('palindrome', isPalindrome && !isSingleDigit);
+        };
+
         requestAnimationFrame(() => {
-            if (
-                previousValuesRef.current.editorSeed === editorSeed &&
-                previousValuesRef.current.editorMod === editorMod &&
-                previousValuesRef.current.editorAttunement === editorAttunement &&
-                previousValuesRef.current.isSpinAnimationPaused === isSpinAnimationPaused &&
-                previousValuesRef.current.isAttunementOverridden === isAttunementOverridden
-            ) {
-                return;
-            }
-        
-            // Determine current flip state
-            const flipBit = 1; // flip is at index 1
-            const isFlipActive = (displaySettings.value & (1 << flipBit)) !== 0;
-        
-            // If flip state has changed, rearrange layers
-            if (previousValuesRef.current.flipState !== isFlipActive) {
-                flipLayers(svg, isFlipActive);
-            }
-        
-            // Update previous values
-            previousValuesRef.current = {
-                editorSeed,
-                editorMod,
-                editorAttunement,
-                isSpinAnimationPaused,
-                modValues: { ...modValues },
-                displaySettings: { ...displaySettings },
-                isAttunementOverridden,
-                flipState: isFlipActive,
-            };
-        
-            const applySeed = () => {
-                updateSVGWithSeed(BigInt(editorSeed), svg, bitsArray);
-                const isPalindrome = checkPalindrome(BigInt(editorSeed));
-                const isSingleDigit = editorSeed.length === 1;
-        
-                const displayClasses = ['reveal', 'flip', 'invert', 'hyper', 'grayscale', 'cmyk', 'accent-1', 'accent-2', 'accent-3'];
-                displayClasses.forEach((className, index) => {
-                    const isActive = index === 0 ? (displaySettings.value & (1 << 0)) === 0 : (displaySettings.value & (1 << index)) !== 0;
-                    svg.classList.toggle(className, isActive);
-                });
-        
-                svg.classList.add('spin');
-                svg.classList.toggle('pauseSpin', isSpinAnimationPaused);
-                svg.classList.toggle('depth', modValues.depth > 0);
-                svg.classList.toggle('palindrome', isPalindrome && !isSingleDigit);
-            };
-            
             applySeed();
             applyModValues();
             applyAttunement();
