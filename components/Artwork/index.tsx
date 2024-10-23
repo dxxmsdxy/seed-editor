@@ -45,18 +45,10 @@ const Artwork = React.memo(forwardRef<{ updateArtwork: () => void }, ArtworkProp
   } = props;
 
   const svgRef = useRef<SVGSVGElement>(null);
-  const updateArtworkRef = useRef<(() => void) | undefined>(undefined);
   const currentDate = new Date();
   const memoizedModValues = useMemo(() => modValues, [modValues.color, modValues.spin, modValues.depth, modValues.tint, modValues.tintPercent]);
   const memoizedDisplaySettings = useMemo(() => displaySettings, [displaySettings.value, displaySettings.array]);
 
-  useEffect(() => {
-    if (typeof ref === 'function') {
-      ref({ updateArtwork: () => updateArtworkRef.current?.() });
-    } else if (ref) {
-      ref.current = { updateArtwork: () => updateArtworkRef.current?.() };
-    }
-  }, [ref]);
 
   const memoizedSVG = useMemo(() => (
     <svg
@@ -917,7 +909,6 @@ return (
     {memoizedSVG}
     <ArtTransformer
       svgRef={svgRef}
-      updateArtworkRef={updateArtworkRef}
       isSpinAnimationPaused={!isPlaying}
       editorSeed={editorSeed}
       editorMod={editorMod}

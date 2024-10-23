@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAppSelector } from '@/app/hooks';
 import { updateSVGWithSeed } from "@/lib/utils/artwork/updateSVGWithSeed";
-import { applyModValueToElements, resetLayers, flipLayers } from '@/lib/utils/artwork/updateSVGWithMod';
+import { applyModValueToElements, resetStyles, flipLayers } from '@/lib/utils/artwork/updateSVGWithMod';
 import { selectBitsArray } from '@/store/slices/editorSlice';
 import { attunementNames, updateThemeColor, checkPalindrome, calculateMostFrequentNumeral } from '@/lib/utils/global';
+import { isEqual } from 'lodash';
 
 
 
@@ -32,13 +33,12 @@ interface ArtTransformerProps {
         array: boolean[];
     };
 }
+  
 
-
-// COMPONENT --------------------------------------
+// COMPONENT ------------------------------------
 
 const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
     svgRef,
-    updateArtworkRef,
     isSpinAnimationPaused,
     editorSeed,
     editorMod,
@@ -47,38 +47,33 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
     modValues,
     displaySettings,
 }) => {
+    const previousValuesRef = useRef({
+        editorSeed: '',
+        editorMod: '',
+        editorAttunement: '',
+        isSpinAnimationPaused: false,
+        modValues: { ...modValues },
+        displaySettings: { ...displaySettings },
+        isAttunementOverridden: isAttunementOverridden,
+        flipState: false,
+    });
+      
 
-    // LOGIC --------------------------------------
+    // LOGIC -----------------------------------
+    
     const bitsArray = useAppSelector(selectBitsArray);
 
     const memoizedCalculatedAttunement = useMemo(() => {
         return calculateMostFrequentNumeral(editorSeed) ?? "0";
     }, [editorSeed]);
 
-    const resetMod = useCallback(() => {
-        if (svgRef.current) {
-            const svg = svgRef.current;
-            resetLayers(svg);
-        }
-    }, []);
-
     const applyModValues = useCallback(() => {
         const svg = svgRef.current;
         if (!svg) return;
 
-        // Exclude 'flip' from the classes to avoid unnecessary flipping
-        const displayClasses = ['reveal', 'invert', 'hyper', 'grayscale', 'cmyk', 'accent-1', 'accent-2', 'accent-3'];
-        displayClasses.forEach((className, index) => {
-            // Adjust index because 'flip' is at index 1 in the original array
-            const classIndex = index >= 1 ? index + 1 : index;
-            const isActive = classIndex === 0 ? (displaySettings.value & (1 << 0)) === 0 : (displaySettings.value & (1 << classIndex)) !== 0;
-            svg.classList.toggle(className, isActive);
-        });
-        svg.classList.toggle('depth', modValues.depth > 0);
-
         const colorElements = [
             svg,
-            ...Array.from(svg.querySelectorAll('.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline,.sub.on path,.sub.on polygon,.sub.on circle,.sub.on ellipse,.sub.on line,.sub.on rect,.sub.on polyline'))
+            ...Array.from(svg.querySelectorAll('.lr.on path,.lr.on polygon, .lr.on circle, .lr.on .ellipse, .lr.on line, .lr.on rect, .lr.on .polyline,.sub.on path,.sub.on polygon,.sub.on circle,.sub.on ellipse,.sub.on line,.sub.on rect,.sub.on polyline,.sub.on .fx'))
         ];
         const spinElements = Array.from(svg.querySelectorAll('.lr.on, .sub.on'));
         const depthElements = Array.from(svg.querySelectorAll('.lr.on .fx, .sub.on .fx'));
@@ -102,76 +97,117 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
                 rgblens.style.cssText = `background-color: hsl(${hue}, 100%, 50%); opacity: ${modValues.tintPercent === 100 ? '1' : (modValues.tintPercent / 100).toString()};`;
             }
         }
-    }, [editorMod]);
+    }, [modValues]);
 
-    
-    // EFFECTS ----------------------------------------
-
-    // Track the previous flip state
-    const previousFlipActiveRef = useRef<boolean>((displaySettings.value & (1 << 1)) !== 0);
-
-    // Separate useEffect for handling 'flip' class
-    useEffect(() => {
-        const flipIndex = 1; // index of 'flip' in displayClasses
-        const currentFlipActive = (displaySettings.value & (1 << flipIndex)) !== 0;
-        const previousFlipActive = previousFlipActiveRef.current;
-
-        if (currentFlipActive !== previousFlipActive) {
-            const svg = svgRef.current;
-            if (svg) {
-                svg.classList.toggle('flip', currentFlipActive);
-                flipLayers(svg, currentFlipActive);
-            }
-        }
-        previousFlipActiveRef.current = currentFlipActive;
-    }, [editorMod]);
-
-    // Update the artwork seed and apply mod values
-    useEffect(() => {
-        if (svgRef.current) {
-            const svg = svgRef.current;
-            const isPalindrome = checkPalindrome(BigInt(editorSeed));
-            const isSingleDigit = editorSeed.length === 1;
-
-            const isFlipActive = (displaySettings.value & (1 << 1)) !== 0;
-            if (isFlipActive) {
-                flipLayers(svg, false); // Restore original layer order
-            }
-
-            updateSVGWithSeed(BigInt(editorSeed), svg, bitsArray);
-
-            if (isFlipActive) {
-                flipLayers(svg, true); // Reapply flip
-            }
-
-            svg.classList.add('spin');
-            svg.classList.toggle('pauseSpin', isSpinAnimationPaused);
-            svg.classList.toggle('palindrome', isPalindrome && !isSingleDigit);
-
-            applyModValues();
-        }
-    }, [editorSeed, isSpinAnimationPaused]);
-
-    // Reset mod when modValues or displaySettings change
-    useEffect(() => {
-        resetMod();
-        applyModValues();
-    }, [editorMod]);
-
-    // Update the artwork attunement
-    useEffect(() => {
+    // Update the artwork attunement with editor state
+    const applyAttunement = useCallback(() => {
         if (svgRef.current) {
             const svg = svgRef.current;
             attunementNames.forEach((className) => {
                 svg.classList.remove(className);
             });
-            const attunementValue = isAttunementOverridden || editorAttunement !== '0' ? editorAttunement : memoizedCalculatedAttunement;
-            svg.classList.add(attunementNames[Number(attunementValue)]);
-            updateThemeColor(attunementNames[Number(attunementValue)]);
+            if (isAttunementOverridden || editorAttunement !== '0') {
+                svg.classList.add(attunementNames[Number(editorAttunement)]);
+                updateThemeColor(attunementNames[Number(editorAttunement)]);
+            } else {
+                svg.classList.add(attunementNames[Number(memoizedCalculatedAttunement)]);
+                updateThemeColor(attunementNames[Number(memoizedCalculatedAttunement)]);
+            }
         }
-    }, [editorSeed, editorAttunement, isAttunementOverridden]);
+    }, [editorAttunement, editorSeed, isAttunementOverridden]);
 
-    // Set original layer indices on mount
+    // Update the artwork with editor state
+    const updateArtwork = useCallback(() => {
+        if (!svgRef.current) return;
+        const svg = svgRef.current;
+      
+        requestAnimationFrame(() => {
+            if (
+                previousValuesRef.current.editorSeed === editorSeed &&
+                previousValuesRef.current.editorMod === editorMod &&
+                previousValuesRef.current.editorAttunement === editorAttunement &&
+                previousValuesRef.current.isSpinAnimationPaused === isSpinAnimationPaused &&
+                previousValuesRef.current.isAttunementOverridden === isAttunementOverridden
+            ) {
+                return;
+            }
+        
+            // Determine current flip state
+            const flipBit = 1; // flip is at index 1
+            const isFlipActive = (displaySettings.value & (1 << flipBit)) !== 0;
+        
+            // If flip state has changed, rearrange layers
+            if (previousValuesRef.current.flipState !== isFlipActive) {
+                flipLayers(svg, isFlipActive);
+            }
+        
+            // Update previous values
+            previousValuesRef.current = {
+                editorSeed,
+                editorMod,
+                editorAttunement,
+                isSpinAnimationPaused,
+                modValues: { ...modValues },
+                displaySettings: { ...displaySettings },
+                isAttunementOverridden,
+                flipState: isFlipActive,
+            };
+        
+            const applySeed = () => {
+                updateSVGWithSeed(BigInt(editorSeed), svg, bitsArray);
+                const isPalindrome = checkPalindrome(BigInt(editorSeed));
+                const isSingleDigit = editorSeed.length === 1;
+        
+                const displayClasses = ['reveal', 'flip', 'invert', 'hyper', 'grayscale', 'cmyk', 'accent-1', 'accent-2', 'accent-3'];
+                displayClasses.forEach((className, index) => {
+                    const isActive = index === 0 ? (displaySettings.value & (1 << 0)) === 0 : (displaySettings.value & (1 << index)) !== 0;
+                    svg.classList.toggle(className, isActive);
+                });
+        
+                svg.classList.add('spin');
+                svg.classList.toggle('pauseSpin', isSpinAnimationPaused);
+                svg.classList.toggle('depth', modValues.depth > 0);
+                svg.classList.toggle('palindrome', isPalindrome && !isSingleDigit);
+            };
+            
+            applySeed();
+            applyModValues();
+            applyAttunement();
+        });
+    }, [editorSeed, editorMod, editorAttunement, isSpinAnimationPaused, isAttunementOverridden]);
+
+    // Reset the artwork SVG to initial state
+    const resetArtwork = useCallback(() => {
+        if (svgRef.current) {
+          const svg = svgRef.current;
+          resetStyles(svg);
+      
+          const colorElements = svg.querySelectorAll('.seedartwork, .lr path, .lr polygon, .lr circle, .lr ellipse, .lr line, .lr rect, .lr polyline, .sub path, .sub polygon, .sub circle, .sub ellipse, .sub line, .sub rect, .sub polyline, .sub .fx');
+          const spinElements = svg.querySelectorAll('.lr, .sub');
+          const depthElements = svg.querySelectorAll('.lr .fx, .sub .fx');
+      
+          if (modValues.color !== undefined) {
+            applyModValueToElements(colorElements, modValues.color, 'color');
+          }
+          if (modValues.spin !== undefined) {
+            applyModValueToElements(spinElements, modValues.spin, 'spin');
+          }
+          if (modValues.depth !== undefined) {
+            applyModValueToElements(depthElements, modValues.depth, 'depth');
+          }
+        }
+    }, [modValues]);
+
+
+    // EFFECTS ----------------------------------------
+
+    useEffect(() => {
+        if (svgRef.current) {
+            resetArtwork();
+            updateArtwork();
+        }
+    }, [updateArtwork, resetArtwork]);
+
     useEffect(() => {
         if (svgRef.current) {
             const artGroup = svgRef.current.querySelector('.art');
@@ -184,7 +220,7 @@ const ArtTransformer: React.FC<ArtTransformerProps> = React.memo(({
         }
     }, []);
 
-    return null;
+    return null
 });
 
 export default ArtTransformer;

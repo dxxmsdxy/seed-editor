@@ -177,14 +177,6 @@ const DisplaySettings: React.FC = () => {
     }
   }, [editorMod]);
 
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlMod = urlParams.get('mod');
-    if (urlMod) {
-      dispatch(setUrlMod(urlMod));
-    }
-  }, [dispatch]);
-
 
 
 

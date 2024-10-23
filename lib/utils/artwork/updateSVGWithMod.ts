@@ -257,8 +257,7 @@ export function flipLayers(svg: SVGSVGElement, isFlipped: boolean): void {
   }
 }
 
-
-export function resetLayers(svg: SVGSVGElement | null): void {
+export function resetStyles(svg: SVGSVGElement | null): void {
   if (!svg) return;
 
   const selectors = [
@@ -279,7 +278,7 @@ export function resetLayers(svg: SVGSVGElement | null): void {
     '.sub line',
     '.sub rect',
     '.sub polyline',
-    '.sub .fx'
+    '.sub .fx',
   ];
 
   const elements = svg.querySelectorAll(selectors.join(', '));
@@ -294,31 +293,6 @@ export function resetLayers(svg: SVGSVGElement | null): void {
       (element as HTMLElement).style.animationDuration = `${originalDuration}s`;
     }
   });
-
-  if (!svg.classList.contains('flip')) {
-    // Reset layer order
-    const artGroup = svg.querySelector('.art');
-    if (artGroup) {
-      const layers = Array.from(artGroup.querySelectorAll('.lr, .sub'));
-      const lastNonLayerElement = artGroup.querySelector('#slot');
-      
-      // Sort layers based on their original order (you may need to add a data attribute for this)
-      layers.sort((a, b) => {
-        const indexA = parseInt(a.getAttribute('data-original-index') || '0', 10);
-        const indexB = parseInt(b.getAttribute('data-original-index') || '0', 10);
-        return indexA - indexB;
-      });
-
-      // Reinsert layers in the original order
-      layers.forEach(layer => {
-        if (lastNonLayerElement) {
-          artGroup.insertBefore(layer, lastNonLayerElement);
-        } else {
-          artGroup.appendChild(layer);
-        }
-      });
-    }
-  }
 
   // Remove the depth filter style
   const depthFilterStyle = svg.querySelector('style.depth-filter');
