@@ -319,7 +319,7 @@ const Home: React.FC = () => {
       } else if (event.ctrlKey && event.key === 'Z' && event.shiftKey) {
         event.preventDefault();
         dispatch(redo());
-      } else if ((event.key === 'r' || event.key === 'R') && !event.ctrlKey) {
+      } else if ((event.key === 'r' || event.key === 'r') && (!event.ctrlKey || !event.metaKey )) {
         event.preventDefault();
         handleRandomizeBits();
       } else if (event.code === 'Space' && event.target === document.body) {
