@@ -123,4 +123,4 @@ const RangeSlider: React.FC<RangeSliderProps> = React.memo(({
   );
 });
 
-export default RangeSlider;
+export default React.memo(RangeSlider);

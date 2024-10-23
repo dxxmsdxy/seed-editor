@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo, forwardRef } from 'react';
+import React, { useRef, useMemo, forwardRef } from 'react';
 import ArtTransformer from './ArtTransformer';
 
 
@@ -26,7 +26,6 @@ interface ArtworkProps {
     value: number;
     array: boolean[];
   };
-  selectedQueueIndex: number | null;
   isPlaying: boolean;
   onArtworkReady: () => void;
 }
@@ -40,7 +39,6 @@ const Artwork = React.memo(forwardRef<{ updateArtwork: () => void }, ArtworkProp
     isAttunementOverridden,
     modValues,
     displaySettings,
-    selectedQueueIndex,
     onArtworkReady,
   } = props;
 

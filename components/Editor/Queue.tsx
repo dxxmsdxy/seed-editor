@@ -1,16 +1,11 @@
-import React, { useCallback, useMemo, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useCallback, useMemo } from 'react';
+import { RootState } from '@/store';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import {
   selectCurrentPageItems,
   selectTotalPages,
-  selectCurrentPage,
-  selectItemsPerPage,
   selectIsQueueModified,
-  selectSelectedIndex,
-  updateQueueItem,
   updateQueueOrder,
-  resetQueueItem,
   resetQueueItemAndUpdateEditor,
   selectQueueItems,
   setSelectedIndex,
@@ -18,7 +13,7 @@ import {
 } from '@/store/slices/queueSlice';
 import { setShowInscribeModal } from '@/store/slices/modalSlice';
 import { selectElementContents, clearSelection } from '@/lib/utils/global';
-import { updateEditorState, resetEditorState, selectEditorSeed, selectEditorMod, selectEditorAttunement, pushCurrentStateToHistory } from '@/store/slices/editorSlice';
+import { updateEditorState, resetEditorState, pushCurrentStateToHistory } from '@/store/slices/editorSlice';
 
 
 
@@ -30,7 +25,7 @@ interface QueueProps {
   isDropping: boolean;
 }
 
-const getKindClass = (kind: string): string => {
+const getKindClass = (kind: string | undefined): string => {
   switch (kind?.toLowerCase()) {
     case 'archetype':
       return 'kind-archetype';
@@ -50,15 +45,16 @@ const getKindClass = (kind: string): string => {
 
 // COMPONENT ---------------------------------------
 
-const Queue: React.FC<QueueProps> = ({ isDropping }) => {
+const Queue: React.FC<QueueProps> = React.memo(({ isDropping }) => {
   const dispatch = useAppDispatch();
-  const editorSeed = useSelector(selectEditorSeed);
-  const editorMod = useSelector(selectEditorMod);
-  const editorAttunement = useSelector(selectEditorAttunement);
   
-  const totalPages = useAppSelector(selectTotalPages);
-  const currentPage = useAppSelector(selectCurrentPage);
-  const itemsPerPage = useAppSelector(selectItemsPerPage);
+  const queueState = useAppSelector(useMemo(() => (state: RootState) => ({
+    totalPages: selectTotalPages(state),
+    currentPage: state.queue.currentPage,
+    isModified: selectIsQueueModified(state),
+    selectedIndex: state.queue.selectedIndex
+  }), []));
+
   const customEqual = (a, b) => {
     return a.length === b.length && a.every((item, index) => {
       return item.id === b[index].id && 
@@ -67,20 +63,19 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
              item.index === b[index].index;  // Add this line
     });
   };
+
   const queueItems = useAppSelector(selectQueueItems);
   const currentPageItems = useAppSelector(selectCurrentPageItems, customEqual);
-  const isQueueModified = useAppSelector(selectIsQueueModified);
-  const selectedQueueIndex = useAppSelector(selectSelectedIndex);
   
 
   // EVENT HANDLERS --------------------------------
 
   // Change queue page
   const handlePageChange = useCallback((newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
+    if (newPage >= 1 && newPage <= queueState.totalPages) {
       dispatch(setCurrentPage(newPage));
     }
-  }, [dispatch, totalPages]);
+  }, [dispatch, queueState.totalPages]);
 
   // Go to first page of the queue
   const goToFirstPage = useCallback((e: React.MouseEvent) => {
@@ -92,7 +87,7 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
   // Select a queue item
   const handleQueueItemSelect = useCallback((index: number) => {
     console.log('Selecting queue item:', index, queueItems[index]);
-    if (selectedQueueIndex === index) {
+    if (queueState.selectedIndex === index) {
       dispatch(setSelectedIndex(null));
       dispatch(resetEditorState());
     } else {
@@ -111,7 +106,7 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
       // Move this dispatch after updating the editor state
       dispatch(setSelectedIndex(index));
     }
-  }, [dispatch, selectedQueueIndex, queueItems]);
+  }, [dispatch, queueState.selectedIndex, queueItems]);
 
   // Reset a queue item to its initial state
   const handleQueueItemReset = useCallback((e: React.MouseEvent, index: number) => {
@@ -122,23 +117,18 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
 
   // Click the inscribe button
   const handleInscribeClick = useCallback(() => {
-    if (isQueueModified) {
+    if (queueState.isModified) {
       dispatch(setShowInscribeModal(true));
     }
-  }, [dispatch, isQueueModified]);
+  }, [dispatch, queueState.isModified]);
 
 
   // DERIVED STATE ---------------------------------
 
-  // Determine where to place "set items" divider
-  const getDividerIndex = useCallback((items: typeof currentPageItems) => {
-    const lastSetItemIndex = items.findLastIndex(item => item.isSet);
-    return lastSetItemIndex + 1;
-  }, []);
-
   // Store divider index
-  const dividerIndex = useMemo(() => getDividerIndex(currentPageItems), [currentPageItems, getDividerIndex]);
-
+  const dividerIndex = useMemo(() => 
+    currentPageItems.findLastIndex(item => item.isSet) + 1
+  , [currentPageItems]);
   
 
   // STRUCTURE -------------------------------------
@@ -147,7 +137,7 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
     return (
       <div className="queue-container">
         <a
-            className={`ui-button inscribe z-button ${isQueueModified ? "" : "disabled"}`}
+            className={`ui-button inscribe z-button ${queueState.isModified ? "" : "disabled"}`}
             onClick={handleInscribeClick}
           >
             --
@@ -157,12 +147,12 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
   } else {
     return (
       <div className="queue-container">
-        <div className={`page-selector ${totalPages > 1 ? '' : 'disabled'}`} onClick={goToFirstPage}>
+        <div className={`page-selector ${queueState.totalPages > 1 ? '' : 'disabled'}`} onClick={goToFirstPage}>
           <div 
-            className={`page-nav prev ${currentPage === 1 ? 'disabled' : ''}`}
+            className={`page-nav prev ${queueState.currentPage === 1 ? 'disabled' : ''}`}
             onClick={(e) => {
               e.stopPropagation();
-              if (currentPage > 1) handlePageChange(currentPage - 1);
+              if (queueState.currentPage > 1) handlePageChange(queueState.currentPage - 1);
             }}
           >&lt;</div>
           <div className="page-label-container" onClick={goToFirstPage}>
@@ -179,7 +169,7 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
                   e.preventDefault();
                   const newPage = parseInt(e.currentTarget.textContent || "1", 10);
                   handlePageChange(newPage);
-                  e.currentTarget.textContent = currentPage.toString();
+                  e.currentTarget.textContent = queueState.currentPage.toString();
                   clearSelection();
                 }}
                 onKeyDown={(e) => {
@@ -188,14 +178,14 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
                     e.currentTarget.blur();
                   }
                 }}
-              >{currentPage}</span> / {totalPages}
+              >{queueState.currentPage}</span> / {queueState.totalPages}
             </div>
           </div>
           <div 
-            className={`page-nav next ${currentPage === totalPages ? 'disabled' : ''}`}
+            className={`page-nav next ${queueState.currentPage === queueState.totalPages ? 'disabled' : ''}`}
             onClick={(e) => {
               e.stopPropagation();
-              if (currentPage < totalPages) handlePageChange(currentPage + 1);
+              if (queueState.currentPage < queueState.totalPages) handlePageChange(queueState.currentPage + 1);
             }}
           >&gt;</div>
         </div>
@@ -204,7 +194,7 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
             <React.Fragment key={item.id}>
               {index === dividerIndex && <span className="queue-divider"></span>}
               <li
-                className={`queue-item ${item.index === selectedQueueIndex ? "selected" : ""} ${item.isSet ? 'set' : ''} ${getKindClass(item.kind)}`}
+                className={`queue-item ${item.index === queueState.selectedIndex ? "selected" : ""} ${item.isSet ? 'set' : ''} ${getKindClass(item.kind)}`}
                 onClick={() => handleQueueItemSelect(item.index)}
                 data-index={item.index}
                 data-dropping={isDropping}
@@ -234,11 +224,11 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
           ))}
         </ul>
         <a
-          className={`ui-button inscribe z-button ${isQueueModified ? "" : "disabled"}`}
+          className={`ui-button inscribe z-button ${queueState.isModified ? "" : "disabled"}`}
           onClick={handleInscribeClick}
         >
           Inscribe
-          {isQueueModified && (
+          {queueState.isModified && (
             <span className="queue-count">
               <span>(</span>
               {currentPageItems.filter(item => item.isSet).length}
@@ -249,6 +239,6 @@ const Queue: React.FC<QueueProps> = ({ isDropping }) => {
       </div>
     );
   }
-};
+});
 
 export default Queue;

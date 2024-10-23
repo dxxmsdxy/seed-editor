@@ -8,7 +8,6 @@
 export function updateSVGWithSeed(
   editorSeed: bigint,
   artwork: SVGSVGElement,
-  bitsArray: boolean[],
   context: Document | DocumentFragment = document
 ) {
   const lrElements = Array.from(context.querySelectorAll(".lr"));

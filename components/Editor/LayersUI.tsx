@@ -1,7 +1,8 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useSelector, useDispatch } from 'react-redux';
-import { toggleBit, selectBitsArray, selectReversedBitsArray, resetEditorState, selectEditorSeed } from '@/store/slices/editorSlice';
+import { toggleBit, selectBitsArray, resetEditorState, selectEditorSeed } from '@/store/slices/editorSlice';
+
 
 
 
@@ -12,7 +13,6 @@ import { toggleBit, selectBitsArray, selectReversedBitsArray, resetEditorState, 
 export const BitsArray = () => {
   const dispatch = useDispatch();
   const bitsArray = useSelector(selectBitsArray);
-  const reversedBitsArray = useSelector(selectReversedBitsArray);
   const editorSeed = useSelector(selectEditorSeed);
   const [activeSelection, setActiveSelection] = useState(false);
 

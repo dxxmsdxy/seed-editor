@@ -88,12 +88,15 @@ const transformWalletData = (data: any[]): QueueItem[] => {
     initialSeed: item.seed,
     initialMod: item.modNumber || null,
     initialAttunement: item.attunementNumber !== null ? Number(item.attunementNumber) : null,
+    initialAttunementOverridden: false,
+    isAttunementOverridden: false,
     locked: item.locked,
     isSet: false,
     newValues: {
       newSeed: null,
       newMod: null,
       newAttunement: null,
+      isAttunementOverridden: null 
     },
     kind: item.kind,
     sat: item.sat,

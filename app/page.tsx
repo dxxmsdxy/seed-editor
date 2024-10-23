@@ -2,7 +2,6 @@
 import React, { useRef, useCallback, useEffect, useState, useMemo, Profiler } from "react";
 import { useSwipeable, SwipeEventData } from 'react-swipeable';
 import TransitionLink from '@/components/TransitionLink';
-import { useRouter } from 'next/navigation';
 import { useAppDispatch } from '@/app/hooks';
 import { createPortal } from 'react-dom';
 import { useSelector } from 'react-redux';
@@ -15,8 +14,8 @@ import { BitsArray } from "@/components/Editor/LayersUI";
 import DisplaySettings from '@/components/Editor/DisplaySettingsUI';
 import InscribeModal from "@/components/Editor/InscribeModal";
 
-import { setSelectedIndex, updateQueueItem, updateQueueOrder, selectSetQueueItems, updateQueueItemWithDragDrop } from '@/store/slices/queueSlice';
-import { updateEditorState, resetEditorState, undo, redo, selectEditorSeed, selectEditorMod, updateModValue, selectEditorAttunement, selectIsAttunementOverridden, setIsAttunementOverridden, selectBitsArray, selectModValues, selectDisplaySettings, selectHasEditorChanges, setUIVisibility, selectUIVisibility, setSpinAnimationPaused, parseMod } from '@/store/slices/editorSlice';
+import { setSelectedIndex, updateQueueItem, updateQueueOrder, updateQueueItemWithDragDrop } from '@/store/slices/queueSlice';
+import { updateEditorState, resetEditorState, undo, redo, selectEditorSeed, selectEditorMod, selectEditorAttunement, selectIsAttunementOverridden, selectBitsArray, selectModValues, selectDisplaySettings, selectHasEditorChanges, setUIVisibility, selectUIVisibility, setSpinAnimationPaused } from '@/store/slices/editorSlice';
 import { connectWalletAndLoadData } from '@/store/slices/walletSlice';
 import { selectElementContents, clearSelection, randomizeBits, hideMouseCursor, calculateMostFrequentNumeral, sanitizeSeed, sanitizeMod, sanitizeAttunement } from '@/lib/utils/global';
 import { generateName } from '@/lib/utils/nameGenerator';
@@ -46,7 +45,6 @@ const onRenderCallback: React.ProfilerOnRenderCallback = (
 
 const Home: React.FC = () => {
   const dispatch = useAppDispatch();
-  const router = useRouter();
 
   // STATE ----------------------------------------
 
@@ -60,7 +58,6 @@ const Home: React.FC = () => {
   const hasEditorChanges = useSelector(selectHasEditorChanges);
   const uiVisibility = useSelector(selectUIVisibility);
   const isSpinAnimationPaused = useSelector((state: RootState) => state.editor.isSpinAnimationPaused);
-  const isDepthAnimationPaused = useSelector((state: RootState) => state.editor.isDepthAnimationPaused);
   const walletConnected = useSelector((state: RootState) => state.wallet.connected);
   const queueItems = useSelector((state: RootState) => state.queue.items);
   const selectedQueueIndex = useSelector((state: RootState) => state.queue.selectedIndex);
@@ -78,7 +75,6 @@ const Home: React.FC = () => {
   const artRef = useRef<{ updateArtwork: () => void } | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const seedInputRef = useRef<HTMLDivElement>(null);
-  const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
   const dragTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const dragStartPositionRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -90,10 +86,8 @@ const Home: React.FC = () => {
   const [isArtworkFocused, setIsArtworkFocused] = useState(false);
   const [isOverlayToggled, setIsOverlayToggled] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [isPotentialDrag, setIsPotentialDrag] = useState(false);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isAudioInitialized, setIsAudioInitialized] = useState(false);
 
 
   // CALLBACKS --------------------------------------
@@ -131,8 +125,8 @@ const Home: React.FC = () => {
         copyText += '.' + editorMod;
       }
 
-      const calculatedAttunement = calculateMostFrequentNumeral(BigInt(editorSeed));
-      if (Number(editorAttunement) !== calculatedAttunement) {
+      const calculatedAttunement = calculateMostFrequentNumeral(editorSeed);
+      if (editorAttunement !== calculatedAttunement) {
         copyText += ':' + editorAttunement;
       }
       navigator.clipboard.writeText(copyText);
@@ -475,7 +469,6 @@ const Home: React.FC = () => {
   }, [editorSeed, editorMod, editorAttunement]);
 
   // Memoized artwork component
-  const { color, spin, depth, tint, tintPercent } = modValues;
   const memoizedArtwork = useMemo(() => (
     <Artwork 
       ref={artRef}
@@ -490,7 +483,6 @@ const Home: React.FC = () => {
       modValues={modValues}
       displaySettings={displaySettings}
       onArtworkReady={handleArtworkReady}
-      selectedQueueIndex={selectedQueueIndex}
     />
   ), [
     editorSeed,

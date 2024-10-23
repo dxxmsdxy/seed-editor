@@ -60,16 +60,7 @@ export function applyModValueToElements(elements: NodeListOf<Element> | HTMLColl
       } else {
         const adjustedDelay = delay - originalDelay;
         (element as HTMLElement).style.animationDelay = `${adjustedDelay.toFixed(10)}s`;
-        
-        if (modType === 'spin') {
-          // Linear interpolation between 1 and 0.2 (1/5 of original duration)
-          const durationMultiplier = 1 - (0.8 * normalizedPosition);
-          const adjustedDuration = originalDuration * durationMultiplier;
-          (element as HTMLElement).style.animationDuration = `${adjustedDuration.toFixed(10)}s`;
-        } else {
-          // For color mod, keep the original duration
-          (element as HTMLElement).style.animationDuration = `${originalDuration}s`;
-        }
+        (element as HTMLElement).style.animationDuration = `${originalDuration}s`;
       }
     });
   }

@@ -1,15 +1,13 @@
 import { usePathname, useRouter } from "next/navigation";
 import {
-  DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/UI/DropdownMenu";
 
-export const MenuDesktop = ({ dropdownOpen, setDropdownOpen }) => {
+export const MenuDesktop = ({ dropdownOpen }) => {
   const pathname = usePathname();
   const router = useRouter();
-  // const isActive = (path) => pathname === path;
 
   return (
     <nav role="navigation" className="nav-menu z-nav-menu">
@@ -30,9 +28,6 @@ export const MenuDesktop = ({ dropdownOpen, setDropdownOpen }) => {
       >
         <DropdownMenuTrigger
           className="bg-transparent"
-          style={{
-            // fontSize: 20,
-          }}
         >
           <div
             className={`dropdown-toggle z-dropdown-toggle ${
@@ -44,7 +39,6 @@ export const MenuDesktop = ({ dropdownOpen, setDropdownOpen }) => {
             aria-expanded="false"
             role="button"
             tabIndex={0}
-            // onClick={() => setDropdownOpen(!dropdownOpen)}
           >
             <div className="icon-2 z-icon-dropdown-toggle" aria-hidden="true" />
             <div>Menu</div>

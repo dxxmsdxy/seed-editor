@@ -1,9 +1,8 @@
-import { createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createSelector, createStructuredSelector } from '@reduxjs/toolkit';
 import { RootState } from '@/store';
 import { calculateMostFrequentNumeral } from '@/lib/utils/global';
 import { resetEditorToQueueItem } from './editorSlice';
-
-
+import { isEqual, memoize } from 'lodash';
 
 
 
@@ -55,7 +54,7 @@ const queueSlice = createSlice({
     initializeQueue: (state, action: PayloadAction<QueueItem[]>) => {
       state.items = action.payload.map(item => ({
         ...item,
-        initialAttunement: item.initialAttunement ?? calculateMostFrequentNumeral(BigInt(item.initialSeed)) ?? 0,
+        initialAttunement: item.initialAttunement ?? calculateMostFrequentNumeral(item.initialSeed) ?? 0,
         initialAttunementOverridden: item.initialAttunement !== null,
         isAttunementOverridden: item.initialAttunement !== null,
         newValues: {
@@ -164,10 +163,15 @@ export const selectQueueItemsForRendering = createSelector(
     ...item,
     index,
     displaySeed: item.newValues.newSeed || item.initialSeed,
-    isSet: item.newValues.newSeed !== null || item.newValues.newMod !== null || item.newValues.newAttunement !== null,
+    isSet: Boolean(item.newValues.newSeed || item.newValues.newMod || item.newValues.newAttunement),
     isSeedZero: (item.newValues.newSeed || item.initialSeed) === '0',
     isSelected: index === selectedIndex,
-  }))
+  })),
+  {
+    memoizeOptions: {
+      resultEqualityCheck: isEqual
+    }
+  }
 );
 
 // Check if queue has been modified

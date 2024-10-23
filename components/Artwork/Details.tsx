@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
 import { createSelector } from '@reduxjs/toolkit';
 import { useAppSelector } from '@/app/hooks';
-import { getMintOrder, calculateRemainder, calculateMostFrequentNumeral } from '@/lib/utils/global';
-import { generateName } from '@/lib/utils/nameGenerator';
+import { calculateRemainder, calculateMostFrequentNumeral } from '@/lib/utils/global';
 
 interface DetailsProps {
   isFocused: boolean;
@@ -56,7 +55,7 @@ const Details: React.FC<DetailsProps> = ({
   const memoizedValues = useMemo(() => {
     const activeBits = bitsArray.filter(bit => bit).length;
     const cardinalNumber = calculateRemainder(BigInt(editorSeed));
-    const naturalAttunement = calculateMostFrequentNumeral(BigInt(editorSeed));
+    const naturalAttunement = calculateMostFrequentNumeral(editorSeed);
     return { activeBits, cardinalNumber, naturalAttunement };
   }, [editorSeed, bitsArray]);
 
@@ -118,7 +117,7 @@ const Details: React.FC<DetailsProps> = ({
               </li>
               <li className="metadata-item">
                 <span className="metadata-label">Attunement:</span>
-                <span className="metadata-value">{getAttunementString(editorAttunement)}</span>
+                <span className="metadata-value">{getAttunementString(editorAttunement || Number(memoizedValues.naturalAttunement))}</span>
               </li>
               <li className="metadata-item">
                 <span className="metadata-label">Bits:</span>

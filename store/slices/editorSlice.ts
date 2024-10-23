@@ -1,7 +1,7 @@
 import { createSlice, createSelector, PayloadAction } from '@reduxjs/toolkit';
 import { produce } from 'immer';
 import { RootState } from '@/store';
-import { selectSelectedIndex, selectQueueItems } from './queueSlice';
+import { selectSelectedIndex, selectQueueItems, QueueItem } from './queueSlice';
 import { memoize, isEqual } from 'lodash';
 import { seedToBits, sanitizeSeed, sanitizeMod, sanitizeAttunement, calculateMostFrequentNumeral, randomizeBits, randomizeMod, getRandomNumber } from "@/lib/utils/global";
 
@@ -27,8 +27,8 @@ interface EditorState {
     tintPercent: number;
   };
   history: {
-    past: Array<{ seed: string; mod: string; attunement: string }>;
-    future: Array<{ seed: string; mod: string; attunement: string }>;
+    past: Array<EditorHistoryState>;
+    future: Array<EditorHistoryState>;
   };
   urlSeed: string | null;
   urlMod: string | null;
@@ -37,6 +37,10 @@ interface EditorState {
   isSpinAnimationPaused: boolean;
   isDepthAnimationPaused: boolean;
   uiVisibility?: 'none' | 'layers' | 'displaySettings';
+  displaySettings?: {
+    value: number;
+    array: boolean[];
+  };
 }
 
 // Editor history state
@@ -113,7 +117,7 @@ const editorSlice = createSlice({
         if (seed !== undefined) {
           state.editorSeed = sanitizeSeed(seed);
           state.bitsArray = seedToBits(BigInt(state.editorSeed));
-          const calculatedAttunement = calculateMostFrequentNumeral(BigInt(state.editorSeed))?.toString() ?? "0";
+          const calculatedAttunement = calculateMostFrequentNumeral(state.editorSeed)?.toString() ?? "0";
           if (attunement !== undefined) {
             state.editorAttunement = sanitizeAttunement(attunement);
             state.isAttunementOverridden = isAttunementOverridden !== undefined ? isAttunementOverridden : attunement !== calculatedAttunement;
@@ -162,7 +166,7 @@ const editorSlice = createSlice({
       const item = action.payload;
       state.editorSeed = item.initialSeed;
       state.editorMod = item.initialMod || '000000000000';
-      state.editorAttunement = item.initialAttunement?.toString() || calculateMostFrequentNumeral(BigInt(item.initialSeed))?.toString() || "0";
+      state.editorAttunement = item.initialAttunement?.toString() || calculateMostFrequentNumeral(item.initialSeed)?.toString() || "0";
       state.isAttunementOverridden = item.initialAttunementOverridden;
       state.bitsArray = seedToBits(BigInt(state.editorSeed));
       state.modValues = parseMod(state.editorMod);
@@ -172,7 +176,7 @@ const editorSlice = createSlice({
       state.bitsArray[index] = !state.bitsArray[index];
       state.editorSeed = BigInt('0b' + [...state.bitsArray].reverse().map(b => b ? '1' : '0').join('')).toString();
       if (!state.isAttunementOverridden) {
-        state.editorAttunement = calculateMostFrequentNumeral(BigInt(state.editorSeed))?.toString() ?? "0";
+        state.editorAttunement = calculateMostFrequentNumeral(state.editorSeed)?.toString() ?? "0";
       }
       pushToHistory(state);
     },
@@ -386,7 +390,7 @@ export const selectEditorAttunement = createSelector(
     if (isAttunementOverridden) {
       return editorAttunement;
     } else {
-      return calculateMostFrequentNumeral(BigInt(editorSeed))?.toString() ?? "0";
+      return calculateMostFrequentNumeral(editorSeed)?.toString() ?? "0";
     }
   }
 );
@@ -434,7 +438,7 @@ export const selectHasEditorChanges = createSelector(
 
     const itemSeed = selectedItem.newValues?.newSeed || selectedItem.initialSeed;
     const itemMod = selectedItem.newValues?.newMod || selectedItem.initialMod || '000000000000';
-    const itemAttunement = selectedItem.newValues?.newAttunement?.toString() || selectedItem.initialAttunement?.toString() || calculateMostFrequentNumeral(BigInt(selectedItem.initialSeed))?.toString() || "0";
+    const itemAttunement = selectedItem.newValues?.newAttunement?.toString() || selectedItem.initialAttunement?.toString() || calculateMostFrequentNumeral(selectedItem.initialSeed)?.toString() || "0";
     const itemIsAttunementOverridden = selectedItem.newValues?.isAttunementOverridden ?? selectedItem.isAttunementOverridden ?? false;
 
     const hasContentChanges = 
@@ -472,13 +476,13 @@ export const selectIsEditorAttunementChanged = createSelector(
   [selectEditorAttunement, selectSelectedIndex, selectQueueItems, selectEditorSeed],
   (editorAttunement, selectedIndex, queueItems, editorSeed) => {
     if (selectedIndex === null || queueItems.length === 0) {
-      return editorAttunement !== calculateMostFrequentNumeral(BigInt(editorSeed))?.toString();
+      return editorAttunement !== calculateMostFrequentNumeral(editorSeed)?.toString();
     }
     const selectedItem = queueItems[selectedIndex];
     if (!selectedItem) {
-      return editorAttunement !== calculateMostFrequentNumeral(BigInt(editorSeed))?.toString();
+      return editorAttunement !== calculateMostFrequentNumeral(editorSeed)?.toString();
     }
-    const defaultAttunement = calculateMostFrequentNumeral(BigInt(selectedItem.initialSeed))?.toString() ?? "0";
+    const defaultAttunement = calculateMostFrequentNumeral(selectedItem.initialSeed)?.toString() ?? "0";
     return editorAttunement !== (selectedItem.newValues?.newAttunement?.toString() || selectedItem.initialAttunement?.toString() || defaultAttunement);
   }
 );

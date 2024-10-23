@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useArtwork } from "@/context";
 import Image from "next/image";
 import { useAppDispatch } from '@/app/hooks';
@@ -16,7 +15,6 @@ const InscribeModal: React.FC<InscribeModalProps> = ({ show, queueItems }) => {
   const [loading, setLoading] = useState(false);
   const [loadingIndex, setLoadingIndex] = useState(0);
   const { getArtworkUrls } = useArtwork();
-  const router = useRouter();
   const [itemsWithUrls, setItemsWithUrls] = useState<QueueItem[]>([]);
   
   const purchaseSeeds = () => {}
