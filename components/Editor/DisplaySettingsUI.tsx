@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { RootState } from '@/store';
+import { RootState, AppDispatch } from '@/store';
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { 
   updateEditorState,
@@ -22,6 +22,14 @@ import { isEqual } from 'lodash';
 
 const iconContext = require.context('@/public/icons/settings', false, /seeds-editor-icons_.*\.svg$/);
 const icons = iconContext.keys().map(iconContext);
+
+const handleDisplaySettingToggle = (dispatch: AppDispatch) => (index: number) => {
+  dispatch(toggleDisplaySetting(index));
+};
+
+const handleSliderChange = (dispatch: AppDispatch) => (name: string, value: number) => {
+  dispatch(updateModValue({ name, value }));
+};
 
 // COMPONENT LOGIC ---------------------------------
 
@@ -132,14 +140,16 @@ const DisplaySettings: React.FC = () => {
   }, [dispatch, editorState.mod, selectedQueueIndex, queueItems]);
 
   // Handle display setting toggle
-  const handleDisplaySettingToggle = useCallback((index: number) => {
-    dispatch(toggleDisplaySetting(index));
-  }, [dispatch]);
+  const memoizedDisplaySettingToggle = useCallback(
+    handleDisplaySettingToggle(dispatch),
+    [dispatch]
+  );
 
   // Handle slider change
-  const handleSliderChange = useCallback((name: string, value: number) => {
-    dispatch(updateModValue({ name, value }));
-  }, [dispatch]);
+  const memoizedSliderChange = useCallback(
+    handleSliderChange(dispatch),
+    [dispatch]
+  );
 
   // Render display setting icons
   const renderDisplaySettingIcons = () => {

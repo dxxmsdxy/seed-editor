@@ -375,6 +375,10 @@ export const parseMod = memoize((mod: string) => {
   };
 });
 
+const calculateMostFrequentNumeralMemo = memoize(calculateMostFrequentNumeral, 
+  (seed: string) => seed
+);
+
 
 // SELECTORS -----------------------------------------
 
@@ -389,8 +393,12 @@ export const selectEditorAttunement = createSelector(
   (editorAttunement, isAttunementOverridden, editorSeed) => {
     if (isAttunementOverridden) {
       return editorAttunement;
-    } else {
-      return calculateMostFrequentNumeral(editorSeed)?.toString() ?? "0";
+    }
+    return calculateMostFrequentNumeralMemo(editorSeed)?.toString() ?? "0";
+  },
+  {
+    memoizeOptions: {
+      resultEqualityCheck: isEqual
     }
   }
 );
